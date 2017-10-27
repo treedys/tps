@@ -1,0 +1,48 @@
+config BR2_PACKAGE_LIBBPG
+    bool "libbpg"
+    select BR2_PACKAGE_LIBPNG
+    select BR2_PACKAGE_JPEG
+    help
+      BPG (Better Portable Graphics) is a new image format.
+      Its purpose is to replace the JPEG image format when
+      quality or file size is an issue.
+
+      https://bellard.org/bpg/
+
+if BR2_PACKAGE_LIBBPG
+
+config BR2_PACKAGE_LIBBPG_EMMC
+    bool "Javascript BPG decoder"
+    help
+      Enable compilation of Javascript decoder with Emscripten
+
+config BR2_PACKAGE_LIBBPG_X265
+    bool "x265"
+    default yes
+    select BR2_PACKAGE_HOST_CMAKE
+    help
+      Enable x265 for the encoder
+
+config BR2_PACKAGE_LIBBPG_JCTVC
+    bool "JCTVC"
+    help
+      Enable the JCTVC code (best quality but slow) for the encoder
+
+if BR2_PACKAGE_LIBBPG_JCTVC
+
+config BR2_PACKAGE_LIBBPG_JCTVC_HIGH_BIT_DEPTH
+    bool "JCTVC hogh bit depth"
+    help
+      Enable it to use bit depths > 12
+      (need more tests to validate encoder)
+
+endif
+
+config BR2_PACKAGE_LIBBPG_BPGVIEW
+    bool "bpgview"
+    select BR2_PACKAGE_SDL
+    select BR2_PACKAGE_SDL_IMAGE
+    help
+      Compile bpgview (SDL and SDL_image libraries needed)
+
+endif

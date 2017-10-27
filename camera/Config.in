@@ -1,0 +1,1 @@
+source "$BR2_EXTERNAL_TREEDYS_CAMERA_PATH/package/libbpg/Config.in"
