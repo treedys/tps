@@ -1,2 +1,2 @@
-make -C buildroot/ O=../output BR2_EXTERNAL=../camera/ treedys_camera_defconfig
-make -C output/ menuconfig
+make -C buildroot/ O=../output/camera BR2_EXTERNAL=../camera/ scanner_camera_defconfig
+make -C output/camera/ menuconfig
