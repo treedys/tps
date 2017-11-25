@@ -1,0 +1,12 @@
+config BR2_PACKAGE_CAMERA_FIRMWARE
+    bool "Treedys Camera firmware"
+    depends on BR2_PACKAGE_DNSMASQ
+    help
+      Builds Treedys Camera Firmware and serves it for network boot via TFTP
+
+comment "Treedys Camera firmware needs dnsmasq for network boot"
+    depends on !BR2_PACKAGE_DNSMASQ
+
+if BR2_PACKAGE_CAMERA_FIRMWARE
+
+endif

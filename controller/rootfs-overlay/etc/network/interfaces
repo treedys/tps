@@ -9,3 +9,15 @@ gateway 10.0.0.254
 
 auto wan
 iface wan inet dhcp
+
+auto lan0
+iface lan0 inet static
+address 192.168.99.200
+netmask 255.255.255.0
+gateway 192.168.99.200
+
+auto lan1
+iface lan1 inet static
+address 192.168.99.201
+netmask 255.255.255.0
+gateway 192.168.99.201

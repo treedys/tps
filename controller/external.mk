@@ -1,1 +1,1 @@
-include $(sort $(wildcard $(BR2_EXTERNAL_TREEDYS_CONTROLLER_PATH)/package/*/*.mk))
+include $(sort $(wildcard $(BR2_EXTERNAL_TREEDYS_CONTROLLER_PATH)/package/treedys/*/*.mk))
