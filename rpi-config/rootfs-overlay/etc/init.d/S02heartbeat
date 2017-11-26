@@ -1,0 +1,15 @@
+#!/bin/sh
+case "$1" in
+    start)
+        echo heartbeat >/sys/class/leds/led1/trigger
+        ;;
+    stop)
+        exit 1
+        ;;
+    *)
+        exit 1
+        ;;
+esac
+
+exit 0
+
