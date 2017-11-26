@@ -1,7 +1,10 @@
 #!/bin/sh
 case "$1" in
     start)
-        echo heartbeat >/sys/class/leds/led1/trigger
+        if vcgencmd otp_dump | grep 17:3020000a
+            then echo heartbeat >/sys/class/leds/led1/trigger
+            else exit 1
+        fi
         ;;
     stop)
         exit 1
