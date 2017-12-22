@@ -1,0 +1,12 @@
+{
+  "name": "app",
+  "version": "0.0.0",
+  "description": "Treedys scanner controller application",
+  "main": "index.js",
+  "bin": {
+    "treedys-controller": "./index.js"
+  },
+  "author": "",
+  "license": "SEE LICENSE IN LICENSE",
+  "private": true
+}
