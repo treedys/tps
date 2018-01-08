@@ -1,0 +1,12 @@
+config BR2_PACKAGE_CAMERA_APP
+    bool "camera-app"
+    depends on BR2_PACKAGE_RPI_USERLAND
+    help
+      Treedys Camera application
+
+comment "Treedys Camera application needs RPi userland for OpenMAX"
+    depends on !BR2_PACKAGE_RPI_USERLAND
+
+if BR2_PACKAGE_CAMERA_APP
+
+endif

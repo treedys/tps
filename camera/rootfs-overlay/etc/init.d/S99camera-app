@@ -1,0 +1,26 @@
+#!/bin/sh
+
+[ -x /bin/camera-app ] || exit 0
+
+case "$1" in
+    start)
+        printf "Starting camera-app: "
+        start-stop-daemon -b --make-pidfile -p /run/camera-app.pid -x /bin/camera-app -S
+        [ $? = 0 ] && echo "OK" || echo "FAIL"
+        ;;
+    stop)
+        printf "Stopping camera-app: "
+        start-stop-daemon -p /run/camera-app.pid -K
+        [ $? = 0 ] && echo "OK" || echo "FAIL"
+        ;;
+    restart|reload)
+        $0 stop
+        $0 start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        ;;
+esac
+
+exit 0
+

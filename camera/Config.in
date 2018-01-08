@@ -1,1 +1,2 @@
 source "$BR2_EXTERNAL_TREEDYS_CAMERA_PATH/package/libbpg/Config.in"
+source "$BR2_EXTERNAL_TREEDYS_CAMERA_PATH/package/treedys/camera-app/Config.in"
