@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <uv.h>
+
 #include "logerr.h"
 #include "omx_still.h"
 
@@ -37,12 +39,43 @@ void write_file(void) {
     if(close(fd)) { LOG_ERROR("close"); exit(1); }
 }
 
+void alloc_cb(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf) {
+        *buf = uv_buf_init((char*) malloc(suggested_size), suggested_size);
+}
+
+void svr_recv_cb(uv_udp_t* handle,
+        ssize_t nread,
+        const struct uv_buf_t *buf,
+        const struct sockaddr* addr,
+        unsigned flags) {
+
+
+    LOG_ERROR("UDP CALLBACK");
+
+    position = 0;
+    omx_still_shoot(buffering);
+
+    write_file();
+}
+
 void session(void) {
 
     omx_still_open();
 
-    position = 0;
-    omx_still_shoot(buffering);
+    uv_loop_t *loop = uv_default_loop();
+
+    uv_udp_t udp_server;
+
+    uv_udp_init(loop, &udp_server);
+
+    struct sockaddr_in recv_addr;
+
+    uv_ip4_addr("0.0.0.0", 6502, &recv_addr);
+    uv_udp_bind(&udp_server, (const struct sockaddr *)&recv_addr, UV_UDP_REUSEADDR);
+    uv_udp_set_membership(&udp_server, "224.1.1.1", NULL, UV_JOIN_GROUP);
+    uv_udp_recv_start(&udp_server, alloc_cb, svr_recv_cb);
+
+    uv_run(loop, UV_RUN_DEFAULT);
 
     omx_still_close();
 }
@@ -50,8 +83,6 @@ void session(void) {
 int main() {
 
     session();
-
-    write_file();
 
     LOG_MESSAGE("ok");
 
