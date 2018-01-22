@@ -8,8 +8,8 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY
 omx_parameter_camera_device_number(
         OMX_IN OMX_HANDLETYPE hComponent,
         OMX_IN OMX_U32        nPortIndex,
-        OMX_IN OMX_U32        nU32) {
-
+        OMX_IN OMX_U32        nU32)
+{
     OMX_PARAM_U32TYPE dev_st; OMX_INIT_STRUCTURE (dev_st);
 
     dev_st.nPortIndex = nPortIndex;
@@ -24,8 +24,8 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY
 omx_parameter_qfactor(
         OMX_IN OMX_HANDLETYPE hComponent,
         OMX_IN OMX_U32        nPortIndex,
-        OMX_IN OMX_U32        nQFactor) {
-
+        OMX_IN OMX_U32        nQFactor)
+{
     OMX_IMAGE_PARAM_QFACTORTYPE quality; OMX_INIT_STRUCTURE (quality);
 
     quality.nPortIndex = nPortIndex;
@@ -39,8 +39,8 @@ omx_parameter_qfactor(
 OMX_API OMX_ERRORTYPE OMX_APIENTRY
 omx_parameter_brcm_exif(
         OMX_IN OMX_HANDLETYPE hComponent,
-        OMX_IN OMX_BOOL       bEnabled) {
-
+        OMX_IN OMX_BOOL       bEnabled)
+{
     OMX_CONFIG_BOOLEANTYPE exif; OMX_INIT_STRUCTURE (exif);
 
     exif.bEnabled = bEnabled;
@@ -54,8 +54,8 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY
 omx_parameter_brcm_ijg_scaling(
         OMX_IN OMX_HANDLETYPE hComponent,
         OMX_IN OMX_U32        nPortIndex,
-        OMX_IN OMX_BOOL       bEnabled) {
-
+        OMX_IN OMX_BOOL       bEnabled)
+{
     OMX_PARAM_IJGSCALINGTYPE ijg; OMX_INIT_STRUCTURE (ijg);
 
     ijg.nPortIndex = nPortIndex;
@@ -72,8 +72,8 @@ omx_parameter_brcm_thumbnail(
         OMX_IN OMX_U32        bEnable,
         OMX_IN OMX_U32        bUsePreview,
         OMX_IN OMX_U32        nWidth,
-        OMX_IN OMX_U32        nHeight) {
-
+        OMX_IN OMX_U32        nHeight)
+{
     OMX_PARAM_BRCMTHUMBNAILTYPE thumbnail; OMX_INIT_STRUCTURE (thumbnail);
 
     thumbnail.bEnable     = bEnable;

@@ -8,8 +8,8 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY
 omx_config_sharpness(
         OMX_IN OMX_HANDLETYPE hComponent,
         OMX_IN OMX_U32        nPortIndex,
-        OMX_IN OMX_S32        nSharpness) {
-
+        OMX_IN OMX_S32        nSharpness)
+{
     OMX_CONFIG_SHARPNESSTYPE sharpness_st; OMX_INIT_STRUCTURE(sharpness_st);
 
     sharpness_st.nPortIndex = nPortIndex;
@@ -24,8 +24,8 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY
 omx_config_contrast(
         OMX_IN OMX_HANDLETYPE hComponent,
         OMX_IN OMX_U32        nPortIndex,
-        OMX_IN OMX_S32        nContrast) {
-
+        OMX_IN OMX_S32        nContrast)
+{
     OMX_CONFIG_CONTRASTTYPE contrast_st; OMX_INIT_STRUCTURE (contrast_st);
 
     contrast_st.nPortIndex = nPortIndex;
@@ -40,8 +40,8 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY
 omx_config_saturation(
         OMX_IN OMX_HANDLETYPE hComponent,
         OMX_IN OMX_U32        nPortIndex,
-        OMX_IN OMX_S32        nSaturation) {
-
+        OMX_IN OMX_S32        nSaturation)
+{
     OMX_CONFIG_SATURATIONTYPE saturation_st; OMX_INIT_STRUCTURE (saturation_st);
 
     saturation_st.nPortIndex  = nPortIndex;
@@ -56,8 +56,8 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY
 omx_config_brightness(
         OMX_IN OMX_HANDLETYPE hComponent,
         OMX_IN OMX_U32        nPortIndex,
-        OMX_IN OMX_S32        nBrightness) {
-
+        OMX_IN OMX_S32        nBrightness)
+{
     OMX_CONFIG_BRIGHTNESSTYPE brightness_st; OMX_INIT_STRUCTURE (brightness_st);
 
     brightness_st.nPortIndex  = nPortIndex;
@@ -79,8 +79,8 @@ omx_config_exposure_value(
         OMX_IN OMX_U32          nShutterSpeedMsec,
         OMX_IN OMX_BOOL         bAutoShutterSpeed,
         OMX_IN OMX_U32          nSensitivity,
-        OMX_IN OMX_BOOL         bAutoSensitivity) {
-
+        OMX_IN OMX_BOOL         bAutoSensitivity)
+{
     OMX_CONFIG_EXPOSUREVALUETYPE exposure_value_st; OMX_INIT_STRUCTURE (exposure_value_st);
 
     exposure_value_st.nPortIndex        = nPortIndex;
@@ -102,8 +102,8 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY
 omx_config_exposure(
         OMX_IN OMX_HANDLETYPE          hComponent,
         OMX_IN OMX_U32                 nPortIndex,
-        OMX_IN OMX_EXPOSURECONTROLTYPE eExposureControl) {
-
+        OMX_IN OMX_EXPOSURECONTROLTYPE eExposureControl)
+{
     OMX_CONFIG_EXPOSURECONTROLTYPE exposure_control_st; OMX_INIT_STRUCTURE (exposure_control_st);
 
     exposure_control_st.nPortIndex       = nPortIndex;
@@ -118,8 +118,8 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY
 omx_config_frame_stabilisation(
         OMX_IN OMX_HANDLETYPE hComponent,
         OMX_IN OMX_U32        nPortIndex,
-        OMX_IN OMX_BOOL       bStab) {
-
+        OMX_IN OMX_BOOL       bStab)
+{
     OMX_CONFIG_FRAMESTABTYPE frame_stabilisation_st; OMX_INIT_STRUCTURE (frame_stabilisation_st);
 
     frame_stabilisation_st.nPortIndex = nPortIndex;
@@ -134,8 +134,8 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY
 omx_config_white_balance(
         OMX_IN OMX_HANDLETYPE   hComponent,
         OMX_IN OMX_U32          nPortIndex,
-        OMX_WHITEBALCONTROLTYPE eWhiteBalControl) {
-
+        OMX_WHITEBALCONTROLTYPE eWhiteBalControl)
+{
     OMX_CONFIG_WHITEBALCONTROLTYPE white_balance_st; OMX_INIT_STRUCTURE (white_balance_st);
 
     white_balance_st.nPortIndex       = nPortIndex;
@@ -150,8 +150,8 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY
 omx_config_white_balance_gains(
         OMX_IN OMX_HANDLETYPE   hComponent,
         OMX_IN OMX_U32          xGainR,
-        OMX_IN OMX_U32          xGainB) {
-
+        OMX_IN OMX_U32          xGainB)
+{
         OMX_CONFIG_CUSTOMAWBGAINSTYPE white_balance_gains_st; OMX_INIT_STRUCTURE (white_balance_gains_st);
 
         white_balance_gains_st.xGainR = xGainR;
@@ -166,8 +166,8 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY
 omx_config_image_filter(
         OMX_IN OMX_HANDLETYPE hComponent,
         OMX_IN OMX_U32        nPortIndex,
-        OMX_IMAGEFILTERTYPE   eImageFilter) {
-
+        OMX_IMAGEFILTERTYPE   eImageFilter)
+{
     OMX_CONFIG_IMAGEFILTERTYPE image_filter_st; OMX_INIT_STRUCTURE (image_filter_st);
 
     image_filter_st.nPortIndex   = nPortIndex;
@@ -182,8 +182,8 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY
 omx_config_mirror(
         OMX_IN OMX_HANDLETYPE hComponent,
         OMX_IN OMX_U32        nPortIndex,
-        OMX_MIRRORTYPE        eMirror) {
-
+        OMX_MIRRORTYPE        eMirror)
+{
     OMX_CONFIG_MIRRORTYPE mirror_st; OMX_INIT_STRUCTURE (mirror_st);
 
     mirror_st.nPortIndex = nPortIndex;
@@ -198,8 +198,8 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY
 omx_config_rotation(
         OMX_IN OMX_HANDLETYPE hComponent,
         OMX_IN OMX_U32        nPortIndex,
-        OMX_IN OMX_S32        nRotation) {
-
+        OMX_IN OMX_S32        nRotation)
+{
     OMX_CONFIG_ROTATIONTYPE rotation_st; OMX_INIT_STRUCTURE (rotation_st);
 
     rotation_st.nPortIndex = nPortIndex;
@@ -216,8 +216,8 @@ omx_config_color_enhancement(
         OMX_IN OMX_U32        nPortIndex,
         OMX_IN OMX_BOOL       bColorEnhancement,
         OMX_IN OMX_U8         nCustomizedU,
-        OMX_IN OMX_U8         nCustomizedV) {
-
+        OMX_IN OMX_U8         nCustomizedV)
+{
     OMX_CONFIG_COLORENHANCEMENTTYPE color_enhancement_st; OMX_INIT_STRUCTURE (color_enhancement_st);
 
     color_enhancement_st.nPortIndex        = nPortIndex;
@@ -233,8 +233,8 @@ omx_config_color_enhancement(
 OMX_API OMX_ERRORTYPE OMX_APIENTRY
 omx_config_denoise(
         OMX_IN OMX_HANDLETYPE hComponent,
-        OMX_IN OMX_BOOL       bEnabled) {
-
+        OMX_IN OMX_BOOL       bEnabled)
+{
     OMX_CONFIG_BOOLEANTYPE denoise_st; OMX_INIT_STRUCTURE (denoise_st);
 
     denoise_st.bEnabled = bEnabled;
@@ -251,8 +251,8 @@ omx_config_input_crop_percentage(
         OMX_IN OMX_U32        xLeft,
         OMX_IN OMX_U32        xTop,
         OMX_IN OMX_U32        xWidth,
-        OMX_IN OMX_U32        xHeight) {
-
+        OMX_IN OMX_U32        xHeight)
+{
     OMX_CONFIG_INPUTCROPTYPE roi_st; OMX_INIT_STRUCTURE (roi_st);
 
     roi_st.nPortIndex = nPortIndex;
@@ -269,8 +269,8 @@ omx_config_input_crop_percentage(
 OMX_API OMX_ERRORTYPE OMX_APIENTRY
 omx_config_dynamic_range_expansion(
         OMX_IN OMX_HANDLETYPE                    hComponent,
-        OMX_IN OMX_DYNAMICRANGEEXPANSIONMODETYPE eMode) {
-
+        OMX_IN OMX_DYNAMICRANGEEXPANSIONMODETYPE eMode)
+{
     OMX_CONFIG_DYNAMICRANGEEXPANSIONTYPE drc_st; OMX_INIT_STRUCTURE (drc_st);
 
     drc_st.eMode = eMode;
@@ -284,8 +284,8 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY
 omx_config_port_capturing(
         OMX_IN OMX_HANDLETYPE hComponent,
         OMX_IN OMX_U32        nPortIndex,
-        OMX_IN OMX_BOOL       bEnabled) {
-
+        OMX_IN OMX_BOOL       bEnabled)
+{
     OMX_CONFIG_PORTBOOLEANTYPE cameraCapturePort; OMX_INIT_STRUCTURE (cameraCapturePort);
 
     cameraCapturePort.nPortIndex = nPortIndex;
@@ -301,8 +301,8 @@ omx_config_request_callback(
         OMX_IN OMX_HANDLETYPE hComponent,
         OMX_IN OMX_U32        nPortIndex,
         OMX_IN OMX_INDEXTYPE  nIndex,
-        OMX_IN OMX_BOOL       bEnable) {
-
+        OMX_IN OMX_BOOL       bEnable)
+{
     OMX_CONFIG_REQUESTCALLBACKTYPE cbs_st; OMX_INIT_STRUCTURE (cbs_st);
 
     cbs_st.nPortIndex = nPortIndex;
@@ -320,12 +320,13 @@ omx_config_metadata_item(
         OMX_IN OMX_METADATASCOPETYPE eScopeMode,
         OMX_IN OMX_U32               nScopeSpecifier,
         OMX_IN char                 *nKey,
-        OMX_IN char                 *nValue) {
-
+        OMX_IN char                 *nValue)
+{
     size_t key_length = strlen(nKey);
     size_t value_length = strlen(nValue);
 
-    struct {
+    struct
+    {
         //These two fields need to be together
         OMX_CONFIG_METADATAITEMTYPE metadata_st;
         char metadata_padding[value_length];

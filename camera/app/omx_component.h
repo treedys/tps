@@ -11,7 +11,8 @@
 #define LOG_EVENT(component, event, fmt, ...) LOG_COMPONENT((component), "event: %-20s, " fmt, #event, ##__VA_ARGS__)
 
 //Data of each component
-typedef struct {
+typedef struct
+{
     //The handle is obtained with OMX_GetHandle() and is used on every function
     //that needs to manipulate a component. It is released with OMX_FreeHandle()
     OMX_HANDLETYPE handle;
@@ -23,7 +24,8 @@ typedef struct {
 } component_t;
 
 //Events used with vcos_event_flags_get() and vcos_event_flags_set()
-typedef enum {
+typedef enum
+{
     EVENT_ERROR                       = 0x1,
     EVENT_PORT_ENABLE                 = 0x2,
     EVENT_PORT_DISABLE                = 0x4,

@@ -126,7 +126,8 @@ component_t encoder;
 
 OMX_BUFFERHEADERTYPE* output_buffer;
 
-void set_camera_settings(void) {
+void set_camera_settings(void)
+{
     LOG_COMPONENT(&camera, "configuring settings");
 
     OMX_ERRORTYPE error;
@@ -151,7 +152,8 @@ void set_camera_settings(void) {
     error = omx_config_white_balance      (camera.handle, OMX_ALL, CAM_WHITE_BALANCE      ); if(error) { exit(1); }
 
     //White balance gains (if white balance is set to off)
-    if(!CAM_WHITE_BALANCE) {
+    if(!CAM_WHITE_BALANCE)
+    {
         error = omx_config_white_balance_gains(camera.handle,
                 (CAM_WHITE_BALANCE_RED_GAIN  << 16)/1000,
                 (CAM_WHITE_BALANCE_BLUE_GAIN << 16)/1000); if(error) { exit(1); }
@@ -170,7 +172,8 @@ void set_camera_settings(void) {
     error = omx_config_dynamic_range_expansion(camera.handle, CAM_DRC); if(error) { exit(1); }
 }
 
-void set_jpeg_settings(void) {
+void set_jpeg_settings(void)
+{
     LOG_COMPONENT(&encoder, "configuring settings");
 
     OMX_ERRORTYPE error;
@@ -189,11 +192,13 @@ void set_jpeg_settings(void) {
     error = omx_config_metadata_item(encoder.handle, OMX_MetadataScopePortLevel, 341, "IFD0.Make", "Raspberry Pi"); if(error) { exit(1); }
 }
 
-int round_up(int value, int divisor) {
+int round_up(int value, int divisor)
+{
     return (divisor + value - 1) & ~(divisor - 1);
 }
 
-void omx_still_open(void) {
+void omx_still_open(void)
+{
     OMX_ERRORTYPE error;
     camera.name = "OMX.broadcom.camera";
     null_sink.name = "OMX.broadcom.null_sink";
@@ -319,7 +324,8 @@ void omx_still_open(void) {
 
 }
 
-void omx_still_close(void) {
+void omx_still_close(void)
+{
     OMX_ERRORTYPE error;
 
     //Disable the tunnel ports
@@ -347,7 +353,8 @@ void omx_still_close(void) {
     bcm_host_deinit();
 }
 
-void omx_still_shoot(const buffer_output_handler handler) {
+void omx_still_shoot(const buffer_output_handler handler)
+{
     OMX_ERRORTYPE error;
 
     //Change state to EXECUTING
@@ -365,7 +372,8 @@ void omx_still_shoot(const buffer_output_handler handler) {
     VCOS_UNSIGNED end_flags = EVENT_BUFFER_FLAG | EVENT_FILL_BUFFER_DONE;
     VCOS_UNSIGNED retrieves_events;
 
-    while(1) {
+    while(1)
+    {
         //Get the buffer data (a slice of the image)
         error = omx_fill_this_buffer(encoder.handle, output_buffer); if(error) { exit(1); }
 
@@ -377,7 +385,8 @@ void omx_still_shoot(const buffer_output_handler handler) {
         //When it's the end of the stream, an OMX_EventBufferFlag is emitted in the
         //camera and image_encode components. Then the FillBufferDone function is
         //called in the image_encode
-        if(retrieves_events == end_flags) {
+        if(retrieves_events == end_flags)
+        {
             //Clear the EOS flags
             wait(&camera, EVENT_BUFFER_FLAG, 0);
             wait(&encoder, EVENT_BUFFER_FLAG, 0);

@@ -15,12 +15,13 @@
 uint8_t jpeg[10000000];
 size_t position = 0;
 
-void buffering(const uint8_t * const buffer, const size_t length) {
-
+void buffering(const uint8_t * const buffer, const size_t length)
+{
     digitalWrite(28, HIGH);
     digitalWrite(  0, LOW);
 
-    if(length > sizeof(jpeg)-position) {
+    if(length > sizeof(jpeg)-position)
+    {
         LOG_ERROR("Buffer overflow %d %d", position, length);
         exit(1);
     }
@@ -30,13 +31,14 @@ void buffering(const uint8_t * const buffer, const size_t length) {
     position += length;
 }
 
-void write_file(void) {
-
+void write_file(void)
+{
     //Open the file
     int fd = open(FILENAME, O_WRONLY | O_CREAT | O_TRUNC | O_APPEND, 0666); if(fd == -1) { LOG_ERROR("open"); exit(1); }
 
     //Append the buffer into the file
-    if(write(fd, jpeg, position) == -1) {
+    if(write(fd, jpeg, position) == -1)
+    {
         LOG_ERRNO("write");
         exit(1);
     }
@@ -45,7 +47,8 @@ void write_file(void) {
     if(close(fd)) { LOG_ERROR("close"); exit(1); }
 }
 
-void alloc_cb(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf) {
+void alloc_cb(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
+{
         *buf = uv_buf_init((char*) malloc(suggested_size), suggested_size);
 }
 
@@ -53,7 +56,8 @@ void svr_recv_cb(uv_udp_t* handle,
         ssize_t nread,
         const struct uv_buf_t *buf,
         const struct sockaddr* addr,
-        unsigned flags) {
+        unsigned flags)
+{
 
     digitalWrite( 29, HIGH);
     digitalWrite(  0, HIGH);
@@ -67,8 +71,8 @@ void svr_recv_cb(uv_udp_t* handle,
     write_file();
 }
 
-void session(void) {
-
+void session(void)
+{
     wiringPiSetup();
 
     pinMode( 27, OUTPUT);
@@ -101,8 +105,8 @@ void session(void) {
     omx_still_close();
 }
 
-int main() {
-
+int main()
+{
     session();
 
     LOG_MESSAGE("ok");
