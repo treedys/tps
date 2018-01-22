@@ -58,6 +58,8 @@ void svr_recv_cb(uv_udp_t* handle,
         const struct sockaddr* addr,
         unsigned flags)
 {
+    if(!addr)
+        return;
 
     digitalWrite( 29, HIGH);
     digitalWrite(  0, HIGH);
