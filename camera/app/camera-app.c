@@ -5,6 +5,8 @@
 
 #include <uv.h>
 
+#include <wiringPi.h>
+
 #include "logerr.h"
 #include "omx_still.h"
 
@@ -14,6 +16,9 @@ uint8_t jpeg[10000000];
 size_t position = 0;
 
 void buffering(const uint8_t * const buffer, const size_t length) {
+
+    digitalWrite(28, HIGH);
+    digitalWrite(  0, LOW);
 
     if(length > sizeof(jpeg)-position) {
         LOG_ERROR("Buffer overflow %d %d", position, length);
@@ -26,6 +31,7 @@ void buffering(const uint8_t * const buffer, const size_t length) {
 }
 
 void write_file(void) {
+
     //Open the file
     int fd = open(FILENAME, O_WRONLY | O_CREAT | O_TRUNC | O_APPEND, 0666); if(fd == -1) { LOG_ERROR("open"); exit(1); }
 
@@ -49,16 +55,31 @@ void svr_recv_cb(uv_udp_t* handle,
         const struct sockaddr* addr,
         unsigned flags) {
 
-
-    LOG_ERROR("UDP CALLBACK");
+    digitalWrite( 29, HIGH);
+    digitalWrite(  0, HIGH);
 
     position = 0;
     omx_still_shoot(buffering);
+
+    digitalWrite( 29, LOW);
+    digitalWrite( 28, LOW);
 
     write_file();
 }
 
 void session(void) {
+
+    wiringPiSetup();
+
+    pinMode( 27, OUTPUT);
+    pinMode( 28, OUTPUT);
+    pinMode( 29, OUTPUT);
+    pinMode(  0, OUTPUT);
+
+    digitalWrite( 27, HIGH);
+    digitalWrite( 28, LOW);
+    digitalWrite( 29, LOW);
+    digitalWrite(  0, LOW);
 
     omx_still_open();
 

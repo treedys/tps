@@ -6,7 +6,7 @@ CFLAGS += -DSTANDALONE -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS \
 		  -DHAVE_LIBBCM_HOST -DUSE_EXTERNAL_LIBBCM_HOST -DUSE_VCHIQ_ARM -fPIC \
 		  -ftree-vectorize -pipe -Werror -g -Wall
 
-LDFLAGS += -lopenmaxil -lbcm_host -lvcos -lvchiq_arm -lpthread -luv
+LDFLAGS += -lopenmaxil -lbcm_host -lvcos -lvchiq_arm -lpthread -luv -lwiringPi
 
 camera-app: camera-app.o dump.o logerr.o omx.o omx_config.o omx_parameter.o omx_component.o omx_still.o
 
