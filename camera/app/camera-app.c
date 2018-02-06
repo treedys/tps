@@ -3,12 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <uv.h>
-
 #include <wiringPi.h>
 
 #include "logerr.h"
 #include "omx_still.h"
+#include "camera-net.h"
 
 #define FILENAME "still.jpg"
 
@@ -47,19 +46,9 @@ void write_file(void)
     if(close(fd)) { LOG_ERROR("close"); exit(1); }
 }
 
-void alloc_cb(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
+void shoot(void)
 {
-        *buf = uv_buf_init((char*) malloc(suggested_size), suggested_size);
-}
-
-void svr_recv_cb(uv_udp_t* handle,
-        ssize_t nread,
-        const struct uv_buf_t *buf,
-        const struct sockaddr* addr,
-        unsigned flags)
-{
-    if(!addr)
-        return;
+    LOG_ERROR("SHOOT");
 
     digitalWrite( 29, HIGH);
     digitalWrite(  0, HIGH);
@@ -89,27 +78,15 @@ void session(void)
 
     omx_still_open();
 
-    uv_loop_t *loop = uv_default_loop();
-
-    uv_udp_t udp_server;
-
-    uv_udp_init(loop, &udp_server);
-
-    struct sockaddr_in recv_addr;
-
-    uv_ip4_addr("0.0.0.0", 6502, &recv_addr);
-    uv_udp_bind(&udp_server, (const struct sockaddr *)&recv_addr, UV_UDP_REUSEADDR);
-    uv_udp_set_membership(&udp_server, "224.1.1.1", NULL, UV_JOIN_GROUP);
-    uv_udp_recv_start(&udp_server, alloc_cb, svr_recv_cb);
-
-    uv_run(loop, UV_RUN_DEFAULT);
+    net_session();
 
     omx_still_close();
 }
 
 int main()
 {
-    session();
+    for(;;)
+        session();
 
     LOG_MESSAGE("ok");
 

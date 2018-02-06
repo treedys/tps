@@ -38,7 +38,7 @@ void log_error(const void * const addr, const char * const format, ... )
         (void)fprintf(stderr, "L%07X\n", lock_err);
 #endif
 
-    /* Print time or error and address */
+    /* Print time of error and address */
     if(t_errno==0)
         (void)fprintf(stderr, "%08X %08"PRIXPTR" ", (uint32_t)t, (uintptr_t)addr);
     else

@@ -8,10 +8,10 @@ CFLAGS += -DSTANDALONE -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS \
 
 LDFLAGS += -lopenmaxil -lbcm_host -lvcos -lvchiq_arm -lpthread -luv -lwiringPi
 
-camera-app: camera-app.o dump.o logerr.o omx.o omx_config.o omx_parameter.o omx_component.o omx_still.o
+camera-app: camera-app.o camera-net.o dump.o logerr.o omx.o omx_config.o omx_parameter.o omx_component.o omx_still.o mac.o
 
 clean:
-	rm -f camera-app camera-app.o dump.o logerr.o omx.o omx_config.o omx_parameter.o omx_component.o omx_still.o
+	rm -f camera-app camera-net.o dump.o logerr.o omx.o omx_config.o omx_parameter.o omx_component.o omx_still.o mac.o
 
 all: camera-app
 
