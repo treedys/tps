@@ -8,5 +8,9 @@
   },
   "author": "",
   "license": "SEE LICENSE IN LICENSE",
-  "private": true
+  "private": true,
+  "dependencies": {
+    "@feathersjs/express": "^1.1.2",
+    "@feathersjs/feathers": "^3.1.0"
+  }
 }
