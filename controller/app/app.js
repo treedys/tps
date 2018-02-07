@@ -19,6 +19,6 @@ app.configure(express.rest());
 app.use(express.errorHandler());
 
 // Serve static files
-app.use(express.static(path.join(__dirname, "www")));
+app.use(express.static(path.join(__dirname, "build")));
 
 module.exports = app;
