@@ -21,7 +21,10 @@ const common = {
             path.resolve(WWW, "index.js"),
             ...static_files
         ], vendors: [
-            "@feathersjs/client"
+            "@feathersjs/client",
+            "react",
+            "react-dom",
+            "react-tap-event-plugin"
         ]
     },
     output: {
@@ -32,7 +35,18 @@ const common = {
     module: {
         rules: [
             { test: /\.css$/, use: ExtractTextPlugin.extract({ fallback: "style-loader", use: "css-loader" }) },
-            { test: static_files, loader: "file-loader", options: { name: "[name].[ext]" } }
+            { test: static_files, loader: "file-loader", options: { name: "[name].[ext]" } },
+            { test: /\.(js|jsx)$/, loader: "babel-loader", exclude: /(node_modules)/, options: {
+                presets: [
+                    [ "env", { "targets":{ "browsers": "defaults" }, "modules": false }],
+                    "react"
+                ],
+                plugins: [
+                    "transform-class-properties",
+                    "transform-export-extensions",
+                    "transform-decorators-legacy",
+                    "transform-object-rest-spread"
+                ] },}
         ]
     },
     plugins: [
