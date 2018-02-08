@@ -36,6 +36,8 @@
     "html-webpack-plugin": "^2.30.1",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
+    "react-router-dom": "^4.2.2",
+    "react-svg": "^2.2.11",
     "react-tap-event-plugin": "^3.0.2",
     "style-loader": "^0.20.1",
     "url-loader": "^0.6.2",

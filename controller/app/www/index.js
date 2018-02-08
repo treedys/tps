@@ -7,7 +7,8 @@ import injectTapEventPlugin from 'react-tap-event-plugin';
 injectTapEventPlugin();
 
 const render = () => {
-    ReactDOM.render(<h1>Hello, react world!</h1>, document.getElementById('App'));
+    const App = require('./app').default;
+    ReactDOM.render(<App></App>, document.getElementById('App'));
 };
 
 render();

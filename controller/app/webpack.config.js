@@ -19,12 +19,15 @@ const common = {
     entry: {
         app: [
             path.resolve(WWW, "index.js"),
+            path.resolve(WWW, "styles.css"),
             ...static_files
         ], vendors: [
             "@feathersjs/client",
             "react",
             "react-dom",
-            "react-tap-event-plugin"
+            "react-router-dom",
+            "react-tap-event-plugin",
+            "react-svg"
         ]
     },
     output: {
