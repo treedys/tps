@@ -5,12 +5,14 @@
 #include "logerr.h"
 #include "mac.h"
 
-static struct sockaddr_in broadcast_addr;
-static struct sockaddr_in recv_addr;
-static struct sockaddr_in send_addr;
+static struct sockaddr_in udp_broadcast_addr;
+static struct sockaddr_in udp_server_addr;
+static struct sockaddr_in udp_client_addr;
+static struct sockaddr_in tcp_server_addr;
 
 static uv_udp_t udp_server;
-static uv_udp_t send_socket;
+static uv_udp_t udp_client;
+static uv_tcp_t tcp_server;
 
 static uv_udp_send_t send_req;
 static uv_buf_t ping_buffer;
@@ -21,10 +23,11 @@ extern void shoo(void);
 
 static void alloc_cb(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
 {
-        *buf = uv_buf_init((char*) malloc(suggested_size), suggested_size);
+    // FIXME: Fix the memory leak, free() must be called.
+    *buf = uv_buf_init((char*) malloc(suggested_size), suggested_size);
 }
 
-static void on_send_cb(uv_udp_send_t *req, int status)
+static void udp_client_on_send_cb(uv_udp_send_t *req, int status)
 {
     if(status==-1)
         LOG_ERROR("UDP send error");
@@ -38,10 +41,10 @@ static void ping(void)
 
     ping_buffer = uv_buf_init(mac_address, sizeof(mac_address));
 
-    uv_udp_send(&send_req, &send_socket, &ping_buffer, 1, (const struct sockaddr *)&send_addr, &on_send_cb);
+    uv_udp_send(&send_req, &udp_client, &ping_buffer, 1, (const struct sockaddr *)&udp_client_addr, &udp_client_on_send_cb);
 }
 
-static void svr_recv_cb(uv_udp_t* handle,
+static void udb_server_recv_cb(uv_udp_t* handle,
         ssize_t nread,
         const struct uv_buf_t *buf,
         const struct sockaddr* addr,
@@ -66,27 +69,45 @@ static void svr_recv_cb(uv_udp_t* handle,
     }
 }
 
-extern void shoo(void);
+static void tcp_server_write_cb(uv_write_t* req, int status)
+{
+    uv_close
+}
+
+static void tcp_server_on_connect_cb(uv_stream_t *stream, int status)
+{
+    jpeg_buffer = uv_buf_init(jpeg, position);
+    uv_write(tcp_write_request, stream, &jpeg_buffer, 1, tcp_server_write_cb);
+}
+
+extern void shoot(void);
+extern uint8_t jpeg[];
+extern size_t position;
 
 void net_session(void) {
     uv_loop_t *loop = uv_default_loop();
 
+    get_mac_address("eth0", &mac_address);
+
     uv_udp_init(loop, &udp_server);
-    uv_udp_init(loop, &send_socket);
+    uv_udp_init(loop, &udp_client);
+    uv_tcp_init(loop, &tcp_server);
 
-    uv_ip4_addr("0.0.0.0",   6502, &recv_addr);
-    uv_ip4_addr("0.0.0.0",      0, &broadcast_addr);
-    uv_ip4_addr("224.1.1.1", 6501, &send_addr);
+    uv_ip4_addr("0.0.0.0",   6502, &udp_server_addr);
+    uv_ip4_addr("0.0.0.0",      0, &udp_broadcast_addr);
+    uv_ip4_addr("224.1.1.1", 6501, &udp_client_addr);
+    uv_ip4_addr("0.0.0.0",   6500, &tcp_server_addr);
 
-    uv_udp_bind(&udp_server,  (const struct sockaddr *)&recv_addr,      UV_UDP_REUSEADDR);
-    uv_udp_bind(&send_socket, (const struct sockaddr *)&broadcast_addr,                0);
+    uv_udp_bind(&udp_server, (const struct sockaddr *)&udp_server_addr,    UV_UDP_REUSEADDR);
+    uv_udp_bind(&udp_client, (const struct sockaddr *)&udp_broadcast_addr,                0);
+    uv_tcp_bind(&tcp_server, (const struct sockaddr *)&tcp_server                          );
 
     uv_udp_set_membership(&udp_server, "224.1.1.1", NULL, UV_JOIN_GROUP);
-    uv_udp_set_broadcast(&send_socket, 1);
+    uv_udp_recv_start(&udp_server, alloc_cb, udb_server_recv_cb);
 
-    uv_udp_recv_start(&udp_server, alloc_cb, svr_recv_cb);
+    uv_udp_set_broadcast(&udp_client, 1);
 
-    get_mac_address("eth0", &mac_address);
+    uv_listen((uv_stream_t*) &tcp_server, 128, tcp_server_on_connect_cb);
 
     uv_run(loop, UV_RUN_DEFAULT);
 }

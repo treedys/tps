@@ -5,7 +5,7 @@ const multicast = require("./multicast");
 
 const delay = ms => new Promise(res => setTimeout(res, ms))
 
-const portsPerSwitch = 48;
+const portsPerSwitch = 24;
 const MCAST_GRP = "224.1.1.1";
 const MCAST_PORT = 6502;
 
@@ -308,10 +308,11 @@ let run = async () => {
 }
 
 debug("Starting");
-run();
 
 const app = require("./app.js");
 
 /* app.listen() *MUST* be called after all feathers plugins are initialised
  *  * (especialy the authentication ones) to call their setup() methods. */
 app.listen(80);
+
+run();
