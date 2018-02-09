@@ -70,7 +70,7 @@ const debug = {
                 ],
                 exclude: path.resolve(WWW, "index.html")
             },
-            { test: /\.(jpe?g|png|gif|svg|eot|woff|ttf|svg|woff2|wav|mp3)$/, loader: "file-loader", options: { name: "[name].[ext]" }, exclude: static_files }
+            { test: /\.(jpe?g|png|gif|svg|eot|woff|ttf|woff2|wav|mp3)$/, loader: "file-loader", options: { name: "[name].[ext]" }, exclude: static_files }
         ]
     },
     devtool: 'source-map',
@@ -96,7 +96,8 @@ const release = {
                 ],
                 exclude: path.resolve(WWW, "index.html")
             },
-            { test: /\.(jpe?g|png|gif|svg|eot|woff|ttf|svg|woff2|wav|mp3)$/, loader: "url-loader", options: { limit: 10000, name: "[name].[hash:8].[ext]" }, exclude: static_files }
+            { test: /\.(svg|wav|mp3)$/, loader: "file-loader", options: { name: "[name].[hash:8].[ext]" }, exclude: static_files },
+            { test: /\.(jpe?g|png|gif|eot|woff|ttf|woff2)$/, loader: "url-loader", options: { limit: 10000, name: "[name].[hash:8].[ext]" }, exclude: static_files }
         ]
     },
     plugins: [
