@@ -1,18 +1,20 @@
 #!/usr/bin/env node
 
+const config = require("./config");
+
 const debug = require("debug")("APP");
 const multicast = require("./multicast");
 
 const delay = ms => new Promise(res => setTimeout(res, ms))
 
-const portsPerSwitch = 24;
-const MCAST_GRP = "224.1.1.1";
-const MCAST_PORT = 6502;
+const app = require("./app.js");
+const switches = require('./switches.js');
+const cameras = require('./cameras.js');
 
 const sendCmd = async (cmd) => {
     const message = Buffer.from([cmd]);
 
-    await multicast.send(message, 0, message.length, MCAST_PORT, MCAST_GRP);
+    await multicast.send(message, 0, message.length, config.MCAST_CAMERA_COMMAND_PORT, config.MCAST_GROUP_ADDR);
 };
 
 const send = {
@@ -20,16 +22,22 @@ const send = {
     shoot: () => sendCmd( 1 )
 };
 
-const onMessage = (message, rinfo) => {
+const look = async mac => {
+    let list = await cameras.find({query: { id: mac }});
+    let camera = list.length ? list[0] : undefined;
+    return camera;
+};
+
+const onMessage = async (message, rinfo) => {
     const address = rinfo.address;
     const mac = message.toString("ascii", 0, 17);
 
-    if(!cameras[mac]) {
-        debug(`Found new camera MAC:${mac} IP:${address}`);
-        cameras[mac] = {};
-    }
+    let camera = await look(mac);
 
-    let camera = cameras[mac];
+    if(!camera) {
+        debug(`Found new camera MAC:${mac} IP:${address}`);
+        camera = await cameras.create({ id: mac });
+    }
 
     if(camera.lastReboot && camera.lastReboot>camera.lastSeen)
         debug(`Reconnecting after reboot on ${camera.interface} port ${camera.port} IP:${camera.address}. Boot took ${time.since(camera.lastBoot)} seconds.`);
@@ -39,9 +47,12 @@ const onMessage = (message, rinfo) => {
     if(camera.lastReboot && (!camera.lastSeen || camera.lastSeen < camera.lastReboot))
         camera.firstSeen = Date.now();
 
-    cameras[mac].lastSeen = Date.now();
-    cameras[mac].address = address;
-    cameras[mac].mac = mac;
+    camera.lastSeen = Date.now();
+    camera.address = address;
+    camera.mac = mac;
+    camera.online = true;
+
+    await cameras.patch(mac, camera);
 };
 
 const doasync = require("doasync");
@@ -52,23 +63,6 @@ const time = require("time-since");
 
 const tplink = require("./tplink")();
 
-const defaultSwitchAddress = "192.168.0.1";
-
-const ports = [
-    {
-        interface: "wan",
-        hostAddress: "192.168.201.200",
-        switchAddress: "192.168.201.100",
-    }, {
-        interface: "lan0",
-        hostAddress: "192.168.202.200",
-        switchAddress: "192.168.202.100"
-    }, {
-        interface: "lan1",
-        hostAddress: "192.168.203.200",
-        switchAddress: "192.168.203.100"
-    }
-];
 
 // Configure the interface with address
 let ipConfiguration = (interface, address) => {
@@ -121,7 +115,7 @@ let configure = async (interface, desiredAddress, defaultAddress) => {
 
             await device.config("spanning-tree|spanning-tree mode rstp");
 
-            for(let i=0; i<portsPerSwitch; i++)
+            for(let i=0; i<config.SWITCH_PORTS; i++)
                 await device.port(i,"spanning-tree|spanning-tree common-config portfast enable");
 
             debug("Spanning tree configured");
@@ -148,28 +142,24 @@ let configure = async (interface, desiredAddress, defaultAddress) => {
 }
 
 let lastReboot;
-let cameras = {};
 
 let loop = async () => {
+
     // Get MAC addresses from the switches
-    for(let { interface, switchAddress } of ports) {
+    for(let { interface, switchAddress } of config.SWITCHES) {
         await tplink.session(switchAddress, async device => {
 
             let table = await device.portMacTable();
 
             for(let { port, mac } of table)
-                if(cameras[mac]) {
-                    cameras[mac].interface = interface;
-                    cameras[mac].switchAddress = switchAddress;
-                    cameras[mac].port = port;
-                }
+                if(await look(mac))
+                    await cameras.patch(mac, { interface, switchAddress, port });
         });
     }
 
     let tasks = [];
 
-    for(let mac in cameras) {
-        let camera = cameras[mac];
+    for(let camera of await cameras.find()) {
         let notSeen = !camera.lastSeen || time.since(camera.lastSeen).secs()>10;
         let notRebooted = !camera.lastReboot || time.since(camera.lastReboot).secs()>60;
 
@@ -184,7 +174,7 @@ let loop = async () => {
             else
                 debug(`Powercycle camera on ${camera.interface} port ${camera.port}`);
 
-            camera.lastReboot = Date.now();
+            await cameras.patch(camera.id, { online: false, lastReboot: Date.now() });
 
             // TODO: Power cycle in parallel
             debug(`Power cycle ${camera.interface}:${camera.port}`);
@@ -198,19 +188,12 @@ let loop = async () => {
         let tasks = [];
 
         // get list of all switch ports without detected camera
-        for(let {interface, switchAddress} of ports) {
-            for(let port=0; port < portsPerSwitch; port++) {
-                let cameraPresent = false;
-                for(let mac in cameras) {
-                    if(cameras[mac].interface==interface && cameras[mac].port==port)
-                        cameraPresent = true;
-                }
-                if(!cameraPresent) {
+        for(let {interface, switchAddress} of config.SWITCHES)
+            for(let port=0; port < config.SWITCH_PORTS; port++)
+                if((await cameras.find({ query: { interface, port } })).length==0) {
                     debug(`Power cycle ${interface}:${port}`);
                     tasks.push(tplink.session(switchAddress, device => device.powerCycle(port, 4000)));
                 }
-            }
-        }
 
         await Promise.all(tasks);
         lastReboot = Date.now();
@@ -238,30 +221,30 @@ let configureAllSwitches = async () => {
     // be able to connect to the switch
     debug("Disable all network interfaces");
 
-    for(let port of ports)
-        await ifconfig.down(port.interface);
+    for(let { interface } of config.SWITCHES)
+        await ifconfig.down(interface);
 
     debug("Network interfaces are disabled");
 
-    for(let port of ports) {
-        if(!await probeSwitch(port.interface, port.switchAddress)) {
+    for(let { interface, switchAddress } of config.SWITCHES) {
+        if(!await probeSwitch(interface, switchAddress)) {
 
-            if(!await probeSwitch(port.interface, defaultSwitchAddress))
-                throw `Can't connect to the switch on port ${port.interface}`;
+            if(!await probeSwitch(interface, config.SWITCH_DEFAULT_ADDRESS))
+                throw `Can't connect to the switch on port ${interface}`;
 
-            await configure(port.interface, port.switchAddress, defaultSwitchAddress);
+            await configure(interface, switchAddress, config.SWITCH_DEFAULT_ADDRESS);
         }
 
-        debug(`Found switch ${port.interface} ${port.switchAddress}`);
+        debug(`Found switch ${interface} ${switchAddress}`);
 
-        await ifconfig.down(port.interface);
+        await ifconfig.down(interface);
 
     }
 
     debug("Enable all network interfaces");
 
-    for(let port of ports)
-        await ifconfig.up(ipConfiguration(port.interface, port.hostAddress));
+    for(let { interface, hostAddress } of config.SWITCHES)
+        await ifconfig.up(ipConfiguration(interface, hostAddress));
 
     debug("Network interfaces are enabled");
 };
@@ -270,20 +253,20 @@ let run = async () => {
 
     try {
         // Probe and configure all switches
-        for(let port of ports)
-            if(!await tplink.probe(port.switchAddress)) {
+        for(let { switchAddress } of config.SWITCHES)
+            if(!await tplink.probe(switchAddress)) {
                 await configureAllSwitches();
                 break;
             }
 
         debug("UDP binding");
 
-        for(let port of ports)
-            await multicast.server(MCAST_PORT, port.hostAddress);
+        for(let { hostAddress } of config.SWITCHES)
+            await multicast.server(config.MCAST_CAMERA_COMMAND_PORT, hostAddress);
 
         debug("UDP server binded");
 
-        await multicast.client(6501, MCAST_GRP);
+        await multicast.client(config.MCAST_CAMERA_REPLY_PORT, config.MCAST_GROUP_ADDR);
 
         debug("UDP client binded");
 
@@ -309,10 +292,9 @@ let run = async () => {
 
 debug("Starting");
 
-const app = require("./app.js");
-
 /* app.listen() *MUST* be called after all feathers plugins are initialised
  *  * (especialy the authentication ones) to call their setup() methods. */
+
 app.listen(80);
 
 run();

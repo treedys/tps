@@ -18,11 +18,14 @@ const common = {
     },
     entry: {
         app: [
+            'babel-polyfill',
             path.resolve(WWW, "index.js"),
             path.resolve(WWW, "styles.css"),
             ...static_files
         ], vendors: [
             "@feathersjs/client",
+            "feathers-reactive",
+            "socket.io-client",
             "react",
             "react-dom",
             "react-router-dom",
