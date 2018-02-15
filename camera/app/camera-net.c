@@ -14,12 +14,18 @@ static uv_udp_t udp_server;
 static uv_udp_t udp_client;
 static uv_tcp_t tcp_server;
 
-static uv_udp_send_t send_req;
+static uv_udp_send_t udp_send_request;
+static uv_write_t    tcp_write_request;
+
 static uv_buf_t ping_buffer;
+static uv_buf_t jpeg_buffer;
 
 static char mac_address[18];
 
-extern void shoo(void);
+extern void shoot(void);
+extern uint8_t jpeg[];
+extern size_t position;
+
 
 static void alloc_cb(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
 {
@@ -41,7 +47,7 @@ static void ping(void)
 
     ping_buffer = uv_buf_init(mac_address, sizeof(mac_address));
 
-    uv_udp_send(&send_req, &udp_client, &ping_buffer, 1, (const struct sockaddr *)&udp_client_addr, &udp_client_on_send_cb);
+    uv_udp_send(&udp_send_request, &udp_client, &ping_buffer, 1, (const struct sockaddr *)&udp_client_addr, &udp_client_on_send_cb);
 }
 
 static void udb_server_recv_cb(uv_udp_t* handle,
@@ -71,18 +77,14 @@ static void udb_server_recv_cb(uv_udp_t* handle,
 
 static void tcp_server_write_cb(uv_write_t* req, int status)
 {
-    uv_close
+//    uv_close
 }
 
 static void tcp_server_on_connect_cb(uv_stream_t *stream, int status)
 {
-    jpeg_buffer = uv_buf_init(jpeg, position);
-    uv_write(tcp_write_request, stream, &jpeg_buffer, 1, tcp_server_write_cb);
+    jpeg_buffer = uv_buf_init((char *)jpeg, position);
+    uv_write(&tcp_write_request, stream, &jpeg_buffer, 1, tcp_server_write_cb);
 }
-
-extern void shoot(void);
-extern uint8_t jpeg[];
-extern size_t position;
 
 void net_session(void) {
     uv_loop_t *loop = uv_default_loop();
@@ -100,7 +102,7 @@ void net_session(void) {
 
     uv_udp_bind(&udp_server, (const struct sockaddr *)&udp_server_addr,    UV_UDP_REUSEADDR);
     uv_udp_bind(&udp_client, (const struct sockaddr *)&udp_broadcast_addr,                0);
-    uv_tcp_bind(&tcp_server, (const struct sockaddr *)&tcp_server                          );
+    uv_tcp_bind(&tcp_server, (const struct sockaddr *)&tcp_server_addr,                   0);
 
     uv_udp_set_membership(&udp_server, "224.1.1.1", NULL, UV_JOIN_GROUP);
     uv_udp_recv_start(&udp_server, alloc_cb, udb_server_recv_cb);
