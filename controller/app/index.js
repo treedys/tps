@@ -22,6 +22,15 @@ const send = {
     shoot: () => sendCmd( 1 )
 };
 
+app.post("/api/shoot", async (request, response) => {
+    try {
+        await send.shoot();
+        response.status(204).end();
+    } catch(err) {
+        response.status(500).send(err);
+    }
+});
+
 const look = async mac => {
     let list = await cameras.find({query: { id: mac }});
     let camera = list.length ? list[0] : undefined;

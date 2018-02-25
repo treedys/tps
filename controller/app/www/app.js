@@ -48,46 +48,17 @@ export default class App extends React.Component {
     }
 
     componentDidMount() {
-
         this.switches = switchesService.watch().find().subscribe( switches => this.setStateAsync({ switches }));
         this.cameras  =  camerasService.watch().find().subscribe(  cameras => this.setStateAsync({ cameras  }));
-
-        setInterval(async () => this.setStateAsync( { cameras: await camerasService.find() } ), 1000);
-/*
-        const updateService = (service, updater) => {
-            service.on('created', updater);
-            service.on('removed', updater);
-            service.on('updated', updater);
-            service.on('patched', updater);
-
-            service.on('created', (data) => console.log('created:', data));
-            service.on('removed', (data) => console.log('removed:', data));
-            service.on('updated', (data) => console.log('updated:', data));
-            service.on('patched', (data) => console.log('patched:', data));
-        };
-
-        const updateSwitches = async () =>
-            this.setStateAsync( {
-                switches: await switchesService.find()
-            } );
-        const updateCameras  = async () =>
-            this.setStateAsync( {
-                cameras: await  camerasService.find()
-            } );
-
-        await Promise.all([
-            updateSwitches(),
-            updateCameras()
-        ]);
-
-        updateService(switchesService, updateSwitches);
-        updateService( camerasService, updateCameras );
-*/
     }
 
     componentWillUnmount() {
         this.switches.unsubscribe();
         this.cameras .unsubscribe();
+    }
+
+    shoot() {
+        fetch('/api/shoot', { method: 'POST' });
     }
 
     render = () =>
@@ -96,7 +67,7 @@ export default class App extends React.Component {
                 <Header/>
                 <Row className="fill">
                     <PageList>
-                        <PageLink to="/shoot"       title="Shoot!"      icon={assets.shoot}/>
+                        <PageLink to="/shoot"       title="Shoot!"      icon={assets.shoot} onClick={this.shoot} />
                         <PageLink to="/session"     title="Session"     icon={assets.session}/>
                         <PageLink to="/calibration" title="Calibration" icon={assets.calibration}/>
                         <PageLink to="/cameras"     title="Cameras"     icon={assets.cameras}/>

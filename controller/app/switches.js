@@ -15,4 +15,16 @@ app.use('/api/switches', {
     })
 });
 
+app.param('switch', (request, response, next, id) => {
+
+    request.switchData = config.SWITCHES[id];
+
+    if(!request.switchData) {
+        next(new Error("Wrong switch ID"));
+        return;
+    }
+
+    next();
+});
+
 module.exports = app.service('/api/switches');

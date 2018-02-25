@@ -8,7 +8,7 @@ const socketio = require('@feathersjs/socketio');
 const app = express(feathers());
 
 // Set up REST transport using Express
-//app.configure(express.rest());
+app.configure(express.rest());
 
 app.configure(socketio({ serveClient: false }));
 
@@ -23,5 +23,8 @@ app.use(express.errorHandler());
 
 // Serve static files
 app.use(express.static(path.join(__dirname, "build")));
+
+app.on('connection', connection => app.channel('unprotected').join(connection) );
+app.publish( (data, context) => app.channel('unprotected') );
 
 module.exports = app;

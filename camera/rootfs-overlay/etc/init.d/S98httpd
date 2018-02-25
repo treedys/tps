@@ -1,16 +1,16 @@
 #!/bin/sh
 
-[ -x /bin/camera-app ] || exit 0
+[ -x /usr/sbin/httpd ] || exit 0
 
 case "$1" in
     start)
-        printf "Starting camera-app: "
-        start-stop-daemon -n camera-app -S -x camera-app -b
+        printf "Starting httpd: "
+        start-stop-daemon -n httpd -S -x /usr/sbin/httpd
         [ $? = 0 ] && echo "OK" || echo "FAIL"
         ;;
     stop)
-        printf "Stopping camera-app: "
-        start-stop-daemon -n camera-app -K
+        printf "Stopping httpd: "
+        start-stop-daemon -n httpd -K
         [ $? = 0 ] && echo "OK" || echo "FAIL"
         ;;
     restart|reload)

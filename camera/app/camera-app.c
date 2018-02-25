@@ -9,7 +9,7 @@
 #include "omx_still.h"
 #include "camera-net.h"
 
-#define FILENAME "still.jpg"
+#define FILENAME "/var/www/still.jpg"
 
 uint8_t jpeg[10000000];
 size_t position = 0;

@@ -1,54 +1,72 @@
 import React from 'react';
 import { Row, Centered, Circle, Icon } from '../components'
+import assets from './assets'
 
 const styles = {
-    circle: {
-        display: "inline-block",
-        backgroundColor: "#5A7287",
-        color: "#2A303B",
-        border: "3px solid white",
-        margin: "1em",
-        fontSize: '1.5em',
-        fontWeight: 'bold',
-        boxShadow: 'rgba(0, 0, 0, 0.156863) 0px 0px 10px, rgba(0, 0, 0, 0.227451) 0px 0px 10px',
-        textAlign: 'center',
-        paddingTop: '1em',
-        textDecoration: 'none'
+    cell: {
+        position: "relative",
+        boxShadow: 'rgba(0, 0, 0, 0.156863) 0px 0px 10px, rgba(0, 0, 0, 0.227451) 0px 0px 10px'
     },
     port: {
-        backgroundColor: "#5A72C7",
+        position: "absolute",
+        bottom: "4px",
+        right: "4px",
+        margin: "0px",
+        color: 'white',
+        textShadow: 'rgba(0, 0, 0, 0.156863) 0px 0px 10px, rgba(0, 0, 0, 0.227451) 0px 0px 10px'
     },
-    camera: {
-        backgroundColor: "#5AC772",
+    led: {
+        position: "absolute",
+        top: "4px",
+        left: "4px",
+        borderRadius: "6px",
+        width: "12px",
+        height: "12px",
+        boxShadow: 'rgba(0, 0, 0, 0.156863) 0px 0px 10px, rgba(0, 0, 0, 0.227451) 0px 0px 10px'
+    },
+    on: {
+        background: "green"
+    },
+    off: {
+        background: "red"
     }
 };
 
-export const PortLink = ({ switchData, port, ...params }) =>
-    <Circle radius={40} className="align-center" style={{ ...styles.circle, ...styles.port }}>
-        {port}
-    </Circle>
-
-export const CameraLink = ({ camera, ...params }) =>
-    <Circle radius={40} className="align-center" style={{ ...styles.circle, ...styles.camera }}>
-        { camera.port }
-    </Circle>
+export const CameraLink = ({ camera, port, ...params }) =>
+    <div style={styles.cell}>
+        <img src={ camera.online ? `/preview/${camera.id}/still.jpg` : assets.noise } style={{width:'100%', height:'auto'}} {...params} />
+        <p style={styles.port}>{port}</p>
+        <div style={{ ...styles.led, ...( camera.online ? styles.on : styles.off) }}/>
+    </div>
 
 export const CameraList = ({ switchData, cameras, ...params }) => {
-    let result = [];
 
-    if(switchData) {
-        for(let port=0; port<switchData.ports; port++) {
-            let camera = cameras.find( camera =>
-                camera.port==port && camera.interface==switchData.interface);
+    if(!switchData)
+        return <h1>Switch is not connected</h1>;
 
-            if(camera && camera.online)
-                result.push(<CameraLink camera={camera} {...params} />);
-            else
-                result.push(<PortLink switchData={switchData} port={port} {...params} />);
+    let rows = [];
+
+    for(let row=0; row<(switchData.ports+7)/8; row++) {
+
+        let cols = [];
+
+        for(let col=0; col<8; col++) {
+
+            const port = row*8+col;
+
+            if(port<switchData.ports) {
+
+                const camera = cameras.find( camera =>
+                    camera.port==port && camera.interface==switchData.interface)
+                        || { online: false, port: port, interface: switchData.interface } ;
+
+                cols.push(<td><CameraLink camera={camera} port={port} {...params}/></td>);
+            }
         }
+        rows.push(<tr>{cols}</tr>);
     }
 
-    return <div>{result}</div>;
+    return <table><tbody>{rows}</tbody></table>;
 };
 
 export default CameraList;
