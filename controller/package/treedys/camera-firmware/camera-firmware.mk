@@ -36,14 +36,6 @@ define CAMERA_FIRMWARE_INSTALL_TARGET_CMDS
 	$(INSTALL) -D -m 0644 -t $(TARGET_DIR)$(CAMERA_FIRMWARE_OUTPUT_DIR) $(@D)/images/zImage
 
 	$(INSTALL) -D -m 0644 -t $(TARGET_DIR)$(CAMERA_FIRMWARE_OUTPUT_DIR)/overlays/ $(@D)/images/rpi-firmware/overlays/*.dtbo
-
-	$(INSTALL) -D -m 0644 $(CAMERA_FIRMWARE_PKGDIR)/dnsmasq.conf $(TARGET_DIR)/etc/dnsmasq.conf
 endef
-
-define CAMERA_FIRMWARE_CONFIGURE_DNSMASQ
-	$(SED) '/^tftp-root=/s~^.*~tftp-root=$(CAMERA_FIRMWARE_OUTPUT_DIR)~' \
-		$(TARGET_DIR)/etc/dnsmasq.conf
-endef
-CAMERA_FIRMWARE_TARGET_FINALIZE_HOOKS += CAMERA_FIRMWARE_CONFIGURE_DNSMASQ
 
 $(eval $(kconfig-package))
