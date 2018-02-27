@@ -64,9 +64,8 @@ const onMessage = async (message, rinfo) => {
     await cameras.patch(mac, camera);
 };
 
-const doasync = require("doasync");
+const interfaces = require('./interfaces.js');
 
-const ifconfig = doasync(require("wireless-tools/ifconfig"));
 const ip = require("ip");
 const time = require("time-since");
 
@@ -75,36 +74,13 @@ let tplinks = {};
 for(let { interface } of config.SWITCHES)
     tplinks[interface] = require("./tplink")();
 
-// Configure the interface with address
-let ipConfiguration = (interface, address) => {
-    let range = ip.toBuffer(address).slice( 0, 3 );
-
-    return {
-        interface: interface,
-        ipv4_address: address,
-        ipv4_broadcast: ip.toString([...range, 255]),
-        ipv4_subnet_mask: "255.255.255.0"
-    };
-}
-
-// Configure the interface with address xxx.xxx.xxx.200
-let ipConfiguration200 = (interface, address) => {
-    let range = ip.toBuffer(address).slice( 0, 3 );
-
-    return {
-        interface: interface,
-        ipv4_address: ip.toString([...range, 200]),
-        ipv4_broadcast: ip.toString([...range, 255]),
-        ipv4_subnet_mask: "255.255.255.0"
-    };
-}
+const addressEnd = (address, end) => ip.toString( [...ip.toBuffer(address).slice(0, 3), end] );
 
 let probeSwitch = async (interface, address) => {
 
     debug(`Checking switch ${interface} ${address}`);
 
-    await ifconfig.down(interface);
-    await ifconfig.up(ipConfiguration200(interface, address));
+    await interfaces.upOnly(interface, addressEnd(address, 200));
 
     return await tplinks[interface].probe(address, {
         timeout: 1*60*1000,
@@ -143,7 +119,7 @@ let configure = async (interface, desiredAddress, defaultAddress) => {
         await tplinks[interface].changeIpAddress(defaultAddress, 0, desiredAddress, "255.255.255.0");
         debug("IP address changed");
 
-        await ifconfig.up(ipConfiguration200(interface, desiredAddress));
+        await interfaces.address(interface, addressEnd( desiredAddress, 200 ));
 
         await tplinks[interface].session(desiredAddress, async device => {
             debug("Updating startup config");
@@ -232,15 +208,6 @@ let retry = async (maxRetries, callback) => {
 };
 
 let configureAllSwitches = async () => {
-    // By default switches are on address 192.168.0.1
-    // so we need to have just one ethernet port up to
-    // be able to connect to the switch
-    debug("Disable all network interfaces");
-
-    for(let { interface } of config.SWITCHES)
-        await ifconfig.down(interface);
-
-    debug("Network interfaces are disabled");
 
     for(let { interface, switchAddress } of config.SWITCHES) {
         if(!await probeSwitch(interface, switchAddress)) {
@@ -252,15 +219,13 @@ let configureAllSwitches = async () => {
         }
 
         debug(`Found switch ${interface} ${switchAddress}`);
-
-        await ifconfig.down(interface);
-
     }
 
     debug("Enable all network interfaces");
 
-    for(let { interface, hostAddress } of config.SWITCHES)
-        await ifconfig.up(ipConfiguration(interface, hostAddress));
+    await Promise.address(config.SWITCHES.map(
+        ({ interface, hostAddress }) => interfaces.up(interface, hostAddress)
+    ));
 
     debug("Network interfaces are enabled");
 };
@@ -268,6 +233,15 @@ let configureAllSwitches = async () => {
 let run = async () => {
 
     try {
+        // Prepare network interfaces
+        await Promise.all(config.SWITCHES.map(
+            ({ interface, hostAddress }) => interfaces.add(interface, hostAddress)
+        ));
+
+        await Promise.all(config.SWITCHES.map(
+            ({ interface }) => interfaces.up(interface)
+        ));
+
         // Probe and configure all switches
         for(let { interface, switchAddress } of config.SWITCHES)
             if(!await tplinks[interface].probe(switchAddress)) {
