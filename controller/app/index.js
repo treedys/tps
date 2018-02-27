@@ -106,7 +106,10 @@ let probeSwitch = async (interface, address) => {
     await ifconfig.down(interface);
     await ifconfig.up(ipConfiguration200(interface, address));
 
-    return await tplinks[interface].probe(address);
+    return await tplinks[interface].probe(address, {
+        timeout: 1*60*1000,
+        execTimeout: 1*60*1000
+    });
 }
 
 let configure = async (interface, desiredAddress, defaultAddress) => {
@@ -188,8 +191,10 @@ let loop = async () => {
             await cameras.patch(camera.id, { online: false, lastReboot: Date.now() });
 
             // TODO: Power cycle in parallel
-            debug(`Power cycle ${camera.interface}:${camera.port}`);
-            tasks.push(tplinks[camera.interface].session(camera.switchAddress, device => device.powerCycle(camera.port, 4000)));
+            if(camera.interface && camera.switchAddress && camera.port) {
+                debug(`Power cycle ${camera.interface}:${camera.port}`);
+                tasks.push(tplinks[camera.interface].session(camera.switchAddress, device => device.powerCycle(camera.port, 4000)));
+            }
         }
     }
 

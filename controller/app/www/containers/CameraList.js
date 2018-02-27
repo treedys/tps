@@ -4,6 +4,9 @@ import assets from './assets'
 
 const styles = {
     cell: {
+        width: `${100/8}%`
+    },
+    camera: {
         position: "relative",
         boxShadow: 'rgba(0, 0, 0, 0.156863) 0px 0px 10px, rgba(0, 0, 0, 0.227451) 0px 0px 10px'
     },
@@ -33,7 +36,7 @@ const styles = {
 };
 
 export const CameraLink = ({ camera, port, ...params }) =>
-    <div style={styles.cell}>
+    <div style={styles.camera}>
         <img src={ camera.online ? `/preview/${camera.id}/still.jpg` : assets.noise } style={{width:'100%', height:'auto'}} {...params} />
         <p style={styles.port}>{port}</p>
         <div style={{ ...styles.led, ...( camera.online ? styles.on : styles.off) }}/>
@@ -60,7 +63,7 @@ export const CameraList = ({ switchData, cameras, ...params }) => {
                     camera.port==port && camera.interface==switchData.interface)
                         || { online: false, port: port, interface: switchData.interface } ;
 
-                cols.push(<td><CameraLink camera={camera} port={port} {...params}/></td>);
+                cols.push(<td style={styles.cell}><CameraLink camera={camera} port={port} {...params}/></td>);
             }
         }
         rows.push(<tr>{cols}</tr>);
