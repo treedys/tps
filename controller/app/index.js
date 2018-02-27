@@ -70,8 +70,10 @@ const ifconfig = doasync(require("wireless-tools/ifconfig"));
 const ip = require("ip");
 const time = require("time-since");
 
-const tplink = require("./tplink")();
+let tplinks = {};
 
+for(let { interface } of config.SWITCHES)
+    tplinks[interface] = require("./tplink")();
 
 // Configure the interface with address
 let ipConfiguration = (interface, address) => {
@@ -104,7 +106,7 @@ let probeSwitch = async (interface, address) => {
     await ifconfig.down(interface);
     await ifconfig.up(ipConfiguration200(interface, address));
 
-    return await tplink.probe(address);
+    return await tplinks[interface].probe(address);
 }
 
 let configure = async (interface, desiredAddress, defaultAddress) => {
@@ -112,7 +114,7 @@ let configure = async (interface, desiredAddress, defaultAddress) => {
     debug(`Starting session to configure switch at ${interface}`);
 
     await retry(5, async () => {
-        await tplink.session(defaultAddress, async device => {
+        await tplinks[interface].session(defaultAddress, async device => {
             debug(`Configuring switch at ${interface}`);
 
             // First get rid of logging messages that mess with the CLI commands execution
@@ -135,12 +137,12 @@ let configure = async (interface, desiredAddress, defaultAddress) => {
         });
 
         debug(`Changing IP address to ${desiredAddress}`);
-        await tplink.changeIpAddress(defaultAddress, 0, desiredAddress, "255.255.255.0");
+        await tplinks[interface].changeIpAddress(defaultAddress, 0, desiredAddress, "255.255.255.0");
         debug("IP address changed");
 
         await ifconfig.up(ipConfiguration200(interface, desiredAddress));
 
-        await tplink.session(desiredAddress, async device => {
+        await tplinks[interface].session(desiredAddress, async device => {
             debug("Updating startup config");
             await device.privileged("copy running-config startup-config");
             debug("Startup config updated");
@@ -156,7 +158,7 @@ let loop = async () => {
 
     // Get MAC addresses from the switches
     for(let { interface, switchAddress } of config.SWITCHES) {
-        await tplink.session(switchAddress, async device => {
+        await tplinks[interface].session(switchAddress, async device => {
 
             let table = await device.portMacTable();
 
@@ -187,7 +189,7 @@ let loop = async () => {
 
             // TODO: Power cycle in parallel
             debug(`Power cycle ${camera.interface}:${camera.port}`);
-            tasks.push(tplink.session(camera.switchAddress, device => device.powerCycle(camera.port, 4000)));
+            tasks.push(tplinks[camera.interface].session(camera.switchAddress, device => device.powerCycle(camera.port, 4000)));
         }
     }
 
@@ -201,7 +203,7 @@ let loop = async () => {
             for(let port=0; port < config.SWITCH_PORTS; port++)
                 if((await cameras.find({ query: { interface, port } })).length==0) {
                     debug(`Power cycle ${interface}:${port}`);
-                    tasks.push(tplink.session(switchAddress, device => device.powerCycle(port, 4000)));
+                    tasks.push(tplinks[interface].session(switchAddress, device => device.powerCycle(port, 4000)));
                 }
 
         await Promise.all(tasks);
@@ -262,8 +264,8 @@ let run = async () => {
 
     try {
         // Probe and configure all switches
-        for(let { switchAddress } of config.SWITCHES)
-            if(!await tplink.probe(switchAddress)) {
+        for(let { interface, switchAddress } of config.SWITCHES)
+            if(!await tplinks[interface].probe(switchAddress)) {
                 await configureAllSwitches();
                 break;
             }
