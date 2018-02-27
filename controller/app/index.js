@@ -49,9 +49,9 @@ const onMessage = async (message, rinfo) => {
     }
 
     if(camera.lastReboot && camera.lastReboot>camera.lastSeen)
-        debug(`Reconnecting after reboot on ${camera.interface} port ${camera.port} IP:${camera.address}. Boot took ${time.since(camera.lastBoot)} seconds.`);
+        debug(`Reconnecting after reboot on ${camera.interface}:${camera.port} IP:${camera.address}. Boot took ${time.since(camera.lastBoot)} seconds.`);
     else if(time.since(camera.lastSeen).secs()>2)
-        debug(`Lost connection to ${camera.interface} port ${camera.port} ${camera.address} for ${time.since(camera.lastSeen).secs()} seconds`);
+        debug(`Lost connection to ${camera.interface}:${camera.port} ${camera.address} for ${time.since(camera.lastSeen).secs()} seconds`);
 
     if(camera.lastReboot && (!camera.lastSeen || camera.lastSeen < camera.lastReboot))
         camera.firstSeen = Date.now();
@@ -175,13 +175,13 @@ let loop = async () => {
         if(notSeen && notRebooted) {
 
             if(camera.lastSeen && !camera.lastReboot)
-                debug(`Connection lost on ${camera.interface} port ${camera.port}.`);
+                debug(`Connection lost on ${camera.interface}:${camera.port} ${camera.address}`);
             else if(camera.lastSeen && camera.lastReboot<camera.lastSeen)
-                debug(`Connection lost on ${camera.interface} port ${camera.port}. ${time.since(camera.firstSeen).secs()} seconds since first seen`);
+                debug(`Connection lost on ${camera.interface}:${camera.port}. ${time.since(camera.firstSeen).secs()} seconds since first seen`);
             else if(!camera.lastReboot)
-                debug(`Discovering camera on ${camera.interface} port ${camera.port}`);
+                debug(`Discovering camera on ${camera.interface}:${camera.port}`);
             else
-                debug(`Powercycle camera on ${camera.interface} port ${camera.port}`);
+                debug(`Powercycle camera on ${camera.interface}:${camera.port}`);
 
             await cameras.patch(camera.id, { online: false, lastReboot: Date.now() });
 
