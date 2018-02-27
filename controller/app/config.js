@@ -7,15 +7,15 @@ module.exports = {
     MCAST_CAMERA_REPLY_PORT: 6501,
     SWITCHES: [
         {
-            interface: "eth1",
+            interface: "wan",
             hostAddress: "192.168.201.200",
             switchAddress: "192.168.201.100",
         }, {
-            interface: "eth2",
+            interface: "lan0",
             hostAddress: "192.168.202.200",
             switchAddress: "192.168.202.100"
         }, {
-            interface: "eth3",
+            interface: "lan1",
             hostAddress: "192.168.203.200",
             switchAddress: "192.168.203.100"
         }
