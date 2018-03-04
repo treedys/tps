@@ -1,16 +1,17 @@
 const app = require('./app.js');
 const memory = require('feathers-memory');
-const download = require('download');
+const request = require('request');
+const debug = require('debug')('cameras');
 
 app.use('/api/cameras', memory() );
 
 const cameras = app.service('/api/cameras');
 
-app.param('camera', async (request, response, next, id) => {
+app.param('camera', async (browser_request, browser_response, next, id) => {
     try {
-        request.camera = await cameras.get(id);
+        browser_request.camera = await cameras.get(id);
 
-        if(!request.camera) {
+        if(!browser_request.camera) {
             next(new Error("Wrong camera ID"));
         } else {
             next();
@@ -20,14 +21,32 @@ app.param('camera', async (request, response, next, id) => {
     }
 });
 
-app.get('/preview/:camera*', (request, response) => {
+app.get('/preview/:camera*', async (browser_request, browser_response) => {
     try {
-        const path = request.params[0];
+        const path = browser_request.params[0];
 
-        download(`http://${request.camera.address}/${path}`).pipe(response);
+        const camera_request = request.get(`http://${browser_request.camera.address}/${path}`);
+
+        camera_request.pause();
+
+        camera_request.on('response', camera_response => {
+            if(camera_response.statusCode == 200) {
+                camera_request.pipe(browser_response);
+                camera_request.resume();
+            } else {
+                browser_response.redirect('/noise.jpg');
+                camera_request.abort();
+            }
+        });
+
+        camera_request.on('error', error => {
+            browser_response.redirect('/noise.jpg');
+            camera_request.abort();
+            debug('Error:', error);
+        });
 
     } catch(err) {
-        response.status(500).send(err);
+        browser_response.status(500).send(err);
     }
 });
 

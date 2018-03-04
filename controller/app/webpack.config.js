@@ -9,6 +9,7 @@ const WWW = path.resolve(__dirname, "www");
 const BUILD = path.resolve(__dirname, "build");
 
 const static_files = [
+    path.resolve(WWW, 'containers/assets/noise.jpg')
 ];
 
 const common = {

@@ -29,6 +29,7 @@
     "feathers-memory": "^2.1.0",
     "ip": "^1.1.5",
     "netlink-notify": "github:cenuij/netlink-notify",
+    "request": "^2.83.0",
     "telnet-client": "^0.15.5",
     "time-since": "^1.0.6",
     "wireless-tools": "^0.19.0"
