@@ -5,7 +5,8 @@ import { Row, Col, Button } from './components/';
 import {
     Header,
     PageList, PageLink,
-    SwitchList, CameraList
+    SwitchList, CameraList,
+    System
 } from './containers/';
 
 import assets from './assets/';
@@ -57,8 +58,7 @@ export default class App extends React.Component {
         this.cameras .unsubscribe();
     }
 
-    shoot   = () => { fetch('/api/shoot',           { method: 'POST' }); }
-    restart = () => { fetch('/api/cameras/restart', { method: 'POST' }); }
+    shoot = () => { fetch('/api/shoot', { method: 'POST' }); }
 
     render = () =>
         <Router>
@@ -72,16 +72,21 @@ export default class App extends React.Component {
                         <PageLink to="/cameras"     title="Cameras"     icon={assets.cameras}/>
                         <PageLink to="/settings"    title="Settings"    icon={assets.settings}/>
                     </PageList>
+
                     <Route path="/cameras" render={ props =>
-                        <SwitchList switches={ this.state.switches }>
-                            <div className="fill"/>
-                            <Button onClick={this.restart}>Restart</Button>
-                        </SwitchList>
+                        <SwitchList switches={ this.state.switches }/>
                     }/>
+
                     <Col className="fill scroll">
+
                         <Route path="/cameras/:switchId" render={ props =>
                             <CameraList cameras={this.state.cameras} switchData={ this.state.switches && this.state.switches[props.match.params.switchId] }/>
                         }/>
+
+                        <Route path="/system" render={ props =>
+                            <System/>
+                        }/>
+
                     </Col>
                 </Row>
             </Col>
