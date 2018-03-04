@@ -32,6 +32,7 @@ const feathersApp = feathers()
 
 const switchesService = feathersApp.service('/api/switches');
 const  camerasService = feathersApp.service('/api/cameras' );
+const   statusService = feathersApp.service('/api/status'  );
 
 export default class App extends React.Component {
 
@@ -51,11 +52,13 @@ export default class App extends React.Component {
     componentDidMount() {
         this.switches = switchesService.watch().find().subscribe( switches => this.setStateAsync({ switches }));
         this.cameras  =  camerasService.watch().find().subscribe(  cameras => this.setStateAsync({ cameras  }));
+        this.status   =   statusService.watch().get(0).subscribe(   status => this.setStateAsync({ status   }));
     }
 
     componentWillUnmount() {
         this.switches.unsubscribe();
         this.cameras .unsubscribe();
+        this.status  .unsubscribe();
     }
 
     shoot = () => { fetch('/api/shoot', { method: 'POST' }); }
@@ -84,7 +87,7 @@ export default class App extends React.Component {
                         }/>
 
                         <Route path="/system" render={ props =>
-                            <System/>
+                            <System status={this.state.status}/>
                         }/>
 
                     </Col>

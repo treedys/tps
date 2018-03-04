@@ -8,6 +8,7 @@ const multicast = require("./multicast");
 const delay = ms => new Promise(res => setTimeout(res, ms))
 
 const app = require("./app.js");
+const status = require('./status.js');
 const switches = require('./switches.js');
 const cameraService = require('./cameras.js');
 
@@ -26,9 +27,16 @@ const send = {
 
 app.post("/api/shoot", async (request, response) => {
     try {
+
+        await status.patch(0, { shooting: true });
+
         await send.shoot();
+
+        await status.patch(0, { shooting: false });
+
         response.status(204).end();
     } catch(err) {
+        await status.patch(0, { shooting: false });
         response.status(500).send(err);
     }
 });
@@ -36,6 +44,8 @@ app.post("/api/shoot", async (request, response) => {
 app.post("/api/cameras/restart", async (request, response) => {
     try {
         let switchTasks = [];
+
+        await status.patch(0, { restarting: true });
 
         for(let {interface, switchAddress} of config.SWITCHES) {
             switchTasks.push(tplinks[interface].session(switchAddress, async device => {
@@ -51,8 +61,13 @@ app.post("/api/cameras/restart", async (request, response) => {
         }
 
         await Promise.all(switchTasks);
+
         lastReboot = Date.now();
+
+        await status.patch(0, { restarting: false });
+
     } catch(err) {
+        await status.patch(0, { restarting: false });
         response.status(500).send(err);
     }
 });
@@ -208,6 +223,8 @@ let loop = async () => {
 
         let switchTasks = [];
 
+        await status.patch(0, { restarting: true });
+
         // get list of all switch ports without detected camera
         for(let {interface, switchAddress} of config.SWITCHES) {
             switchTasks.push(tplinks[interface].session(switchAddress, async device => {
@@ -224,7 +241,10 @@ let loop = async () => {
         }
 
         await Promise.all(switchTasks);
+
         lastReboot = Date.now();
+
+        await status.patch(0, { restarting: false });
     }
 }
 
