@@ -33,6 +33,30 @@ app.post("/api/shoot", async (request, response) => {
     }
 });
 
+app.post("/api/cameras/restart", async (request, response) => {
+    try {
+        let switchTasks = [];
+
+        for(let {interface, switchAddress} of config.SWITCHES) {
+            switchTasks.push(tplinks[interface].session(switchAddress, async device => {
+
+                let tasks = [];
+
+                for(let port=0; port < config.SWITCH_PORTS; port++) {
+                    debug(`Forced power cycle ${interface}:${port}`);
+                    tasks.push(device.powerCycle(port, 4000));
+                }
+                await Promise.all(tasks);
+            }));
+        }
+
+        await Promise.all(switchTasks);
+        lastReboot = Date.now();
+    } catch(err) {
+        response.status(500).send(err);
+    }
+});
+
 const onMessage = async (message, rinfo) => {
     const address = rinfo.address;
     const mac = message.toString("ascii", 0, 17);

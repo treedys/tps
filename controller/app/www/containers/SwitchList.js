@@ -77,11 +77,12 @@ export const SwitchLink = ({switchData, ...props}) =>
         </Row>
     </NavLink>
 
-export const SwitchList = ({switches, ...props}) =>
+export const SwitchList = ({switches, children, ...props}) =>
     <Col style={ styles.list.container } className="scroll">
         { switches && switches.map( (switchData) =>
             <SwitchLink key={switchData.id} switchData={switchData} {...props} />
         )}
+        { children }
     </Col>
 
 export default SwitchList;
