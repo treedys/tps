@@ -44,7 +44,7 @@ export const CameraLink = ({ camera, port, ...params }) =>
 
 export const CameraList = ({ switchData, cameras, ...params }) => {
 
-    if(!switchData)
+    if(!switchData || !cameras)
         return <h1>Switch is not connected</h1>;
 
     let rows = [];

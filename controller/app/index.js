@@ -223,7 +223,7 @@ let configureAllSwitches = async () => {
 
     debug("Enable all network interfaces");
 
-    await Promise.address(config.SWITCHES.map(
+    await Promise.all(config.SWITCHES.map(
         ({ interface, hostAddress }) => interfaces.up(interface, hostAddress)
     ));
 
@@ -279,6 +279,10 @@ let run = async () => {
     }
     debug("Quitting");
 }
+
+process.on('unhandledRejection', (reason, promise) => {
+    debug('Unhandled rejection at Promise:', promise, 'Reason:', reason);
+});
 
 debug("Starting");
 
