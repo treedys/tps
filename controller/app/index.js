@@ -9,7 +9,9 @@ const delay = ms => new Promise(res => setTimeout(res, ms))
 
 const app = require("./app.js");
 const switches = require('./switches.js');
-const cameras = require('./cameras.js');
+const cameraService = require('./cameras.js');
+
+const cameras = {};
 
 const sendCmd = async (cmd) => {
     const message = Buffer.from([cmd]);
@@ -31,37 +33,21 @@ app.post("/api/shoot", async (request, response) => {
     }
 });
 
-const look = async mac => {
-    let list = await cameras.find({query: { id: mac }});
-    let camera = list.length ? list[0] : undefined;
-    return camera;
-};
-
 const onMessage = async (message, rinfo) => {
     const address = rinfo.address;
     const mac = message.toString("ascii", 0, 17);
 
-    let camera = await look(mac);
-
-    if(!camera) {
-        debug(`Found new camera MAC:${mac} IP:${address}`);
-        camera = await cameras.create({ id: mac });
+    if(!cameras[mac]) {
+        debug(`Found new ${mac} ${address}`);
+        cameras[mac] = { address, online:true, lastSeen: Date.now() };
+        await cameraService.create({ id: mac, address, mac, online:true });
+    } else if(cameras[mac].address != address || !cameras[mac].online) {
+        debug(`Recovering ${cameras[mac].interface}:${cameras[mac].port} ${address}`);
+        cameras[mac] = { ...cameras[mac], address, online: true };
+        await cameraService.patch(mac, { address, online: true });
     }
 
-    if(camera.lastReboot && camera.lastReboot>camera.lastSeen)
-        debug(`Reconnecting after reboot on ${camera.interface}:${camera.port} IP:${camera.address}. Boot took ${time.since(camera.lastBoot)} seconds.`);
-    else if(time.since(camera.lastSeen).secs()>2)
-        debug(`Lost connection to ${camera.interface}:${camera.port} ${camera.address} for ${time.since(camera.lastSeen).secs()} seconds`);
-
-    if(camera.lastReboot && (!camera.lastSeen || camera.lastSeen < camera.lastReboot))
-        camera.firstSeen = Date.now();
-
-    camera.lastSeen = Date.now();
-    camera.address = address;
-    camera.mac = mac;
-    camera.online = true;
-
-    await cameras.patch(mac, camera);
+    cameras[mac].lastSeen = Date.now();
 };
 
 const interfaces = require('./interfaces.js');
@@ -142,34 +128,52 @@ let loop = async () => {
             let table = await device.portMacTable();
 
             for(let { port, mac } of table)
-                if(await look(mac))
-                    await cameras.patch(mac, { interface, switchAddress, port });
+                if(cameras[mac])
+                    if( cameras[mac].interface     != interface     ||
+                        cameras[mac].switchAddress != switchAddress ||
+                        cameras[mac].port          != port ) {
+
+                        debug(`Linking ${interface}:${port} to ${cameras[mac].address}`);
+
+                        cameras[mac] = { ...cameras[mac], interface, switchAddress, port };
+                        await cameraService.patch(mac, { interface, switchAddress, port });
+                    }
         });
     }
 
     let tasks = [];
 
-    for(let camera of await cameras.find()) {
-        let notSeen = !camera.lastSeen || time.since(camera.lastSeen).secs()>10;
+    for(let mac in cameras) {
+
+        let camera = cameras[mac];
+
+        let notSeen     = !camera.lastSeen   || time.since(camera.lastSeen  ).secs()>10;
         let notRebooted = !camera.lastReboot || time.since(camera.lastReboot).secs()>60;
+
+        if(camera.online && notSeen) {
+
+            debug(`Lost connection to ${camera.interface}:${camera.port} ${camera.address}`);
+
+            camera.online = false;
+
+            tasks.push(
+                cameraService.patch(mac, { online: false })
+            );
+        }
 
         if(notSeen && notRebooted) {
 
-            if(camera.lastSeen && !camera.lastReboot)
-                debug(`Connection lost on ${camera.interface}:${camera.port} ${camera.address}`);
-            else if(camera.lastSeen && camera.lastReboot<camera.lastSeen)
-                debug(`Connection lost on ${camera.interface}:${camera.port}. ${time.since(camera.firstSeen).secs()} seconds since first seen`);
-            else if(!camera.lastReboot)
-                debug(`Discovering camera on ${camera.interface}:${camera.port}`);
-            else
-                debug(`Powercycle camera on ${camera.interface}:${camera.port}`);
-
-            await cameras.patch(camera.id, { online: false, lastReboot: Date.now() });
-
             // TODO: Power cycle in parallel
             if(camera.interface && camera.switchAddress && camera.port) {
+
                 debug(`Power cycle ${camera.interface}:${camera.port}`);
-                tasks.push(tplinks[camera.interface].session(camera.switchAddress, device => device.powerCycle(camera.port, 4000)));
+
+                tasks.push(
+                    tplinks[camera.interface].session(camera.switchAddress, async device => {
+                        await device.powerCycle(camera.port, 4000);
+                        camera.lastReboot = Date.now();
+                    })
+                );
             }
         }
     }
@@ -177,17 +181,25 @@ let loop = async () => {
     await Promise.all(tasks);
 
     if(!lastReboot || time.since(lastReboot).secs()>60) {
-        let tasks = [];
+
+        let switchTasks = [];
 
         // get list of all switch ports without detected camera
-        for(let {interface, switchAddress} of config.SWITCHES)
-            for(let port=0; port < config.SWITCH_PORTS; port++)
-                if((await cameras.find({ query: { interface, port } })).length==0) {
-                    debug(`Power cycle ${interface}:${port}`);
-                    tasks.push(tplinks[interface].session(switchAddress, device => device.powerCycle(port, 4000)));
-                }
+        for(let {interface, switchAddress} of config.SWITCHES) {
+            switchTasks.push(tplinks[interface].session(switchAddress, async device => {
 
-        await Promise.all(tasks);
+                let tasks = [];
+
+                for(let port=0; port < config.SWITCH_PORTS; port++)
+                    if(!Object.values(cameras).find(camera => camera.interface==interface && camera.port==port)) {
+                        debug(`Power cycle ${interface}:${port}`);
+                        tasks.push(device.powerCycle(port, 4000));
+                    }
+                await Promise.all(tasks);
+            }));
+        }
+
+        await Promise.all(switchTasks);
         lastReboot = Date.now();
     }
 }
