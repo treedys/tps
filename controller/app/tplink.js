@@ -50,6 +50,29 @@ module.exports = function() {
 
         let unlock = await connectionMutex.lock();
 
+        const disconnect = async () => {
+
+            debug("Disconnecting");
+
+            /* FIXME: finally doesn't work well with async/await
+                        try {
+                            await connection.end();
+                        } finally {
+                            unlock();
+                        }
+                        */
+            try {
+                connection.end();
+                await eventToPromise.multi(connection, ["close"], ["error", "failedlogin", "timeout", "bufferexceeded"]);
+                debug("Disconnected");
+                unlock();
+            } catch(error) {
+                connection.getSocket().destroy();
+                unlock();
+                throw error;
+            }
+        };
+
         debug("Connecting to ", address);
 
         let err = undefined;
@@ -63,29 +86,7 @@ module.exports = function() {
                 debug("Connected");
 
                 return {
-                    disconnect: async () => {
-
-                        debug("Disconnecting");
-
-                        /* FIXME: finally doesn't work well with async/await
-                        try {
-                            await connection.end();
-                        } finally {
-                            unlock();
-                        }
-                        */
-
-                        try {
-                            connection.end();
-                            await eventToPromise.multi(connection, ["close"], ["error", "failedlogin", "timeout", "bufferexceeded"]);
-                            debug("Disconnected");
-                            unlock();
-                        } catch(error) {
-                            connection.getSocket().destroy();
-                            unlock();
-                            throw error;
-                        }
-                    },
+                    disconnect,
                     execute,
                     privileged,
                     config,
@@ -98,6 +99,7 @@ module.exports = function() {
                 };
             } catch(error) {
                 debug(`Connect failed: ${error}`);
+                try { await disconnect(); } catch (ignore) {}
                 err = error;
             }
         }
