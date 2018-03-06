@@ -12,7 +12,7 @@
 #define JPEG_QUALITY                75        //    1 ..  100
 #define JPEG_EXIF_DISABLE           OMX_FALSE
 #define JPEG_IJG_ENABLE             OMX_FALSE
-#define JPEG_THUMBNAIL_ENABLE       OMX_TRUE
+#define JPEG_THUMBNAIL_ENABLE       OMX_FALSE
 #define JPEG_THUMBNAIL_WIDTH        64        //    0 .. 1024
 #define JPEG_THUMBNAIL_HEIGHT       48        //    0 .. 1024
 #define JPEG_PREVIEW                OMX_FALSE
@@ -24,19 +24,19 @@
 #define CAM_CONTRAST                0         // -100 ..  100
 #define CAM_BRIGHTNESS              50        //    0 ..  100
 #define CAM_SATURATION              0         // -100 ..  100
-#define CAM_SHUTTER_SPEED_AUTO      OMX_TRUE
+#define CAM_SHUTTER_SPEED_AUTO      OMX_FALSE
 //In microseconds, (1/8)*1e6
 #define CAM_SHUTTER_SPEED           16000    //    1 ..
-#define CAM_ISO_AUTO                OMX_TRUE
+#define CAM_ISO_AUTO                OMX_FALSE
 #define CAM_ISO                     100       //  100 ..  800
-#define CAM_EXPOSURE                OMX_ExposureControlAuto
+#define CAM_EXPOSURE                OMX_ExposureControlOff
 #define CAM_EXPOSURE_COMPENSATION   0         //  -24 ..   24
 #define CAM_MIRROR                  OMX_MirrorNone
-#define CAM_ROTATION                0         // 0 90 180 270
+#define CAM_ROTATION                270       // 0 90 180 270
 #define CAM_COLOR_ENABLE            OMX_FALSE
 #define CAM_COLOR_U                 128       //    0 ..  255
 #define CAM_COLOR_V                 128       //    0 ..  255
-#define CAM_NOISE_REDUCTION         OMX_TRUE
+#define CAM_NOISE_REDUCTION         OMX_FALSE
 #define CAM_FRAME_STABILIZATION     OMX_FALSE
 #define CAM_METERING                OMX_MeteringModeAverage
 #define CAM_WHITE_BALANCE           OMX_WhiteBalControlAuto
@@ -126,16 +126,16 @@ component_t encoder;
 
 OMX_BUFFERHEADERTYPE* output_buffer;
 
-void set_camera_settings(void)
+void set_camera_settings(struct camera_shot_configuration config)
 {
     LOG_COMPONENT(&camera, "configuring settings");
 
     OMX_ERRORTYPE error;
 
-    error = omx_config_sharpness (camera.handle, OMX_ALL, CAM_SHARPNESS ); if(error) { exit(1); }
-    error = omx_config_contrast  (camera.handle, OMX_ALL, CAM_CONTRAST  ); if(error) { exit(1); }
-    error = omx_config_saturation(camera.handle, OMX_ALL, CAM_SATURATION); if(error) { exit(1); }
-    error = omx_config_brightness(camera.handle, OMX_ALL, CAM_BRIGHTNESS); if(error) { exit(1); }
+    error = omx_config_sharpness (camera.handle, OMX_ALL, config.sharpness ); if(error) { exit(1); }
+    error = omx_config_contrast  (camera.handle, OMX_ALL, config.contrast  ); if(error) { exit(1); }
+    error = omx_config_saturation(camera.handle, OMX_ALL, config.saturation); if(error) { exit(1); }
+    error = omx_config_brightness(camera.handle, OMX_ALL, config.brightness); if(error) { exit(1); }
     error = omx_config_exposure_value(
             camera.handle,
             OMX_ALL,
@@ -143,20 +143,20 @@ void set_camera_settings(void)
             (CAM_EXPOSURE_COMPENSATION << 16)/6,
             0,
             OMX_FALSE,
-            CAM_SHUTTER_SPEED,
+            config.shutterSpeed,
             CAM_SHUTTER_SPEED_AUTO,
-            CAM_ISO,
+            config.iso,
             CAM_ISO_AUTO); if(error) { exit(1); }
     error = omx_config_exposure           (camera.handle, OMX_ALL, CAM_EXPOSURE           ); if(error) { exit(1); }
     error = omx_config_frame_stabilisation(camera.handle, OMX_ALL, CAM_FRAME_STABILIZATION); if(error) { exit(1); }
-    error = omx_config_white_balance      (camera.handle, OMX_ALL, CAM_WHITE_BALANCE      ); if(error) { exit(1); }
+    error = omx_config_white_balance      (camera.handle, OMX_ALL, config.whiteBalance    ); if(error) { exit(1); }
 
     //White balance gains (if white balance is set to off)
-    if(!CAM_WHITE_BALANCE)
+    if(!config.whiteBalance)
     {
         error = omx_config_white_balance_gains(camera.handle,
-                (CAM_WHITE_BALANCE_RED_GAIN  << 16)/1000,
-                (CAM_WHITE_BALANCE_BLUE_GAIN << 16)/1000); if(error) { exit(1); }
+                (config.redGain  << 16)/1000,
+                (config.blueGain << 16)/1000); if(error) { exit(1); }
     }
 
     error = omx_config_image_filter(camera.handle, OMX_ALL, CAM_IMAGE_FILTER); if(error) { exit(1); }
@@ -169,16 +169,16 @@ void set_camera_settings(void)
             (CAM_ROI_TOP    << 16)/100,
             (CAM_ROI_WIDTH  << 16)/100,
             (CAM_ROI_HEIGHT << 16)/100); if(error) { exit(1); }
-    error = omx_config_dynamic_range_expansion(camera.handle, CAM_DRC); if(error) { exit(1); }
+    error = omx_config_dynamic_range_expansion(camera.handle, config.drc); if(error) { exit(1); }
 }
 
-void set_jpeg_settings(void)
+void set_jpeg_settings(struct camera_shot_configuration config)
 {
     LOG_COMPONENT(&encoder, "configuring settings");
 
     OMX_ERRORTYPE error;
 
-    error = omx_parameter_qfactor         (encoder.handle, 341, JPEG_QUALITY     ); if(error) { exit(1); }
+    error = omx_parameter_qfactor         (encoder.handle, 341, config.quality   ); if(error) { exit(1); }
     error = omx_parameter_brcm_exif       (encoder.handle,      JPEG_EXIF_DISABLE); if(error) { exit(1); }
     error = omx_parameter_brcm_ijg_scaling(encoder.handle, 341, JPEG_IJG_ENABLE  ); if(error) { exit(1); }
     error = omx_parameter_brcm_thumbnail  (encoder.handle,
@@ -197,7 +197,7 @@ int round_up(int value, int divisor)
     return (divisor + value - 1) & ~(divisor - 1);
 }
 
-void omx_still_open(void)
+void omx_still_open(struct camera_shot_configuration config)
 {
     OMX_ERRORTYPE error;
     camera.name = "OMX.broadcom.camera";
@@ -282,7 +282,7 @@ void omx_still_open(void)
     error = omx_set_parameter(camera.handle, OMX_IndexParamPortDefinition, &port_def); if(error) { exit(1); }
 
     //Configure camera settings
-    set_camera_settings();
+    set_camera_settings(config);
 
     //Configure encoder port definition
     LOG_COMPONENT(&encoder, "configuring encoder port definition");
@@ -301,7 +301,7 @@ void omx_still_open(void)
     error = omx_set_parameter(encoder.handle, OMX_IndexParamPortDefinition, &port_def); if(error) { exit(1); }
 
     //Configure JPEG settings
-    set_jpeg_settings();
+    set_jpeg_settings(config);
 
     //Setup tunnels: camera (still) -> image_encode, camera (preview) -> null_sink
     LOG_MESSAGE("configuring tunnels");

@@ -14,15 +14,18 @@ const cameraService = require('./cameras.js');
 
 const cameras = {};
 
-const sendCmd = async (cmd) => {
-    const message = Buffer.from([cmd]);
+const sendCmd = async (cmd, data) => {
+    let message = Buffer.from([cmd]);
+
+    if(data)
+        message = Buffer.concat([message, data]);
 
     await multicast.send(message, 0, message.length, config.MCAST_CAMERA_COMMAND_PORT, config.MCAST_GROUP_ADDR);
 };
 
 const send = {
-    ping:  () => sendCmd( 0 ),
-    shoot: () => sendCmd( 1 )
+    ping:  async () => sendCmd( 0 ),
+    shoot: async () => sendCmd( 1, await config.pack() )
 };
 
 app.post("/api/shoot", async (request, response) => {

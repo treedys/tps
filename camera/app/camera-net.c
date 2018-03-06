@@ -1,4 +1,5 @@
 #include "camera-net.h"
+#include "camera-app.h"
 
 #include <uv.h>
 
@@ -17,11 +18,6 @@ static uv_udp_send_t udp_send_request;
 static uv_buf_t ping_buffer;
 
 static char mac_address[18];
-
-extern void shoot(void);
-extern uint8_t jpeg[];
-extern size_t position;
-
 
 static void alloc_cb(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
 {
@@ -52,7 +48,7 @@ static void udb_server_recv_cb(uv_udp_t* handle,
         const struct sockaddr* addr,
         unsigned flags)
 {
-    if(!addr)
+    if(!addr || !nread)
         return;
 
     switch(buf->base[0])
@@ -62,7 +58,11 @@ static void udb_server_recv_cb(uv_udp_t* handle,
             break;
 
         case 1:
-            shoot();
+            if( nread != 1+sizeof(struct camera_configuration) )
+                LOG_ERROR("Wrong request size %d expected %d",
+                        nread, 1+sizeof(struct camera_configuration));
+
+            shoot(*(struct camera_configuration *)&buf->base[1]);
             break;
 
         default:

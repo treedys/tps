@@ -6,7 +6,7 @@ import {
     Header,
     PageList, PageLink,
     SwitchList, CameraList,
-    System
+    System, Settings
 } from './containers/';
 
 import assets from './assets/';
@@ -33,6 +33,7 @@ const feathersApp = feathers()
 const switchesService = feathersApp.service('/api/switches');
 const  camerasService = feathersApp.service('/api/cameras' );
 const   statusService = feathersApp.service('/api/status'  );
+const   configService = feathersApp.service('/api/config'  );
 
 export default class App extends React.Component {
 
@@ -52,13 +53,15 @@ export default class App extends React.Component {
     componentDidMount() {
         this.switches = switchesService.watch().find().subscribe( switches => this.setStateAsync({ switches }));
         this.cameras  =  camerasService.watch().find().subscribe(  cameras => this.setStateAsync({ cameras  }));
-        this.status   =   statusService.watch().get(0).subscribe(   status => this.setStateAsync({ status   }));
+        this.status   =   statusService.watch().get( 0 ).subscribe( status => this.setStateAsync({ status }));
+        this.config   =   configService.watch().get('0').subscribe( config => this.setStateAsync({ config }));
     }
 
     componentWillUnmount() {
         this.switches.unsubscribe();
         this.cameras .unsubscribe();
         this.status  .unsubscribe();
+        this.config  .unsubscribe();
     }
 
     shoot = () => { fetch('/api/shoot', { method: 'POST' }); }
@@ -84,6 +87,10 @@ export default class App extends React.Component {
 
                         <Route path="/cameras/:switchId" render={ props =>
                             <CameraList cameras={this.state.cameras} switchData={ this.state.switches && this.state.switches[props.match.params.switchId] }/>
+                        }/>
+
+                        <Route path="/settings" render={ props =>
+                            <Settings settings={this.state.config} onSave={config => configService.update('0', config)}/>
                         }/>
 
                         <Route path="/system" render={ props =>
