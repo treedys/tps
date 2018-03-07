@@ -37,7 +37,7 @@ const styles = {
 
 export const CameraLink = ({ camera, port, ...params }) =>
     <div style={styles.camera}>
-        <img src={ camera.online ? `/preview/${camera.id}/still.jpg` : assets.noise } style={{width:'100%', height:'auto'}} {...params} />
+        <img src={ camera.online ? `/preview/${camera.id}/0-2.jpg` : assets.noise } style={{width:'100%', height:'auto'}} {...params} />
         <p style={styles.port}>{port}</p>
         <div style={{ ...styles.led, ...( camera.online ? styles.on : styles.off) }}/>
     </div>

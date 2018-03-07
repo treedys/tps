@@ -65,6 +65,13 @@ static void udb_server_recv_cb(uv_udp_t* handle,
             shoot(*(struct camera_configuration *)&buf->base[1]);
             break;
 
+        case 2:
+            if(nread != 2)
+                LOG_ERROR("Wrong request size %d expected %d", nread, 2);
+
+            erase(buf->base[1]);
+            break;
+
         default:
             LOG_ERROR("Unknown UDP request %02X", buf->base[0]);
             break;

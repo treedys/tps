@@ -14,18 +14,21 @@ const cameraService = require('./cameras.js');
 
 const cameras = {};
 
-const sendCmd = async (cmd, data) => {
-    let message = Buffer.from([cmd]);
+const sendCmd = async (args) => {
 
-    if(data)
-        message = Buffer.concat([message, data]);
+    const message = Buffer.concat(
+        [].concat(args).map(
+            arg => Buffer.isBuffer(arg) ? arg : Buffer.from([arg])
+        )
+    );
 
     await multicast.send(message, 0, message.length, config.MCAST_CAMERA_COMMAND_PORT, config.MCAST_GROUP_ADDR);
 };
 
 const send = {
-    ping:  async () => sendCmd( 0 ),
-    shoot: async () => sendCmd( 1, await config.pack() )
+    ping:  async ()   => sendCmd( 0 ),
+    shoot: async (id) => sendCmd([ 1, id, await config.pack() ]),
+    erase: async (id) => sendCmd([ 2, id ])
 };
 
 app.post("/api/shoot", async (request, response) => {
@@ -33,7 +36,7 @@ app.post("/api/shoot", async (request, response) => {
 
         await status.patch(0, { shooting: true });
 
-        await send.shoot();
+        await send.shoot(0);
 
         await status.patch(0, { shooting: false });
 
@@ -71,6 +74,15 @@ app.post("/api/cameras/restart", async (request, response) => {
 
     } catch(err) {
         await status.patch(0, { restarting: false });
+        response.status(500).send(err);
+    }
+});
+
+app.post("/api/cameras/erase", async (request, response) => {
+    try {
+        await send.erase(0);
+        response.status(204).end();
+    } catch(err) {
         response.status(500).send(err);
     }
 });

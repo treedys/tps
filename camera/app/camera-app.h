@@ -26,12 +26,14 @@ struct __attribute__((__packed__)) camera_shot_configuration {
 /*****************************************************************************/
 
 struct __attribute__((__packed__)) camera_configuration {
+    int8_t id;
     struct camera_shot_configuration shot[2];
 };
 
 /*****************************************************************************/
 
 extern void shoot(struct camera_configuration camera_configuration);
+extern void erase(const int8_t id);
 
 /*****************************************************************************/
 

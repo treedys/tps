@@ -32,7 +32,7 @@
 #define CAM_EXPOSURE                OMX_ExposureControlOff
 #define CAM_EXPOSURE_COMPENSATION   0         //  -24 ..   24
 #define CAM_MIRROR                  OMX_MirrorNone
-#define CAM_ROTATION                270       // 0 90 180 270
+#define CAM_ROTATION                90        // 0 90 180 270
 #define CAM_COLOR_ENABLE            OMX_FALSE
 #define CAM_COLOR_U                 128       //    0 ..  255
 #define CAM_COLOR_V                 128       //    0 ..  255
