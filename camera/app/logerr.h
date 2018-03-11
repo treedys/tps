@@ -27,6 +27,8 @@
 
 #define LOG_MESSAGE(fmt, ...) // LOG_ERROR(fmt, ##__VA_ARGS__)
 
+extern void (*logerr)(const char * const message);
+
 const void * const log_pc(void);
 
 __attribute__((format(printf,3,4)))

@@ -2,6 +2,7 @@
 #include "camera-app.h"
 
 #include <uv.h>
+#include <string.h>
 
 #include "logerr.h"
 #include "mac.h"
@@ -14,6 +15,7 @@ static uv_udp_t udp_server;
 static uv_udp_t udp_client;
 
 static uv_buf_t ping_buffer;
+static uv_buf_t error_buffer;
 
 static char mac_address[18];
 
@@ -22,7 +24,7 @@ static void alloc_cb(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
     *buf = uv_buf_init((char*) malloc(suggested_size), suggested_size);
 }
 
-static void udp_client_on_send_cb(uv_udp_send_t *req, int status)
+static void udp_client_on_send_ping_cb(uv_udp_send_t *req, int status)
 {
     if(status==-1)
         LOG_ERROR("UDP send error");
@@ -55,6 +57,37 @@ static WARN_UNUSED enum error_code ping(void)
     }
 
     return OK;
+}
+
+static void udp_client_on_send_error_cb(uv_udp_send_t *req, int status)
+{
+    if(status==-1)
+        LOG_ERROR("UDP send error");
+
+    free(req);
+}
+
+/* TODO: call that from the error handler */
+void report_error(const char * const message)
+{
+    int result;
+
+    struct {
+        uv_udp_send_t udp_send_request;
+        char          message[500];
+    } *mem = malloc(sizeof(*mem));
+
+    if(mem==NULL) { return; }
+
+    memset(mem->message, 0, sizeof(mem->message));
+
+    strncpy(mem->message, message, sizeof(mem->message));
+    error_buffer = uv_buf_init(mem->message, sizeof(mem->message));
+
+    result = uv_udp_send(&mem->udp_send_request, &udp_client, &error_buffer, 1, (const struct sockaddr *)&udp_client_addr, &udp_client_on_send_error_cb);
+
+    if(result!=0)
+        free(mem);
 }
 
 static void udb_server_recv_cb(uv_udp_t* handle,
@@ -122,7 +155,11 @@ enum error_code net_session(void) {
 
     result_uv = uv_udp_set_broadcast(&udp_client, 1);                                                  if(result_uv!=0) { LOG_ERROR("Client UDP broadcast (%d)",     result_uv); return ERROR; }
 
+    logerr = report_error;
+
     uv_run(loop, UV_RUN_DEFAULT);
+
+    logerr = NULL;
 
     return OK;
 }

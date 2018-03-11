@@ -88,20 +88,26 @@ app.post("/api/cameras/erase", async (request, response) => {
 });
 
 const onMessage = async (message, rinfo) => {
-    const address = rinfo.address;
-    const mac = message.toString("ascii", 0, 17);
+    if(message.length==18) {
+        const address = rinfo.address;
+        const mac = message.toString("ascii", 0, 17);
 
-    if(!cameras[mac]) {
-        debug(`Found new ${mac} ${address}`);
-        cameras[mac] = { address, online:true, lastSeen: Date.now() };
-        await cameraService.create({ id: mac, address, mac, online:true });
-    } else if(cameras[mac].address != address || !cameras[mac].online) {
-        debug(`Recovering ${cameras[mac].interface}:${cameras[mac].port} ${address}`);
-        cameras[mac] = { ...cameras[mac], address, online: true };
-        await cameraService.patch(mac, { address, online: true });
+        if(!cameras[mac]) {
+            debug(`Found new ${mac} ${address}`);
+            cameras[mac] = { address, online:true, lastSeen: Date.now() };
+            await cameraService.create({ id: mac, address, mac, online:true });
+        } else if(cameras[mac].address != address || !cameras[mac].online) {
+            debug(`Recovering ${cameras[mac].interface}:${cameras[mac].port} ${address}`);
+            cameras[mac] = { ...cameras[mac], address, online: true };
+            await cameraService.patch(mac, { address, online: true });
+        }
+
+        cameras[mac].lastSeen = Date.now();
+    } else if(message.length==500) {
+        debug(message.toString("ascii", 0, 500));
+    } else {
+        debug("Received:", message.length, message);
     }
-
-    cameras[mac].lastSeen = Date.now();
 };
 
 const interfaces = require('./interfaces.js');

@@ -16,6 +16,8 @@
 static pthread_mutex_t logerr_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
+void (*logerr)(const char * const message) = NULL;
+
 const void * const log_pc(void)
 {
     return __builtin_return_address(0);
@@ -25,6 +27,9 @@ static void log_message(const char * const message)
 {
     (void)fputs(message, stderr);
     (void)fputs("\n", stderr);
+
+    if(logerr)
+        logerr(message);
 }
 
 void log_error(int caller_errno, const void * const addr, const char * const format, ... )
