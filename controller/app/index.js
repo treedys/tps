@@ -25,11 +25,13 @@ const sendCmd = async (args) => {
     await multicast.send(message, 0, message.length, config.MCAST_CAMERA_COMMAND_PORT, config.MCAST_GROUP_ADDR);
 };
 
+const sendCmdAll = async (args) => sendCmd([Buffer.from('FF:FF:FF:FF:FF:FF')].concat(args));
+
 const send = {
-    ping:  async ()   => sendCmd( 0 ),
-    shoot: async (id) => sendCmd([ 1, id, await config.pack() ]),
-    erase: async (id) => sendCmd([ 2, id ]),
-    exec:  async (s)  => sendCmd([ 3, Buffer.from(s) ])
+    ping:  async ()   => sendCmdAll( 0 ),
+    shoot: async (id) => sendCmdAll([ 1, id, await config.pack() ]),
+    erase: async (id) => sendCmdAll([ 2, id ]),
+    exec:  async (s)  => sendCmdAll([ 3, Buffer.from(s) ])
 };
 
 app.post("/api/shoot", async (request, response) => {

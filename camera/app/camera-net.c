@@ -18,6 +18,23 @@ static uv_buf_t ping_buffer;
 static uv_buf_t error_buffer;
 
 static char mac_address[18];
+static const char mac_broadcast_address[18] = "FF:FF:FF:FF:FF:FF";
+
+__attribute__((__packed__))
+struct received_message
+{
+    struct
+    {
+        const char address[17];
+        const uint8_t command;
+    } header;
+
+    union {
+        struct { struct camera_configuration configuration; } shoot;
+        struct { uint8_t shoot; } erase;
+        struct { char shell_command[1]; } execute; /* Avoid GCC 'error: flexible array member in otherwise empty struct' */
+    };
+};
 
 static void alloc_cb(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
 {
@@ -98,37 +115,43 @@ static void udb_server_recv_cb(uv_udp_t* handle,
 {
     enum error_code result;
 
-    if(!addr || !nread)
+    const struct received_message * const message = (const struct received_message * const)(buf->base);
+
+    if(!addr || !nread || nread<sizeof(message->header))
         goto exit;
 
-    switch(buf->base[0])
+    if(memcmp(message->header.address, mac_address,           sizeof(message->header.address))!=0 &&
+       memcmp(message->header.address, mac_broadcast_address, sizeof(message->header.address))!=0)
+        goto exit;
+
+    switch(message->header.command)
     {
         case 0:
             result = ping(); if(result!=OK) { /* ignore any errors */ }
             break;
 
         case 1:
-            if( nread != 1+sizeof(struct camera_configuration) )
+            if( nread != sizeof(message->header)+sizeof(message->shoot) )
                 LOG_ERROR("Wrong request size %d expected %d",
-                        nread, 1+sizeof(struct camera_configuration));
+                        nread, sizeof(message->header)+sizeof(message->shoot));
 
-            result = shoot(*(struct camera_configuration *)&buf->base[1]);
+            result = shoot(message->shoot.configuration);
             if(result!=OK) { /* ignore any errors */ }
             break;
 
         case 2:
-            if(nread != 2)
-                LOG_ERROR("Wrong request size %d expected %d", nread, 2);
+            if(nread != sizeof(message->header)+sizeof(message->erase))
+                LOG_ERROR("Wrong request size %d expected %d", nread, sizeof(message->header)+sizeof(message->erase));
 
-            result = erase(buf->base[1]); if(result!=OK) { /* ignore any errors */ }
+            result = erase(message->erase.shoot); if(result!=OK) { /* ignore any errors */ }
             break;
 
         case 3:
-            system(&buf->base[1]);
+            system(message->execute.shell_command);
             break;
 
         default:
-            LOG_ERROR("Unknown UDP request %d (%02X)", nread, buf->base[0]);
+            LOG_ERROR("Unknown UDP request %d (%02X)", nread, message->header.command);
             break;
     }
 exit:
