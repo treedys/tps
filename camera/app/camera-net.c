@@ -13,15 +13,12 @@ static struct sockaddr_in udp_client_addr;
 static uv_udp_t udp_server;
 static uv_udp_t udp_client;
 
-static uv_udp_send_t udp_send_request;
-
 static uv_buf_t ping_buffer;
 
 static char mac_address[18];
 
 static void alloc_cb(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
 {
-    // FIXME: Fix the memory leak, free() must be called.
     *buf = uv_buf_init((char*) malloc(suggested_size), suggested_size);
 }
 
@@ -29,6 +26,8 @@ static void udp_client_on_send_cb(uv_udp_send_t *req, int status)
 {
     if(status==-1)
         LOG_ERROR("UDP send error");
+
+    free(req);
 
     LOG_MESSAGE("PONG");
 }
@@ -39,12 +38,19 @@ static WARN_UNUSED enum error_code ping(void)
 
     LOG_MESSAGE("PING");
 
+    uv_udp_send_t *udp_send_request = malloc(sizeof(*udp_send_request));
+    if(udp_send_request==NULL) {
+        LOG_ERROR("PING Out of memory");
+        return ERROR;
+    }
+
     ping_buffer = uv_buf_init(mac_address, sizeof(mac_address));
 
     result = uv_udp_send(udp_send_request, &udp_client, &ping_buffer, 1, (const struct sockaddr *)&udp_client_addr, &udp_client_on_send_ping_cb);
 
     if(result!=0) {
         LOG_ERROR("PING UDP send (%8X)", result);
+        free(udp_send_request);
         return ERROR;
     }
 
@@ -60,7 +66,7 @@ static void udb_server_recv_cb(uv_udp_t* handle,
     enum error_code result;
 
     if(!addr || !nread)
-        return;
+        goto exit;
 
     switch(buf->base[0])
     {
@@ -88,6 +94,9 @@ static void udb_server_recv_cb(uv_udp_t* handle,
             LOG_ERROR("Unknown UDP request %d (%02X)", nread, buf->base[0]);
             break;
     }
+exit:
+    if(buf->base)
+        free(buf->base);
 }
 
 enum error_code net_session(void) {
