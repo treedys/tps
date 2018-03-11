@@ -43,39 +43,52 @@ void buffering2(const uint8_t * const buffer, size_t length)
     position2 += length;
 }
 
-void write_file(const char * const filename, const uint8_t * const buffer, const size_t length)
+WARN_UNUSED enum error_code write_file(const char * const filename, const uint8_t * const buffer, const size_t length)
 {
     //Open the file
-    int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC | O_APPEND, 0666); if(fd == -1) { LOG_ERRNO("open"); exit(1); }
+    int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC | O_APPEND, 0666);
+    if(fd == -1)
+    {
+        LOG_ERRNO("open %s", filename);
+        return ERROR;
+    }
 
     //Append the buffer into the file
     if(write(fd, buffer, length) == -1)
     {
-        LOG_ERRNO("write");
-        exit(1);
+        LOG_ERRNO("write %s %zu", filename, length);
+        return ERROR;
     }
 
     //Close the file
-    if(close(fd)) { LOG_ERRNO("close"); exit(1); }
+    if(close(fd))
+    {
+        LOG_ERRNO("close %s", filename);
+        return ERROR;
+    }
+
+    return OK;
 }
 
-void single_shoot(struct camera_shot_configuration config, const buffer_output_handler handler)
+WARN_UNUSED enum error_code single_shoot(struct camera_shot_configuration config, const buffer_output_handler handler)
 {
+    enum error_code result;
+
     digitalWrite( 17, config.gpio17 ? HIGH : LOW );
     digitalWrite( 18, config.gpio17 ? HIGH : LOW );
     digitalWrite( 22, config.gpio17 ? HIGH : LOW );
     digitalWrite( 27, config.gpio17 ? HIGH : LOW );
 
-    omx_still_open(config);
-
-    omx_still_shoot(handler);
-
-    omx_still_close();
+    result = omx_still_open(config);   if(result!=OK) { return result; }
+    result = omx_still_shoot(handler); if(result!=OK) { return result; }
+    return omx_still_close();
 }
 
-void shoot(struct camera_configuration config)
+enum error_code shoot(struct camera_configuration config)
 {
-    LOG_ERROR("SHOOT");
+    enum error_code result;
+
+    LOG_MESSAGE("SHOOT");
 
     LOG_MESSAGE("config.shutterSpeed %d %d", config.shot[0].shutterSpeed, config.shot[1].shutterSpeed );
     LOG_MESSAGE("config.iso          %d %d", config.shot[0].iso,          config.shot[1].iso          );
@@ -97,8 +110,8 @@ void shoot(struct camera_configuration config)
     position1 = 0;
     position2 = 0;
 
-    single_shoot(config.shot[0], buffering1);
-    single_shoot(config.shot[1], buffering2);
+    result = single_shoot(config.shot[0], buffering1); if(result!=OK) { return result; }
+    result = single_shoot(config.shot[1], buffering2); if(result!=OK) { return result; }
 
     digitalWrite( 17, LOW);
     digitalWrite( 18, LOW);
@@ -109,37 +122,45 @@ void shoot(struct camera_configuration config)
 
     snprintf(filename, sizeof(filename), "/var/www/%d-1.jpg", (int)config.id);
 
-    write_file(filename, jpeg1, position1);
+    result = write_file(filename, jpeg1, position1); if(result!=OK) { return result; }
 
     LOG_MESSAGE("Written %s", filename);
 
     snprintf(filename, sizeof(filename), "/var/www/%d-2.jpg", (int)config.id);
 
-    write_file(filename, jpeg2, position2);
+    result = write_file(filename, jpeg2, position2); if(result!=OK) { return result; }
 
     LOG_MESSAGE("Written %s", filename);
+
+    return OK;
 }
 
-void erase(const int8_t id)
+enum error_code erase(const int8_t id)
 {
     char filename[100];
 
     snprintf(filename, sizeof(filename), "/var/www/%d-1.jpg", (int)id);
 
-    if(unlink(filename))
+    if(unlink(filename)) {
         LOG_ERRNO("Unlink %s", filename);
+        return ERROR;
+    }
 
     LOG_MESSAGE("Removed %s", filename);
 
     snprintf(filename, sizeof(filename), "/var/www/%d-2.jpg", (int)id);
 
-    if(unlink(filename))
+    if(unlink(filename)) {
         LOG_ERRNO("Unlink %s", filename);
+        return ERROR;
+    }
 
     LOG_MESSAGE("Removed %s", filename);
+
+    return OK;
 }
 
-void session(void)
+WARN_UNUSED enum error_code session(void)
 {
     wiringPiSetup();
 
@@ -153,15 +174,14 @@ void session(void)
     digitalWrite( 22, LOW);
     digitalWrite( 27, LOW);
 
-    net_session();
+    return net_session();
 }
 
 int main()
 {
     for(;;)
-        session();
-
-    LOG_MESSAGE("ok");
+        if(session()!=OK)
+            exit(1);
 
     return 0;
 }

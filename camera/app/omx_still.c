@@ -126,17 +126,17 @@ component_t encoder;
 
 OMX_BUFFERHEADERTYPE* output_buffer;
 
-void set_camera_settings(struct camera_shot_configuration config)
+WARN_UNUSED enum error_code set_camera_settings(struct camera_shot_configuration config)
 {
-    LOG_COMPONENT(&camera, "configuring settings");
+    LOG_MESSAGE_COMPONENT(&camera, "configuring settings");
 
-    OMX_ERRORTYPE error;
+    enum error_code result;
 
-    error = omx_config_sharpness (camera.handle, OMX_ALL, config.sharpness ); if(error) { exit(1); }
-    error = omx_config_contrast  (camera.handle, OMX_ALL, config.contrast  ); if(error) { exit(1); }
-    error = omx_config_saturation(camera.handle, OMX_ALL, config.saturation); if(error) { exit(1); }
-    error = omx_config_brightness(camera.handle, OMX_ALL, config.brightness); if(error) { exit(1); }
-    error = omx_config_exposure_value(
+    result = omx_config_sharpness (camera.handle, OMX_ALL, config.sharpness ); if(result!=OK) { return result; }
+    result = omx_config_contrast  (camera.handle, OMX_ALL, config.contrast  ); if(result!=OK) { return result; }
+    result = omx_config_saturation(camera.handle, OMX_ALL, config.saturation); if(result!=OK) { return result; }
+    result = omx_config_brightness(camera.handle, OMX_ALL, config.brightness); if(result!=OK) { return result; }
+    result = omx_config_exposure_value(
             camera.handle,
             OMX_ALL,
             CAM_METERING,
@@ -146,50 +146,54 @@ void set_camera_settings(struct camera_shot_configuration config)
             config.shutterSpeed,
             CAM_SHUTTER_SPEED_AUTO,
             config.iso,
-            CAM_ISO_AUTO); if(error) { exit(1); }
-    error = omx_config_exposure           (camera.handle, OMX_ALL, CAM_EXPOSURE           ); if(error) { exit(1); }
-    error = omx_config_frame_stabilisation(camera.handle, OMX_ALL, CAM_FRAME_STABILIZATION); if(error) { exit(1); }
-    error = omx_config_white_balance      (camera.handle, OMX_ALL, config.whiteBalance    ); if(error) { exit(1); }
+            CAM_ISO_AUTO); if(result!=OK) { return result; }
+    result = omx_config_exposure           (camera.handle, OMX_ALL, CAM_EXPOSURE           ); if(result!=OK) { return result; }
+    result = omx_config_frame_stabilisation(camera.handle, OMX_ALL, CAM_FRAME_STABILIZATION); if(result!=OK) { return result; }
+    result = omx_config_white_balance      (camera.handle, OMX_ALL, config.whiteBalance    ); if(result!=OK) { return result; }
 
     //White balance gains (if white balance is set to off)
     if(!config.whiteBalance)
     {
-        error = omx_config_white_balance_gains(camera.handle,
+        result = omx_config_white_balance_gains(camera.handle,
                 (config.redGain  << 16)/1000,
-                (config.blueGain << 16)/1000); if(error) { exit(1); }
+                (config.blueGain << 16)/1000); if(result!=OK) { return result; }
     }
 
-    error = omx_config_image_filter(camera.handle, OMX_ALL, CAM_IMAGE_FILTER); if(error) { exit(1); }
-    error = omx_config_mirror      (camera.handle,      72, CAM_MIRROR      ); if(error) { exit(1); }
-    error = omx_config_rotation    (camera.handle,      72, CAM_ROTATION    ); if(error) { exit(1); }
-    error = omx_config_color_enhancement(camera.handle, OMX_ALL, CAM_COLOR_ENABLE, CAM_COLOR_U, CAM_COLOR_V); if(error) { exit(1); }
-    error = omx_config_denoise     (camera.handle,       CAM_NOISE_REDUCTION); if(error) { exit(1); }
-    error = omx_config_input_crop_percentage(camera.handle, OMX_ALL,
+    result = omx_config_image_filter(camera.handle, OMX_ALL, CAM_IMAGE_FILTER); if(result!=OK) { return result; }
+    result = omx_config_mirror      (camera.handle,      72, CAM_MIRROR      ); if(result!=OK) { return result; }
+    result = omx_config_rotation    (camera.handle,      72, CAM_ROTATION    ); if(result!=OK) { return result; }
+    result = omx_config_color_enhancement(camera.handle, OMX_ALL, CAM_COLOR_ENABLE, CAM_COLOR_U, CAM_COLOR_V); if(result!=OK) { return result; }
+    result = omx_config_denoise     (camera.handle,       CAM_NOISE_REDUCTION); if(result!=OK) { return result; }
+    result = omx_config_input_crop_percentage(camera.handle, OMX_ALL,
             (CAM_ROI_LEFT   << 16)/100,
             (CAM_ROI_TOP    << 16)/100,
             (CAM_ROI_WIDTH  << 16)/100,
-            (CAM_ROI_HEIGHT << 16)/100); if(error) { exit(1); }
-    error = omx_config_dynamic_range_expansion(camera.handle, config.drc); if(error) { exit(1); }
+            (CAM_ROI_HEIGHT << 16)/100); if(result!=OK) { return result; }
+    result = omx_config_dynamic_range_expansion(camera.handle, config.drc); if(result!=OK) { return result; }
+
+    return OK;
 }
 
-void set_jpeg_settings(struct camera_shot_configuration config)
+WARN_UNUSED enum error_code set_jpeg_settings(struct camera_shot_configuration config)
 {
-    LOG_COMPONENT(&encoder, "configuring settings");
+    LOG_MESSAGE_COMPONENT(&encoder, "configuring settings");
 
-    OMX_ERRORTYPE error;
+    enum error_code result;
 
-    error = omx_parameter_qfactor         (encoder.handle, 341, config.quality   ); if(error) { exit(1); }
-    error = omx_parameter_brcm_exif       (encoder.handle,      JPEG_EXIF_DISABLE); if(error) { exit(1); }
-    error = omx_parameter_brcm_ijg_scaling(encoder.handle, 341, JPEG_IJG_ENABLE  ); if(error) { exit(1); }
-    error = omx_parameter_brcm_thumbnail  (encoder.handle,
+    result = omx_parameter_qfactor         (encoder.handle, 341, config.quality   ); if(result!=OK) { return result; }
+    result = omx_parameter_brcm_exif       (encoder.handle,      JPEG_EXIF_DISABLE); if(result!=OK) { return result; }
+    result = omx_parameter_brcm_ijg_scaling(encoder.handle, 341, JPEG_IJG_ENABLE  ); if(result!=OK) { return result; }
+    result = omx_parameter_brcm_thumbnail  (encoder.handle,
             JPEG_THUMBNAIL_ENABLE,
             JPEG_PREVIEW,
             JPEG_THUMBNAIL_WIDTH,
-            JPEG_THUMBNAIL_HEIGHT); if(error) { exit(1); }
+            JPEG_THUMBNAIL_HEIGHT); if(result!=OK) { return result; }
 
     //EXIF tags
     //See firmware/documentation/ilcomponents/image_decode.html for valid keys
-    error = omx_config_metadata_item(encoder.handle, OMX_MetadataScopePortLevel, 341, "IFD0.Make", "Raspberry Pi"); if(error) { exit(1); }
+    result = omx_config_metadata_item(encoder.handle, OMX_MetadataScopePortLevel, 341, "IFD0.Make", "Raspberry Pi"); if(result!=OK) { return result; }
+
+    return OK;
 }
 
 int round_up(int value, int divisor)
@@ -197,9 +201,9 @@ int round_up(int value, int divisor)
     return (divisor + value - 1) & ~(divisor - 1);
 }
 
-void omx_still_open(struct camera_shot_configuration config)
+enum error_code omx_still_open(struct camera_shot_configuration config)
 {
-    OMX_ERRORTYPE error;
+    enum error_code result;
     camera.name = "OMX.broadcom.camera";
     null_sink.name = "OMX.broadcom.null_sink";
     encoder.name = "OMX.broadcom.image_encode";
@@ -208,18 +212,18 @@ void omx_still_open(struct camera_shot_configuration config)
     bcm_host_init();
 
     //Initialize OpenMAX IL
-    error = omx_init(); if(error) { exit(1); }
+    result = omx_init(); if(result!=OK) { return result; }
 
     //Initialize components
-    init_component(&camera);
-    init_component(&null_sink);
-    init_component(&encoder);
+    result = init_component(&camera);    if(result!=OK) { return result; }
+    result = init_component(&null_sink); if(result!=OK) { return result; }
+    result = init_component(&encoder);   if(result!=OK) { return result; }
 
     //Initialize camera drivers
-    load_camera_drivers(&camera);
+    result = load_camera_drivers(&camera);
 
     //Configure camera sensor
-    LOG_COMPONENT(&camera, "configuring sensor");
+    LOG_MESSAGE_COMPONENT(&camera, "configuring sensor");
 
     OMX_PARAM_SENSORMODETYPE sensor; OMX_INIT_STRUCTURE (sensor);
 
@@ -229,22 +233,22 @@ void omx_still_open(struct camera_shot_configuration config)
 
     sensor.sFrameSize.nPortIndex = OMX_ALL;
 
-    error = omx_get_parameter(camera.handle, OMX_IndexParamCommonSensorMode, &sensor); if(error) { exit(1); }
+    result = omx_get_parameter(camera.handle, OMX_IndexParamCommonSensorMode, &sensor); if(result!=OK) { return result; }
 
     sensor.bOneShot = OMX_TRUE;
     sensor.sFrameSize.nWidth = CAM_WIDTH;
     sensor.sFrameSize.nHeight = CAM_HEIGHT;
 
-    error = omx_set_parameter(camera.handle, OMX_IndexParamCommonSensorMode, &sensor); if(error) { exit(1); }
+    result = omx_set_parameter(camera.handle, OMX_IndexParamCommonSensorMode, &sensor); if(result!=OK) { return result; }
 
     //Configure camera port definition
-    LOG_COMPONENT(&camera, "configuring still port definition");
+    LOG_MESSAGE_COMPONENT(&camera, "configuring still port definition");
 
     OMX_PARAM_PORTDEFINITIONTYPE port_def; OMX_INIT_STRUCTURE (port_def);
 
     port_def.nPortIndex = 72;
 
-    error = omx_get_parameter(camera.handle, OMX_IndexParamPortDefinition, &port_def); if(error) { exit(1); }
+    result = omx_get_parameter(camera.handle, OMX_IndexParamPortDefinition, &port_def); if(result!=OK) { return result; }
 
     port_def.format.image.nFrameWidth        = CAM_WIDTH;
     port_def.format.image.nFrameHeight       = CAM_HEIGHT;
@@ -255,9 +259,9 @@ void omx_still_open(struct camera_shot_configuration config)
     //See mmal/util/mmal_util.c, mmal_encoding_width_to_stride()
     port_def.format.image.nStride            = round_up(CAM_WIDTH, 32);
 
-    error = omx_set_parameter(camera.handle, OMX_IndexParamPortDefinition, &port_def); if(error) { exit(1); }
+    result = omx_set_parameter(camera.handle, OMX_IndexParamPortDefinition, &port_def); if(result) { return result; }
 
-    LOG_COMPONENT(&camera, "configuring preview port definition");
+    LOG_MESSAGE_COMPONENT(&camera, "configuring preview port definition");
 
     //Configure preview port
     //In theory the fastest resolution and framerate are 1920x1080 @30fps because
@@ -268,7 +272,7 @@ void omx_still_open(struct camera_shot_configuration config)
     //of ~4%, from ~1083ms to ~1039ms
     port_def.nPortIndex = 70;
 
-    error = omx_get_parameter(camera.handle, OMX_IndexParamPortDefinition, &port_def); if(error) { exit(1); }
+    result = omx_get_parameter(camera.handle, OMX_IndexParamPortDefinition, &port_def); if(result!=OK) { return result; }
 
     port_def.format.video.nFrameWidth = 640;
     port_def.format.video.nFrameHeight = 480;
@@ -279,94 +283,96 @@ void omx_still_open(struct camera_shot_configuration config)
     port_def.format.video.xFramerate = 0;
     port_def.format.video.nStride = 640;
 
-    error = omx_set_parameter(camera.handle, OMX_IndexParamPortDefinition, &port_def); if(error) { exit(1); }
+    result = omx_set_parameter(camera.handle, OMX_IndexParamPortDefinition, &port_def); if(result!=OK) { return result; }
 
     //Configure camera settings
-    set_camera_settings(config);
+    result = set_camera_settings(config); if(result!=OK) { return result; }
 
     //Configure encoder port definition
-    LOG_COMPONENT(&encoder, "configuring encoder port definition");
+    LOG_MESSAGE_COMPONENT(&encoder, "configuring encoder port definition");
 
     OMX_INIT_STRUCTURE (port_def);
 
     port_def.nPortIndex = 341;
 
-    error = omx_get_parameter(encoder.handle, OMX_IndexParamPortDefinition, &port_def); if(error) { exit(1); }
+    result = omx_get_parameter(encoder.handle, OMX_IndexParamPortDefinition, &port_def); if(result!=OK) { return result; }
 
     port_def.format.image.nFrameWidth        = CAM_WIDTH;
     port_def.format.image.nFrameHeight       = CAM_HEIGHT;
     port_def.format.image.eCompressionFormat = OMX_IMAGE_CodingJPEG;
     port_def.format.image.eColorFormat       = OMX_COLOR_FormatUnused;
 
-    error = omx_set_parameter(encoder.handle, OMX_IndexParamPortDefinition, &port_def); if(error) { exit(1); }
+    result = omx_set_parameter(encoder.handle, OMX_IndexParamPortDefinition, &port_def); if(result!=OK) { return result; }
 
     //Configure JPEG settings
-    set_jpeg_settings(config);
+    result = set_jpeg_settings(config); if(result!=OK) { return result; }
 
     //Setup tunnels: camera (still) -> image_encode, camera (preview) -> null_sink
     LOG_MESSAGE("configuring tunnels");
 
-    error = omx_setup_tunnel(camera.handle, 72, encoder.handle,   340); if(error) { exit(1); }
-    error = omx_setup_tunnel(camera.handle, 70, null_sink.handle, 240); if(error) { exit(1); }
+    result = omx_setup_tunnel(camera.handle, 72, encoder.handle,   340); if(result!=OK) { return result; }
+    result = omx_setup_tunnel(camera.handle, 70, null_sink.handle, 240); if(result!=OK) { return result; }
 
     //Change state to IDLE
-    change_state(&camera,    OMX_StateIdle); wait(&camera,    EVENT_STATE_SET, 0);
-    change_state(&null_sink, OMX_StateIdle); wait(&null_sink, EVENT_STATE_SET, 0);
-    change_state(&encoder,   OMX_StateIdle); wait(&encoder,   EVENT_STATE_SET, 0);
+    result = change_state(&camera,    OMX_StateIdle); if(result!=OK) { return result; } result = wait(&camera,    EVENT_STATE_SET, 0); if(result!=OK) { return result; }
+    result = change_state(&null_sink, OMX_StateIdle); if(result!=OK) { return result; } result = wait(&null_sink, EVENT_STATE_SET, 0); if(result!=OK) { return result; }
+    result = change_state(&encoder,   OMX_StateIdle); if(result!=OK) { return result; } result = wait(&encoder,   EVENT_STATE_SET, 0); if(result!=OK) { return result; }
 
     //Enable the tunnel ports
-    enable_port(&camera,     72); wait(&camera,    EVENT_PORT_ENABLE, 0);
-    enable_port(&camera,     70); wait(&camera,    EVENT_PORT_ENABLE, 0);
-    enable_port(&null_sink, 240); wait(&null_sink, EVENT_PORT_ENABLE, 0);
-    enable_port(&encoder,   340); wait(&encoder,   EVENT_PORT_ENABLE, 0);
+    result = enable_port(&camera,     72); if(result!=OK) { return result; } result = wait(&camera,    EVENT_PORT_ENABLE, 0); if(result!=OK) { return result; }
+    result = enable_port(&camera,     70); if(result!=OK) { return result; } result = wait(&camera,    EVENT_PORT_ENABLE, 0); if(result!=OK) { return result; }
+    result = enable_port(&null_sink, 240); if(result!=OK) { return result; } result = wait(&null_sink, EVENT_PORT_ENABLE, 0); if(result!=OK) { return result; }
+    result = enable_port(&encoder,   340); if(result!=OK) { return result; } result = wait(&encoder,   EVENT_PORT_ENABLE, 0); if(result!=OK) { return result; }
 
-    port_enable_allocate_buffer(&encoder, &output_buffer, 341);
+    return port_enable_allocate_buffer(&encoder, &output_buffer, 341);
 
 }
 
-void omx_still_close(void)
+enum error_code omx_still_close(void)
 {
-    OMX_ERRORTYPE error;
+    enum error_code result;
 
     //Disable the tunnel ports
-    port_disable_free_buffer(&encoder, output_buffer, 341);
+    result = port_disable_free_buffer(&encoder, output_buffer, 341); if(result!=OK) { return result; }
 
-    disable_port(&camera,     72);
-    disable_port(&camera,     70);
-    disable_port(&null_sink, 240);
-    disable_port(&encoder,   340);
+    result = disable_port(&camera,     72); if(result!=OK) { return result; }
+    result = disable_port(&camera,     70); if(result!=OK) { return result; }
+    result = disable_port(&null_sink, 240); if(result!=OK) { return result; }
+    result = disable_port(&encoder,   340); if(result!=OK) { return result; }
 
     //Change state to LOADED
-    change_state(&camera,    OMX_StateLoaded); wait(&camera,    EVENT_STATE_SET, 0);
-    change_state(&null_sink, OMX_StateLoaded); wait(&null_sink, EVENT_STATE_SET, 0);
-    change_state(&encoder,   OMX_StateLoaded); wait(&encoder,   EVENT_STATE_SET, 0);
+    result = change_state(&camera,    OMX_StateLoaded); if(result!=OK) { return result; } result = wait(&camera,    EVENT_STATE_SET, 0); if(result!=OK) { return result; }
+    result = change_state(&null_sink, OMX_StateLoaded); if(result!=OK) { return result; } result = wait(&null_sink, EVENT_STATE_SET, 0); if(result!=OK) { return result; }
+    result = change_state(&encoder,   OMX_StateLoaded); if(result!=OK) { return result; } result = wait(&encoder,   EVENT_STATE_SET, 0); if(result!=OK) { return result; }
 
     //Deinitialize components
-    deinit_component(&camera   );
-    deinit_component(&null_sink);
-    deinit_component(&encoder  );
+    result = deinit_component(&camera   ); if(result!=OK) { return result; }
+    result = deinit_component(&null_sink); if(result!=OK) { return result; }
+    result = deinit_component(&encoder  ); if(result!=OK) { return result; }
 
     //Deinitialize OpenMAX IL
-    error = omx_deinit(); if(error) { exit(1); }
+    result = omx_deinit(); if(result!=OK) { return result; }
 
     //Deinitialize Broadcom's VideoCore APIs
     bcm_host_deinit();
+
+    return OK;
 }
 
-void omx_still_shoot(const buffer_output_handler handler)
+enum error_code omx_still_shoot(const buffer_output_handler handler)
 {
-    OMX_ERRORTYPE error;
+    enum error_code result;
 
     //Change state to EXECUTING
-    change_state(&camera,    OMX_StateExecuting); wait(&camera,    EVENT_STATE_SET, 0);
-    change_state(&null_sink, OMX_StateExecuting); wait(&null_sink, EVENT_STATE_SET, 0);
-    change_state(&encoder,   OMX_StateExecuting); wait(&encoder,   EVENT_STATE_SET, 0);
+    result = change_state(&camera,    OMX_StateExecuting); if(result!=OK) { return result; } result = wait(&camera,    EVENT_STATE_SET, 0); if(result!=OK) { return result; }
+    result = change_state(&null_sink, OMX_StateExecuting); if(result!=OK) { return result; } result = wait(&null_sink, EVENT_STATE_SET, 0); if(result!=OK) { return result; }
+    result = change_state(&encoder,   OMX_StateExecuting); if(result!=OK) { return result; } result = wait(&encoder,   EVENT_STATE_SET, 0); if(result!=OK) { return result; }
 
     //Enable camera capture port. This basically says that the port 72 will be
     //used to get data from the camera. If you're capturing video, the port 71
     //must be used
-    LOG_COMPONENT(&camera, "enabling capture port");
-    error = omx_config_port_capturing(camera.handle, 72, OMX_TRUE); if(error) { exit(1); }
+    LOG_MESSAGE_COMPONENT(&camera, "enabling capture port");
+    result = omx_config_port_capturing(camera.handle, 72, OMX_TRUE); if(result!=OK) { return result; }
 
     //Start consuming the buffers
     VCOS_UNSIGNED end_flags = EVENT_BUFFER_FLAG | EVENT_FILL_BUFFER_DONE;
@@ -375,10 +381,10 @@ void omx_still_shoot(const buffer_output_handler handler)
     while(1)
     {
         //Get the buffer data (a slice of the image)
-        error = omx_fill_this_buffer(encoder.handle, output_buffer); if(error) { exit(1); }
+        result = omx_fill_this_buffer(encoder.handle, output_buffer); if(result!=OK) { return result; }
 
         //Wait until it's filled
-        wait(&encoder, EVENT_FILL_BUFFER_DONE, &retrieves_events);
+        result = wait(&encoder, EVENT_FILL_BUFFER_DONE, &retrieves_events); if(result!=OK) { return result; }
 
         handler(&output_buffer->pBuffer[output_buffer->nOffset], output_buffer->nFilledLen);
 
@@ -388,8 +394,8 @@ void omx_still_shoot(const buffer_output_handler handler)
         if(retrieves_events == end_flags)
         {
             //Clear the EOS flags
-            wait(&camera, EVENT_BUFFER_FLAG, 0);
-            wait(&encoder, EVENT_BUFFER_FLAG, 0);
+            result = wait(&camera,  EVENT_BUFFER_FLAG, 0); if(result!=OK) { return result; }
+            result = wait(&encoder, EVENT_BUFFER_FLAG, 0); if(result!=OK) { return result; }
             break;
         }
     }
@@ -397,12 +403,14 @@ void omx_still_shoot(const buffer_output_handler handler)
     LOG_MESSAGE("------------------------------------------------");
 
     //Disable camera capture port
-    LOG_COMPONENT(&camera, "disabling capture port");
-    error = omx_config_port_capturing(camera.handle, 72, OMX_FALSE); if(error) { exit(1); }
+    LOG_MESSAGE_COMPONENT(&camera, "disabling capture port");
+    result = omx_config_port_capturing(camera.handle, 72, OMX_FALSE); if(result!=OK) { return result; }
 
     //Change state to IDLE
-    change_state(&camera,    OMX_StateIdle); wait(&camera,    EVENT_STATE_SET, 0);
-    change_state(&null_sink, OMX_StateIdle); wait(&null_sink, EVENT_STATE_SET, 0);
-    change_state(&encoder,   OMX_StateIdle); wait(&encoder,   EVENT_STATE_SET, 0);
+    result = change_state(&camera,    OMX_StateIdle); if(result!=OK) { return result; } result = wait(&camera,    EVENT_STATE_SET, 0); if(result!=OK) { return result; }
+    result = change_state(&null_sink, OMX_StateIdle); if(result!=OK) { return result; } result = wait(&null_sink, EVENT_STATE_SET, 0); if(result!=OK) { return result; }
+    result = change_state(&encoder,   OMX_StateIdle); if(result!=OK) { return result; } result = wait(&encoder,   EVENT_STATE_SET, 0); if(result!=OK) { return result; }
+
+    return OK;
 }
 

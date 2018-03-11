@@ -32,8 +32,8 @@ struct __attribute__((__packed__)) camera_configuration {
 
 /*****************************************************************************/
 
-extern void shoot(struct camera_configuration camera_configuration);
-extern void erase(const int8_t id);
+WARN_UNUSED enum error_code shoot(struct camera_configuration camera_configuration);
+WARN_UNUSED enum error_code erase(const int8_t id);
 
 /*****************************************************************************/
 

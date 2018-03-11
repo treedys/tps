@@ -6,9 +6,13 @@
 
 #include "logerr.h"
 
-#define LOG_COMPONENT(component, fmt, ...) LOG_MESSAGE("component: %-30s, " fmt, (component)->name, ##__VA_ARGS__)
+#define LOG_MESSAGE_COMPONENT(component, fmt, ...) LOG_MESSAGE("component: %-30s, " fmt, (component)->name, ##__VA_ARGS__)
+#define LOG_MESSAGE_EVENT(component, event, fmt, ...) LOG_MESSAGE_COMPONENT((component), "event: %-20s, " fmt, #event, ##__VA_ARGS__)
 
-#define LOG_EVENT(component, event, fmt, ...) LOG_COMPONENT((component), "event: %-20s, " fmt, #event, ##__VA_ARGS__)
+#define LOG_ERROR_COMPONENT(component, fmt, ...) LOG_ERROR("component: %-30s, " fmt, (component)->name, ##__VA_ARGS__)
+#define LOG_ERROR_EVENT(component, event, fmt, ...) LOG_ERROR_COMPONENT((component), "event: %-20s, " fmt, #event, ##__VA_ARGS__)
+
+#include "error.h"
 
 //Data of each component
 typedef struct
@@ -42,16 +46,16 @@ typedef enum
     EVENT_EMPTY_BUFFER_DONE           = 0x2000,
 } component_event;
 
-void wake                        (component_t* component, VCOS_UNSIGNED event);
-void wait                        (component_t* component, VCOS_UNSIGNED events, VCOS_UNSIGNED* retrieves_events);
-void init_component              (component_t* component);
-void deinit_component            (component_t* component);
-void load_camera_drivers         (component_t* component);
-void change_state                (component_t* component, OMX_STATETYPE state);
-void enable_port                 (component_t* component, OMX_U32 port);
-void disable_port                (component_t* component, OMX_U32 port);
-void port_enable_allocate_buffer (component_t* component, OMX_BUFFERHEADERTYPE** buffer, OMX_U32 port);
-void port_disable_free_buffer    (component_t* component, OMX_BUFFERHEADERTYPE* buffer, OMX_U32 port);
+            void            wake                        (component_t* component, VCOS_UNSIGNED event);
+WARN_UNUSED enum error_code wait                        (component_t* component, VCOS_UNSIGNED events, VCOS_UNSIGNED* retrieves_events);
+WARN_UNUSED enum error_code init_component              (component_t* component);
+WARN_UNUSED enum error_code deinit_component            (component_t* component);
+WARN_UNUSED enum error_code load_camera_drivers         (component_t* component);
+WARN_UNUSED enum error_code change_state                (component_t* component, OMX_STATETYPE state);
+WARN_UNUSED enum error_code enable_port                 (component_t* component, OMX_U32 port);
+WARN_UNUSED enum error_code disable_port                (component_t* component, OMX_U32 port);
+WARN_UNUSED enum error_code port_enable_allocate_buffer (component_t* component, OMX_BUFFERHEADERTYPE** buffer, OMX_U32 port);
+WARN_UNUSED enum error_code port_disable_free_buffer    (component_t* component, OMX_BUFFERHEADERTYPE* buffer, OMX_U32 port);
 
 #endif
 

@@ -1,9 +1,11 @@
 #ifndef  MAC_INC
 #define  MAC_INC
 
+#include "error.h"
+
 /*****************************************************************************/
 
-void get_mac_address(const char * const device, char (* const mac)[18]);
+WARN_UNUSED enum error_code get_mac_address(const char * const device, char (* const mac)[18]);
 
 /*****************************************************************************/
 

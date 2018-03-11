@@ -6,6 +6,8 @@
 #include <string.h>
 #include <IL/OMX_Broadcom.h>
 
+#include "error.h"
+
 /*****************************************************************************/
 
 #define OMX_INIT_STRUCTURE(a)                            \
@@ -19,12 +21,12 @@
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY omx_init(void);
-OMX_API OMX_ERRORTYPE OMX_APIENTRY omx_deinit(void);
+WARN_UNUSED enum error_code omx_init(void);
+WARN_UNUSED enum error_code omx_deinit(void);
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_get_handle(
         OMX_OUT OMX_HANDLETYPE   *pHandle,
         OMX_IN  OMX_STRING        cComponentName,
@@ -33,13 +35,13 @@ omx_get_handle(
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_free_handle(
         OMX_IN OMX_HANDLETYPE hComponent);
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_set_config(
         OMX_IN OMX_HANDLETYPE hComponent,
         OMX_IN OMX_INDEXTYPE  nIndex,
@@ -47,7 +49,7 @@ omx_set_config(
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_send_command(
         OMX_IN OMX_HANDLETYPE  hComponent,
         OMX_IN OMX_COMMANDTYPE Cmd,
@@ -56,7 +58,7 @@ omx_send_command(
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_get_parameter(
         OMX_IN    OMX_HANDLETYPE  hComponent,
         OMX_IN    OMX_INDEXTYPE   nParamIndex,
@@ -64,7 +66,7 @@ omx_get_parameter(
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_set_parameter(
         OMX_IN OMX_HANDLETYPE hComponent,
         OMX_IN OMX_INDEXTYPE  nIndex,
@@ -72,7 +74,7 @@ omx_set_parameter(
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_allocate_buffer(
         OMX_IN    OMX_HANDLETYPE         hComponent,
         OMX_INOUT OMX_BUFFERHEADERTYPE **ppBuffer,
@@ -82,7 +84,7 @@ omx_allocate_buffer(
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_free_buffer(
         OMX_IN OMX_HANDLETYPE        hComponent,
         OMX_IN OMX_U32               nPortIndex,
@@ -90,14 +92,14 @@ omx_free_buffer(
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_fill_this_buffer(
         OMX_IN OMX_HANDLETYPE        hComponent,
         OMX_IN OMX_BUFFERHEADERTYPE *pBuffer);
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_setup_tunnel(
         OMX_IN OMX_HANDLETYPE hOutput,
         OMX_IN OMX_U32        nPortOutput,
@@ -106,7 +108,7 @@ omx_setup_tunnel(
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_allocate_port_buffer(
         OMX_IN    OMX_HANDLETYPE         hComponent,
         OMX_INOUT OMX_BUFFERHEADERTYPE **ppBuffer,

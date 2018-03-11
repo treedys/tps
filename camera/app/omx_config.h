@@ -4,10 +4,11 @@
 /*****************************************************************************/
 
 #include <IL/OMX_Broadcom.h>
+#include "error.h"
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_config_sharpness(
         OMX_IN OMX_HANDLETYPE hComponent,
         OMX_IN OMX_U32        nPortIndex,
@@ -15,7 +16,7 @@ omx_config_sharpness(
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_config_contrast(
         OMX_IN OMX_HANDLETYPE hComponent,
         OMX_IN OMX_U32        nPortIndex,
@@ -23,7 +24,7 @@ omx_config_contrast(
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_config_saturation(
         OMX_IN OMX_HANDLETYPE hComponent,
         OMX_IN OMX_U32        nPortIndex,
@@ -31,7 +32,7 @@ omx_config_saturation(
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_config_brightness(
         OMX_IN OMX_HANDLETYPE hComponent,
         OMX_IN OMX_U32        nPortIndex,
@@ -39,7 +40,7 @@ omx_config_brightness(
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_config_exposure_value(
         OMX_IN OMX_HANDLETYPE   hComponent,
         OMX_U32                 nPortIndex,
@@ -54,7 +55,7 @@ omx_config_exposure_value(
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_config_exposure(
         OMX_IN OMX_HANDLETYPE          hComponent,
         OMX_IN OMX_U32                 nPortIndex,
@@ -62,7 +63,7 @@ omx_config_exposure(
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_config_frame_stabilisation(
         OMX_IN OMX_HANDLETYPE hComponent,
         OMX_IN OMX_U32        nPortIndex,
@@ -70,7 +71,7 @@ omx_config_frame_stabilisation(
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_config_white_balance(
         OMX_IN OMX_HANDLETYPE   hComponent,
         OMX_IN OMX_U32          nPortIndex,
@@ -78,7 +79,7 @@ omx_config_white_balance(
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_config_white_balance_gains(
         OMX_IN OMX_HANDLETYPE hComponent,
         OMX_IN OMX_U32        xGainR,
@@ -86,7 +87,7 @@ omx_config_white_balance_gains(
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_config_image_filter(
         OMX_IN OMX_HANDLETYPE hComponent,
         OMX_IN OMX_U32        nPortIndex,
@@ -94,7 +95,7 @@ omx_config_image_filter(
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_config_mirror(
         OMX_IN OMX_HANDLETYPE hComponent,
         OMX_IN OMX_U32        nPortIndex,
@@ -102,7 +103,7 @@ omx_config_mirror(
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_config_rotation(
         OMX_IN OMX_HANDLETYPE hComponent,
         OMX_IN OMX_U32        nPortIndex,
@@ -110,7 +111,7 @@ omx_config_rotation(
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_config_color_enhancement(
         OMX_IN OMX_HANDLETYPE hComponent,
         OMX_IN OMX_U32        nPortIndex,
@@ -120,14 +121,14 @@ omx_config_color_enhancement(
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_config_denoise(
         OMX_IN OMX_HANDLETYPE hComponent,
         OMX_IN OMX_BOOL       bEnabled);
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_config_input_crop_percentage(
         OMX_IN OMX_HANDLETYPE hComponent,
         OMX_IN OMX_U32        nPortIndex,
@@ -138,14 +139,14 @@ omx_config_input_crop_percentage(
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_config_dynamic_range_expansion(
         OMX_IN OMX_HANDLETYPE                    hComponent,
         OMX_IN OMX_DYNAMICRANGEEXPANSIONMODETYPE eMode);
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_config_port_capturing(
         OMX_IN OMX_HANDLETYPE hComponent,
         OMX_IN OMX_U32        nPortIndex,
@@ -153,7 +154,7 @@ omx_config_port_capturing(
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_config_request_callback(
         OMX_IN OMX_HANDLETYPE hComponent,
         OMX_IN OMX_U32        nPortIndex,
@@ -162,7 +163,7 @@ omx_config_request_callback(
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_config_metadata_item(
         OMX_IN OMX_HANDLETYPE        hComponent,
         OMX_IN OMX_METADATASCOPETYPE eScopeMode,
