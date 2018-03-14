@@ -17,6 +17,7 @@ endef
 
 define CAMERA_APP_INSTALL_TARGET_CMDS
 	$(INSTALL) -D -m 0755 -t $(TARGET_DIR)/bin/ $(@D)/camera-app
+	grep -qF "::respawn:/bin/camera-app" $(TARGET_DIR)/etc/inittab || echo "::respawn:/bin/camera-app" >> $(TARGET_DIR)/etc/inittab
 endef
 
 $(eval $(generic-package))
