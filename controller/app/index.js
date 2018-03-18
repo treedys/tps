@@ -366,9 +366,13 @@ let run = async () => {
             await loop();
 
     } catch(error) {
-        console.log("Error:", error);
+        debug("Error:", error);
     }
     debug("Quitting");
+
+    server.close();
+
+    process.abort();
 }
 
 process.on('unhandledRejection', (reason, promise) => {
@@ -380,6 +384,6 @@ debug("Starting");
 /* app.listen() *MUST* be called after all feathers plugins are initialised
  *  * (especialy the authentication ones) to call their setup() methods. */
 
-app.listen(80);
+const server = app.listen(80);
 
 run();
