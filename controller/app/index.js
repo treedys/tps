@@ -170,6 +170,12 @@ let configure = async (interface, desiredAddress, defaultAddress) => {
 
             debug("Spanning tree configured");
 
+            debug("Configuring PoE");
+
+            for(let i=0; i<config.SWITCH_PORTS; i++)
+                await device.powerDisable(i);
+
+            debug("PoE configured");
         }, {
             timeout: 2*60*1000,
             execTimeout: 2*60*1000
