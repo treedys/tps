@@ -37,13 +37,12 @@ const send = {
 app.post("/api/shoot", async (request, response) => {
     try {
 
+        response.status(204).end();
+
         await status.patch(0, { shooting: true });
-
         await send.shoot(0);
-
         await status.patch(0, { shooting: false });
 
-        response.status(204).end();
     } catch(err) {
         await status.patch(0, { shooting: false });
         response.status(500).send(err);
@@ -116,6 +115,7 @@ const onMessage = async (message, rinfo) => {
 
         cameras[mac].lastSeen = Date.now();
     } else if(message.length==500) {
+        // TODO: Log message to external file on the SSD
         debug(message.toString("ascii", 0, 500));
     } else {
         debug("Received:", message.length, message);
