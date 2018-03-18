@@ -11,6 +11,7 @@ const app = require("./app.js");
 const status = require('./status.js');
 const switches = require('./switches.js');
 const cameraService = require('./cameras.js');
+const scans = require('./scans.js');
 
 const cameras = {};
 
@@ -36,8 +37,9 @@ const send = {
 
 app.post("/api/shoot", async (request, response) => {
     try {
+        const scan = await scans.create({});
 
-        response.status(204).end();
+        response.send({ id: scan[scans.id] });
 
         await status.patch(0, { shooting: true });
         await send.shoot(0);

@@ -1,10 +1,11 @@
 import React from 'react';
-import { HashRouter as Router, Route } from 'react-router-dom'
+import { HashRouter as Router, Route, Switch } from 'react-router-dom';
 
 import { Row, Col, Button } from './components/';
 import {
     Header,
     PageList, PageLink,
+    Scan, ScanList,
     SwitchList, CameraList,
     System, Settings
 } from './containers/';
@@ -34,6 +35,7 @@ export default class App extends React.Component {
     componentDidMount() {
         this.switches = services.switches.watch().find().subscribe( switches => this.changeState({ switches }));
         this.cameras  = services. cameras.watch().find().subscribe(  cameras => this.changeState({ cameras  }));
+        this.scans    = services.   scans.watch().find().subscribe(    scans => this.changeState({ scans    }));
         this.status   = services.  status.watch().get( 0 ).subscribe( status => this.changeState({ status }));
         this.config   = services.  config.watch().get('0').subscribe( config => this.changeState({ config }));
     }
@@ -41,6 +43,7 @@ export default class App extends React.Component {
     componentWillUnmount() {
         this.switches.unsubscribe();
         this.cameras .unsubscribe();
+        this.scans   .unsubscribe();
         this.status  .unsubscribe();
         this.config  .unsubscribe();
     }
@@ -60,11 +63,23 @@ export default class App extends React.Component {
                         <PageLink to="/settings"    title="Settings"    icon={assets.settings}/>
                     </PageList>
 
-                    <Route path="/cameras" render={ props =>
-                        <SwitchList switches={ this.state.switches }/>
-                    }/>
+                    <Switch>
+                        <Route path="/cameras" render={ props =>
+                            <SwitchList switches={ this.state.switches }/>
+                        }/>
+
+                        <Route render={ props =>
+                                <ScanList scans={ this.state.scans }/>
+                        }/>
+                    </Switch>
 
                     <Col className="fill scroll">
+
+                        <Route path="/scan/:scanId" render={ props =>
+                            <Scan scan={ this.state.scans && this.state.scans.find(scan => scan.id == props.match.params.scanId)}
+                                onChange={ scan => services.scans.update( props.match.params.scanId, scan)}
+                            />
+                        }/>
 
                         <Route path="/cameras/:switchId" render={ props =>
                             <CameraList cameras={this.state.cameras} switchData={ this.state.switches && this.state.switches[props.match.params.switchId] }/>

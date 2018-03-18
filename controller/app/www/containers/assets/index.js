@@ -4,6 +4,7 @@ import user        from './user.jpg'
 import cloche      from './cloche.svg'
 import switchIcon  from './switch.svg'
 import noise       from './noise.jpg'
+import search      from './search.png'
 
 export default {
     logoTreedys,
@@ -11,5 +12,6 @@ export default {
     user,
     cloche,
     switchIcon,
-    noise
+    noise,
+    search
 };

@@ -13,6 +13,7 @@ const app = feathers()
 
 const switches = app.service('/api/switches');
 const  cameras = app.service('/api/cameras' );
+const    scans = app.service('/api/scans'   );
 const   status = app.service('/api/status'  );
 const   config = app.service('/api/config'  );
 
@@ -21,6 +22,7 @@ export default {
     app,
     switches,
     cameras,
+    scans,
     status,
     config
 };
