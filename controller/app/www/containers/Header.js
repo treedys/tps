@@ -36,8 +36,8 @@ const styles = {
 };
 
 export const Logo     = (props) => <Icon url={ assets.logoTreedys } style={ styles.logo     } {...props}/>
-export const Language = (props) => <Icon url={ assets.language } style={ styles.language } {...props}/>
-export const Alerts   = (props) => <Icon url={ assets.cloche } style={ styles.alerts   } {...props}/>
+export const Language = (props) => <Icon url={ assets.language    } style={ styles.language } {...props}/>
+export const Alerts   = (props) => <Icon url={ assets.cloche      } style={ styles.alerts   } {...props}/>
 
 export const User     = (props) =>
     <Circle radius={40} style={ styles.user.circle }>

@@ -5,11 +5,11 @@ const debug = require('debug')('cameras');
 
 app.use('/api/cameras', memory() );
 
-const cameras = app.service('/api/cameras');
+const service = app.service('/api/cameras');
 
 app.param('camera', async (browser_request, browser_response, next, id) => {
     try {
-        browser_request.camera = await cameras.get(id);
+        browser_request.camera = await service.get(id);
 
         if(!browser_request.camera) {
             next(new Error("Wrong camera ID"));
@@ -50,4 +50,4 @@ app.get('/preview/:camera*', async (browser_request, browser_response) => {
     }
 });
 
-module.exports = cameras;
+module.exports = service;

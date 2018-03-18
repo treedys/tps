@@ -11,9 +11,7 @@ import {
 
 import assets from './assets/';
 
-import io from 'socket.io-client';
-import feathers from '@feathersjs/client';
-import rx from 'feathers-reactive';
+import services from './services';
 
 const styles = {
     container: {
@@ -21,19 +19,6 @@ const styles = {
         height: "100%"
     }
 }
-
-let socketio = io();
-
-socketio.on("reconnect_failed", () => socketio.socket.reconnect());
-
-const feathersApp = feathers()
-    .configure(feathers.socketio(socketio))
-    .configure(rx({idField: "id"}));
-
-const switchesService = feathersApp.service('/api/switches');
-const  camerasService = feathersApp.service('/api/cameras' );
-const   statusService = feathersApp.service('/api/status'  );
-const   configService = feathersApp.service('/api/config'  );
 
 export default class App extends React.Component {
 
@@ -51,10 +36,10 @@ export default class App extends React.Component {
     }
 
     componentDidMount() {
-        this.switches = switchesService.watch().find().subscribe( switches => this.setStateAsync({ switches }));
-        this.cameras  =  camerasService.watch().find().subscribe(  cameras => this.setStateAsync({ cameras  }));
-        this.status   =   statusService.watch().get( 0 ).subscribe( status => this.setStateAsync({ status }));
-        this.config   =   configService.watch().get('0').subscribe( config => this.setStateAsync({ config }));
+        this.switches = services.switches.watch().find().subscribe( switches => this.setStateAsync({ switches }));
+        this.cameras  = services. cameras.watch().find().subscribe(  cameras => this.setStateAsync({ cameras  }));
+        this.status   = services.  status.watch().get( 0 ).subscribe( status => this.setStateAsync({ status }));
+        this.config   = services.  config.watch().get('0').subscribe( config => this.setStateAsync({ config }));
     }
 
     componentWillUnmount() {
@@ -90,7 +75,7 @@ export default class App extends React.Component {
                         }/>
 
                         <Route path="/settings" render={ props =>
-                            <Settings settings={this.state.config} onSave={config => configService.update('0', config)}/>
+                            <Settings settings={this.state.config} onSave={config => services.config.update('0', config)}/>
                         }/>
 
                         <Route path="/system" render={ props =>
