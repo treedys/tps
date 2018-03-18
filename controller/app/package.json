@@ -54,6 +54,7 @@
     "extract-text-webpack-plugin": "^3.0.2",
     "feathers-reactive": "^0.5.4",
     "file-loader": "^1.1.6",
+    "history": "^4.7.2",
     "html-minify-loader": "^1.3.0",
     "html-webpack-plugin": "^2.30.1",
     "react": "^16.2.0",

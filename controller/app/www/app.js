@@ -1,5 +1,6 @@
 import React from 'react';
-import { HashRouter as Router, Route, Switch } from 'react-router-dom';
+import { createHashHistory as createHistory } from 'history';
+import { Router, Route, Switch } from 'react-router-dom';
 
 import { Row, Col, Button } from './components/';
 import {
@@ -30,6 +31,7 @@ export default class App extends React.Component {
         super(props);
 
         this.state = {};
+        this.history = createHistory();
     }
 
     componentDidMount() {
@@ -48,10 +50,19 @@ export default class App extends React.Component {
         this.config  .unsubscribe();
     }
 
-    shoot = () => { fetch('/api/shoot', { method: 'POST' }); }
+    shoot = async () => {
+        try {
+            const response = await fetch('/api/shoot', { method: 'POST' });
+            const { id:scanId } = await response.json();
+
+            this.history.replace(`/scan/${scanId}`);
+        } catch(error) {
+            console.log("Shoot error:", error);
+        }
+    }
 
     render = () =>
-        <Router>
+        <Router history={this.history}>
             <Col style={ styles.container }>
                 <Header/>
                 <Row className="fill">
