@@ -6,10 +6,15 @@ export const updateState = mixin({
 });
 
 export const changeState = mixin({
-    changeState(obj) {
-        this.setState(
-            (state) => ({...state, ...obj}),
-            () => this.props.onChange && this.props.onChange(this.state)
+    changeState(newState) {
+        return new Promise( resolve =>
+            this.setState(
+                (oldState) => ({...oldState, ...newState}),
+                () => {
+                    this.props.onChange && this.props.onChange(this.state);
+                    resolve();
+                }
+            )
         );
     }
 });

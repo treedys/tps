@@ -13,6 +13,8 @@ import assets from './assets/';
 
 import services from './services';
 
+import { changeState } from './utils/decorators';
+
 const styles = {
     container: {
         width: "100%",
@@ -20,6 +22,7 @@ const styles = {
     }
 }
 
+@changeState
 export default class App extends React.Component {
 
     constructor(props) {
@@ -28,18 +31,11 @@ export default class App extends React.Component {
         this.state = {};
     }
 
-    setStateAsync(newState) {
-        return new Promise( resolve =>
-            this.setState(
-                oldState => ({ ...oldState, ...newState }),
-                resolve));
-    }
-
     componentDidMount() {
-        this.switches = services.switches.watch().find().subscribe( switches => this.setStateAsync({ switches }));
-        this.cameras  = services. cameras.watch().find().subscribe(  cameras => this.setStateAsync({ cameras  }));
-        this.status   = services.  status.watch().get( 0 ).subscribe( status => this.setStateAsync({ status }));
-        this.config   = services.  config.watch().get('0').subscribe( config => this.setStateAsync({ config }));
+        this.switches = services.switches.watch().find().subscribe( switches => this.changeState({ switches }));
+        this.cameras  = services. cameras.watch().find().subscribe(  cameras => this.changeState({ cameras  }));
+        this.status   = services.  status.watch().get( 0 ).subscribe( status => this.changeState({ status }));
+        this.config   = services.  config.watch().get('0').subscribe( config => this.changeState({ config }));
     }
 
     componentWillUnmount() {
