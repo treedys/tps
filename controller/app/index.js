@@ -39,18 +39,26 @@ const send = {
 };
 
 app.post("/api/shoot", async (browser_request, browser_response) => {
+
+    let scanId;
+
     try {
         const scan = await scans.create({});
+        scanId = scan[scans.id];
+        browser_response.send({ id: scanId });
+    } catch(err) {
+        await status.patch(0, { shooting: false });
+        browser_response.status(500).send(err);
+        return;
+    }
 
-        browser_response.send({ id: scan[scans.id] });
-
+    try {
         await status.patch(0, { shooting: true });
         await send.shoot(0);
         await status.patch(0, { shooting: false });
 
-    } catch(err) {
-        await status.patch(0, { shooting: false });
-        browser_response.status(500).send(err);
+    } catch(error) {
+        debug(error);
     }
 });
 
