@@ -28,10 +28,13 @@ const sendCmd = async (args) => {
 
 const sendCmdAll = async (args) => sendCmd([Buffer.from('FF:FF:FF:FF:FF:FF')].concat(args));
 
+const bufferFromInt32LE = int32 => { let buf = Buffer.alloc(4); buf.writeInt32LE(int32, 0); return buf; }
+
+// TODO: Build the structures with https://github.com/TooTallNate/ref-struct
 const send = {
     ping:  async ()   => sendCmdAll( 0 ),
-    shoot: async (id) => sendCmdAll([ 1, id, await config.pack() ]),
-    erase: async (id) => sendCmdAll([ 2, id ]),
+    shoot: async (id) => sendCmdAll([ 1, bufferFromInt32LE(id), await config.pack() ]),
+    erase: async (id) => sendCmdAll([ 2, bufferFromInt32LE(id) ]),
     exec:  async (s)  => sendCmdAll([ 3, Buffer.from(s) ])
 };
 

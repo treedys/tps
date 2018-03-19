@@ -20,19 +20,19 @@ static uv_buf_t error_buffer;
 static char mac_address[18];
 static const char mac_broadcast_address[18] = "FF:FF:FF:FF:FF:FF";
 
-__attribute__((__packed__))
-struct received_message
+struct __attribute__((__packed__)) received_message
 {
-    struct
+    struct __attribute__((__packed__))
     {
         const char address[17];
         const uint8_t command;
     } header;
 
-    union {
-        struct { struct camera_configuration configuration; } shoot;
-        struct { uint8_t shoot; } erase;
-        struct { char shell_command[1]; } execute; /* Avoid GCC 'error: flexible array member in otherwise empty struct' */
+    union __attribute__((__packed__))
+    {
+        struct __attribute__((__packed__)) { struct camera_configuration configuration; } shoot;
+        struct __attribute__((__packed__)) { int32_t shoot; } erase;
+        struct __attribute__((__packed__)) { char shell_command[1]; } execute; /* Avoid GCC 'error: flexible array member in otherwise empty struct' */
     };
 };
 
@@ -140,7 +140,7 @@ static void udb_server_recv_cb(uv_udp_t* handle,
             break;
 
         case 2:
-            if(nread != sizeof(message->header)+sizeof(message->erase))
+            if( nread != sizeof(message->header)+sizeof(message->erase) )
                 LOG_ERROR("Wrong request size %d expected %d", nread, sizeof(message->header)+sizeof(message->erase));
 
             result = erase(message->erase.shoot); if(result!=OK) { /* ignore any errors */ }

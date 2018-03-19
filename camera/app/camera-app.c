@@ -135,7 +135,7 @@ enum error_code shoot(struct camera_configuration config)
     return OK;
 }
 
-enum error_code erase(const int8_t id)
+enum error_code erase(const int32_t id)
 {
     char filename[100];
 

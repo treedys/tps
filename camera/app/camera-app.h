@@ -26,14 +26,14 @@ struct __attribute__((__packed__)) camera_shot_configuration {
 /*****************************************************************************/
 
 struct __attribute__((__packed__)) camera_configuration {
-    int8_t id;
+    int32_t id;
     struct camera_shot_configuration shot[2];
 };
 
 /*****************************************************************************/
 
 WARN_UNUSED enum error_code shoot(struct camera_configuration camera_configuration);
-WARN_UNUSED enum error_code erase(const int8_t id);
+WARN_UNUSED enum error_code erase(const int32_t id);
 
 /*****************************************************************************/
 
