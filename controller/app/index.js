@@ -38,11 +38,11 @@ const send = {
     exec:  async (s)  => sendCmdAll([ 3, Buffer.from(s) ])
 };
 
-app.post("/api/shoot", async (request, response) => {
+app.post("/api/shoot", async (browser_request, browser_response) => {
     try {
         const scan = await scans.create({});
 
-        response.send({ id: scan[scans.id] });
+        browser_response.send({ id: scan[scans.id] });
 
         await status.patch(0, { shooting: true });
         await send.shoot(0);
@@ -50,11 +50,11 @@ app.post("/api/shoot", async (request, response) => {
 
     } catch(err) {
         await status.patch(0, { shooting: false });
-        response.status(500).send(err);
+        browser_response.status(500).send(err);
     }
 });
 
-app.post("/api/cameras/restart", async (request, response) => {
+app.post("/api/cameras/restart", async (browser_request, browser_response) => {
     try {
         let switchTasks = [];
 
@@ -79,27 +79,29 @@ app.post("/api/cameras/restart", async (request, response) => {
 
         await status.patch(0, { restarting: false });
 
+        browser_response.status(204).end();
+
     } catch(err) {
         await status.patch(0, { restarting: false });
-        response.status(500).send(err);
+        browser_response.status(500).send(err);
     }
 });
 
-app.post("/api/cameras/erase", async (request, response) => {
+app.post("/api/cameras/erase", async (browser_request, browser_response) => {
     try {
         await send.erase(0);
-        response.status(204).end();
+        browser_response.status(204).end();
     } catch(err) {
-        response.status(500).send(err);
+        browser_response.status(500).send(err);
     }
 });
 
-app.post("/api/cameras/exec", async (request, response) => {
+app.post("/api/cameras/exec", async (browser_request, browser_response) => {
     try {
         await send.exec("ls -al / >/var/www/output.txt");
-        response.status(204).end();
+        browser_response.status(204).end();
     } catch(err) {
-        response.status(500).send(err);
+        browser_response.status(500).send(err);
     }
 });
 
