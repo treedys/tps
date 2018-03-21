@@ -26,16 +26,21 @@ const sendCmd = async (args) => {
     await multicast.send(message, 0, message.length, config.MCAST_CAMERA_COMMAND_PORT, config.MCAST_GROUP_ADDR);
 };
 
-const sendCmdAll = async (args) => sendCmd([Buffer.from('FF:FF:FF:FF:FF:FF')].concat(args));
+const all = Buffer.from('FF:FF:FF:FF:FF:FF');
 
 const bufferFromInt32LE = int32 => { let buf = Buffer.alloc(4); buf.writeInt32LE(int32, 0); return buf; }
 
 // TODO: Build the structures with https://github.com/TooTallNate/ref-struct
 const send = {
-    ping:  async ()   => sendCmdAll( 0 ),
-    shoot: async (id) => sendCmdAll([ 1, bufferFromInt32LE(id), await config.pack() ]),
-    erase: async (id) => sendCmdAll([ 2, bufferFromInt32LE(id) ]),
-    exec:  async (s)  => sendCmdAll([ 3, Buffer.from(s) ])
+     ping: async (mac)     => sendCmd([ Buffer.from(mac), 0 ]),
+    shoot: async (mac, id) => sendCmd([ Buffer.from(mac), 1, bufferFromInt32LE(id), await config.pack() ]),
+    erase: async (mac, id) => sendCmd([ Buffer.from(mac), 2, bufferFromInt32LE(id) ]),
+     exec: async (mac, s)  => sendCmd([ Buffer.from(mac), 3, Buffer.from(s) ]),
+
+     pingAll: async ()   => send. ping( all     ),
+    shootAll: async (id) => send.shoot( all, id ),
+    eraseAll: async (id) => send.erase( all, id ),
+     execAll: async (s)  => send. exec( all, s  )
 };
 
 app.post("/api/shoot", async (browser_request, browser_response) => {
@@ -53,7 +58,7 @@ app.post("/api/shoot", async (browser_request, browser_response) => {
 
     try {
         await status.patch(0, { shooting: true });
-        await send.shoot(0);
+        await send.shootAll(0);
         await status.patch(0, { shooting: false });
 
     } catch(error) {
@@ -96,7 +101,7 @@ app.post("/api/cameras/restart", async (browser_request, browser_response) => {
 
 app.post("/api/cameras/erase", async (browser_request, browser_response) => {
     try {
-        await send.erase(0);
+        await send.eraseAll(0);
         browser_response.status(204).end();
     } catch(err) {
         browser_response.status(500).send(err);
@@ -105,7 +110,7 @@ app.post("/api/cameras/erase", async (browser_request, browser_response) => {
 
 app.post("/api/cameras/exec", async (browser_request, browser_response) => {
     try {
-        await send.exec("ls -al / >/var/www/output.txt");
+        await send.execAll("ls -al / >/var/www/output.txt");
         browser_response.status(204).end();
     } catch(err) {
         browser_response.status(500).send(err);
@@ -375,7 +380,7 @@ let run = async () => {
 
         debug("Starting camera heartbeat");
 
-        setInterval(send.ping, 1000);
+        setInterval(send.pingAll, 1000);
 
         /* Give some time to the get ping response from the working cameras */
         await delay(2000);
