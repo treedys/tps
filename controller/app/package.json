@@ -22,6 +22,7 @@
     "@feathersjs/socketio": "^3.2.0",
     "await-mutex": "^1.0.1",
     "babel-runtime": "^6.26.0",
+    "bottleneck": "^2.1.0",
     "debug": "^3.1.0",
     "doasync": "^2.0.0",
     "download": "^6.2.5",

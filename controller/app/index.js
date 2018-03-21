@@ -117,6 +117,10 @@ app.post("/api/cameras/exec", async (browser_request, browser_response) => {
     }
 });
 
+let discovered = 0;
+let linked = 0;
+let linking = false;
+
 const onMessage = async (message, rinfo) => {
     if(message.length==18) {
         const address = rinfo.address;
@@ -126,6 +130,8 @@ const onMessage = async (message, rinfo) => {
             debug(`Found new ${mac} ${address}`);
             cameras[mac] = { address, online:true, lastSeen: Date.now() };
             await cameraService.create({ id: mac, address, mac, online:true });
+
+            discovered++;
         } else if(cameras[mac].address != address || !cameras[mac].online) {
             debug(`Recovering ${cameras[mac].interface}:${cameras[mac].port} ${address}`);
             cameras[mac] = { ...cameras[mac], address, online: true };
@@ -141,10 +147,58 @@ const onMessage = async (message, rinfo) => {
     }
 };
 
+const link = async () => {
+    // Get MAC addresses from the switches
+    for(let { interface, switchAddress } of config.SWITCHES) {
+        await tplinks[interface].session(switchAddress, async device => {
+
+            let table = await device.portMacTable();
+
+            for(let { port, mac } of table)
+                if(cameras[mac])
+                    if( cameras[mac].interface     != interface     ||
+                        cameras[mac].switchAddress != switchAddress ||
+                        cameras[mac].port          != port ) {
+
+                        debug(`Linking ${interface}:${port} to ${cameras[mac].address}`);
+
+                        cameras[mac] = { ...cameras[mac], interface, switchAddress, port };
+                        await cameraService.patch(mac, { interface, switchAddress, port });
+
+                        linked++;
+                    }
+        });
+    }
+}
+
+const discover = async () => {
+
+    await send.pingAll();
+
+    if(discovered != linked && !linking) {
+        linking = true;
+
+        try { await link() } catch(error) { debug("Link:", error); }
+
+        linking = false;
+    }
+}
+
 const interfaces = require('./interfaces.js');
 
 const ip = require("ip");
 const time = require("time-since");
+const Bottleneck = require("bottleneck");
+
+const bootLimiter = new Bottleneck({ maxConcurrent: 10 });
+//bootLimiter.on('debug', (msg, data) => debug("BOTTLENECK:", msg, data));
+
+const powerCycle = async (sw, address, port) => {
+    await sw.session( address, device => device.powerDisable(port) );
+    await delay(  3*1000 );
+    await sw.session( address, device => device.powerEnable(port) );
+    await delay( 30*1000 );
+}
 
 let tplinks = {};
 
@@ -218,26 +272,6 @@ let lastReboot;
 
 let loop = async () => {
 
-    // Get MAC addresses from the switches
-    for(let { interface, switchAddress } of config.SWITCHES) {
-        await tplinks[interface].session(switchAddress, async device => {
-
-            let table = await device.portMacTable();
-
-            for(let { port, mac } of table)
-                if(cameras[mac])
-                    if( cameras[mac].interface     != interface     ||
-                        cameras[mac].switchAddress != switchAddress ||
-                        cameras[mac].port          != port ) {
-
-                        debug(`Linking ${interface}:${port} to ${cameras[mac].address}`);
-
-                        cameras[mac] = { ...cameras[mac], interface, switchAddress, port };
-                        await cameraService.patch(mac, { interface, switchAddress, port });
-                    }
-        });
-    }
-
     let tasks = [];
 
     for(let mac in cameras) {
@@ -260,18 +294,11 @@ let loop = async () => {
 
         if(notSeen && notRebooted) {
 
-            // TODO: Power cycle in parallel
-            if(camera.interface && camera.switchAddress && camera.port) {
-
-                debug(`Power cycle ${camera.interface}:${camera.port}`);
-
-                tasks.push(
-                    tplinks[camera.interface].session(camera.switchAddress, async device => {
-                        await device.powerCycle(camera.port, 4000);
-                        camera.lastReboot = Date.now();
-                    })
-                );
-            }
+            if(camera.interface && camera.switchAddress && camera.port)
+                tasks.push( bootLimiter.schedule( async () => {
+                    await powerCycle(tplinks[camera.interface], camera.switchAddress, camera.port );
+                    camera.lastReboot = Date.now();
+                }));
         }
     }
 
@@ -279,26 +306,17 @@ let loop = async () => {
 
     if(!lastReboot || time.since(lastReboot).secs()>60) {
 
-        let switchTasks = [];
-
         await status.patch(0, { restarting: true });
 
-        // get list of all switch ports without detected camera
-        for(let {interface, switchAddress} of config.SWITCHES) {
-            switchTasks.push(tplinks[interface].session(switchAddress, async device => {
+        let tasks = [];
 
-                let tasks = [];
+        for(let {interface, switchAddress} of config.SWITCHES)
+            for(let port=0; port < config.SWITCH_PORTS; port++)
+                if(!Object.values(cameras).find(camera => camera.interface==interface && camera.port==port)) {
+                    tasks.push( bootLimiter.schedule( () => powerCycle(tplinks[interface], switchAddress, port )));
+                }
 
-                for(let port=0; port < config.SWITCH_PORTS; port++)
-                    if(!Object.values(cameras).find(camera => camera.interface==interface && camera.port==port)) {
-                        debug(`Power cycle ${interface}:${port}`);
-                        tasks.push(device.powerCycle(port, 4000));
-                    }
-                await Promise.all(tasks);
-            }));
-        }
-
-        await Promise.all(switchTasks);
+        await Promise.all(tasks);
 
         lastReboot = Date.now();
 
@@ -348,6 +366,8 @@ let configureAllSwitches = async () => {
 
 let run = async () => {
 
+    let discoverInterval;
+
     try {
         // Prepare network interfaces
         await Promise.all(config.SWITCHES.map(
@@ -380,10 +400,10 @@ let run = async () => {
 
         debug("Starting camera heartbeat");
 
-        setInterval(send.pingAll, 1000);
+        discoverInterval = setInterval(discover, 1000);
 
         /* Give some time to the get ping response from the working cameras */
-        await delay(2000);
+        await delay(15000);
 
         debug("Starting main loop");
 
@@ -394,6 +414,8 @@ let run = async () => {
         debug("Error:", error);
     }
     debug("Quitting");
+
+    clearInterval(discoverInterval);
 
     server.close();
 
