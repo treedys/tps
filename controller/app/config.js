@@ -1,8 +1,11 @@
 const app = require('./app.js');
 const nedb = require('nedb');
 const feathersNedb = require('feathers-nedb');
+const path = require('path');
 
 const settings = {
+    PATH: "/disk/sda1",
+    PREVIEW: "normal/29.jpg",
     SWITCH_PORTS: 48,
     SWITCH_DEFAULT_ADDRESS: "192.168.0.1",
     MCAST_GROUP_ADDR: "224.1.1.1",
@@ -63,7 +66,7 @@ const initDefault = async () => {
 };
 
 const db = new nedb({
-    filename: '/disk/sda1/config.json',
+    filename: path.join(settings.PATH,'config.json'),
     autoload: true,
     onload: initDefault
 });

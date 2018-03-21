@@ -1,11 +1,10 @@
 const app = require('./app.js');
+const config = require('./config');
 const memory = require('feathers-memory');
 const Path = require('path');
 const fs = require('fs-extra');
 
 const debug = require('debug')('scans');
-
-const PATH = '/disk/sda1/db/';
 
 app.use('/api/scans', memory() );
 
@@ -84,7 +83,7 @@ const populate = async (path) => {
                 if(exists.length) {
                     await service.update( scanId, {
                         ...scan,
-                        "icon": Path.join(scanPath,"normal/176.jpg"),
+                        "icon": Path.join(scanPath, config.PREVIEW),
                         "path": scanJsonPath
                     });
                 } else {
@@ -92,7 +91,7 @@ const populate = async (path) => {
                         ...scan,
 
                         [service.id]: scanId,
-                        "icon": Path.join(scanPath,"normal/176.jpg"),
+                        "icon": Path.join(scanPath, config.PREVIEW),
                         "path": scanJsonPath
                     });
                 }
@@ -108,11 +107,11 @@ service.hooks({
         create: async context => {
             if(!context.data[service.id]) {
 
-                const directories = await fs.readdir(PATH);
+                const directories = await fs.readdir(Path.join(config.PATH,'/db'));
                 const numbers = directories.filter(directory=>!isNaN(directory)).map(directory=>parseInt(directory));
                 const next = numbers && numbers.length && Math.max(...numbers)+1 || 1;
 
-                const { scanPath, scanJsonPath } = paths(PATH, next.toString());
+                const { scanPath, scanJsonPath } = paths(Path.join(config.PATH,'/db'), next.toString());
 
                 await fs.ensureDir(scanPath);
 
@@ -121,7 +120,7 @@ service.hooks({
                     {
                         [service.id]: next.toString(),
                         path: scanJsonPath,
-                        icon: Path.join(scanPath,"normal/176.jpg")
+                        icon: Path.join(scanPath, config.PREVIEW)
                     },
                     context.data
                 );
@@ -158,6 +157,6 @@ service.hooks({
     }
 });
 
-populate(PATH);
+populate(Path.join(config.PATH,'/db'));
 
 module.exports = service;
