@@ -67,34 +67,38 @@ const paths = (path, scanId) => ({
 
 const populate = async (path) => {
 
-    let directories = await fs.readdir(path);
+    try {
+        let directories = await fs.readdir(path);
 
-    await Promise.all(directories.map(async scanId => {
+        await Promise.all(directories.map(async scanId => {
 
-        const { scanPath, scanJsonPath } = paths(path, scanId);
+            const { scanPath, scanJsonPath } = paths(path, scanId);
 
-        if(await isDirectory(scanPath) && await fs.exists(scanJsonPath)) {
-            let scan = JSON.parse(await fs.readFile(scanJsonPath));
+            if(await isDirectory(scanPath) && await fs.exists(scanJsonPath)) {
+                let scan = JSON.parse(await fs.readFile(scanJsonPath));
 
-            const exists = await service.find({ query: { [service.id]: scanId } });
+                const exists = await service.find({ query: { [service.id]: scanId } });
 
-            if(exists.length) {
-                await service.update( scanId, {
-                    ...scan,
-                    "icon": Path.join(scanPath,"normal/176.jpg"),
-                    "path": scanJsonPath
-                });
-            } else {
-                await service.create({
-                    ...scan,
+                if(exists.length) {
+                    await service.update( scanId, {
+                        ...scan,
+                        "icon": Path.join(scanPath,"normal/176.jpg"),
+                        "path": scanJsonPath
+                    });
+                } else {
+                    await service.create({
+                        ...scan,
 
-                    [service.id]: scanId,
-                    "icon": Path.join(scanPath,"normal/176.jpg"),
-                    "path": scanJsonPath
-                });
+                        [service.id]: scanId,
+                        "icon": Path.join(scanPath,"normal/176.jpg"),
+                        "path": scanJsonPath
+                    });
+                }
             }
-        }
-    }));
+        }));
+    } catch(error) {
+        debug("Error populating database", error);
+    }
 }
 
 service.hooks({
