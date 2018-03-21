@@ -43,6 +43,16 @@ const send = {
      execAll: async (s)  => send. exec( all, s  )
 };
 
+const shotsConfig = [
+    { name: 'projection', index: '1' },
+    { name: 'normal',     index: '2' }
+];
+
+const request = require('request');
+const eventToPromise = require('event-to-promise');
+const fs = require('fs-extra');
+const path = require('path');
+
 app.post("/api/shoot", async (browser_request, browser_response) => {
 
     let scanId;
@@ -51,6 +61,7 @@ app.post("/api/shoot", async (browser_request, browser_response) => {
         const scan = await scans.create({});
         scanId = scan[scans.id];
         browser_response.send({ id: scanId });
+        debug(`Start scan ${scanId}`);
     } catch(err) {
         browser_response.status(500).send(err);
         return;
@@ -58,8 +69,53 @@ app.post("/api/shoot", async (browser_request, browser_response) => {
 
     try {
         await status.patch(0, { shooting: true });
-        await send.shootAll(0);
+        await send.shootAll(scanId);
+        await delay(5*1000);
         await status.patch(0, { shooting: false });
+
+        await Promise.all(shotsConfig.map( ({ name }) =>
+            fs.ensureDir(path.join(config.PATH,`db/${scanId}/${name}/`))
+        ));
+
+        await Promise.all(Object.entries(cameras).map( async ([mac, camera]) => {
+            try {
+                const ipAddress = ip.toBuffer(camera.address);
+                const index = (ipAddress[2]-201)*50+camera.port;
+
+                if(isNaN(index)) {
+                    debug("NaN:",mac, camera);
+                    return;
+                }
+
+                debug(`Start ${index}`);
+
+                await Promise.all(shotsConfig.map( async ({ name, index: cameraFileIndex }) => {
+
+                    // Use HEAD request to check if the target jpg file exists
+
+                    const file_stream = fs.createWriteStream(path.join(config.PATH,`/db/${scanId}/${name}/${index}.jpg`));
+                    const camera_request = request.get(`http://${camera.address}/${scanId}-${cameraFileIndex}.jpg`);
+
+                    camera_request.pipe(file_stream);
+
+                    await Promise.all([
+                        eventToPromise.multi(camera_request, ["finish", "close"], ["error"] ),
+                        eventToPromise.multi(file_stream,    ["finish", "close"], ["error"] )
+                    ]);
+
+                }));
+
+                await send.erase(mac, scanId);
+
+                debug(`Done ${index}`);
+            } catch(error) {
+                debug(error);
+            }
+        }));
+
+        debug(`Done scan ${scanId}`);
+
+        await scans.patch(scanId, { done: Date.now() });
 
     } catch(error) {
         debug(error);
