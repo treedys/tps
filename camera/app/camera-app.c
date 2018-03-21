@@ -74,14 +74,23 @@ WARN_UNUSED enum error_code single_shoot(struct camera_shot_configuration config
 {
     enum error_code result;
 
-    digitalWrite( 17, config.gpio17 ? HIGH : LOW );
-    digitalWrite( 18, config.gpio17 ? HIGH : LOW );
-    digitalWrite( 22, config.gpio17 ? HIGH : LOW );
-    digitalWrite( 27, config.gpio17 ? HIGH : LOW );
+    result = omx_still_open(config); if(result!=OK) { return result; }
 
-    result = omx_still_open(config);   if(result!=OK) { return result; }
+    digitalWrite( 17, config.gpio17 ? HIGH : LOW );
+    digitalWrite( 18, config.gpio18 ? HIGH : LOW );
+    digitalWrite( 22, config.gpio22 ? HIGH : LOW );
+    digitalWrite( 27, config.gpio27 ? HIGH : LOW );
+
     result = omx_still_shoot(handler); if(result!=OK) { return result; }
-    return omx_still_close();
+
+    digitalWrite( 17, LOW );
+    digitalWrite( 18, LOW );
+    digitalWrite( 22, LOW );
+    digitalWrite( 27, LOW );
+
+    result = omx_still_close(); if(result!=OK) { return result; }
+
+    return OK;
 }
 
 enum error_code shoot(struct camera_configuration config)
@@ -162,7 +171,7 @@ enum error_code erase(const int32_t id)
 
 WARN_UNUSED enum error_code session(void)
 {
-    wiringPiSetup();
+    wiringPiSetupGpio();
 
     pinMode( 17, OUTPUT);
     pinMode( 18, OUTPUT);
