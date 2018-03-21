@@ -47,7 +47,6 @@ app.post("/api/shoot", async (browser_request, browser_response) => {
         scanId = scan[scans.id];
         browser_response.send({ id: scanId });
     } catch(err) {
-        await status.patch(0, { shooting: false });
         browser_response.status(500).send(err);
         return;
     }
@@ -299,6 +298,8 @@ let loop = async () => {
         lastReboot = Date.now();
 
         await status.patch(0, { restarting: false });
+    } else if(!tasks.length) {
+        await delay(1000);
     }
 }
 

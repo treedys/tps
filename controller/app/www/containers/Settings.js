@@ -1,7 +1,7 @@
 import React from 'react';
 import { Row, Col, Button } from '../components'
 import CameraSettings from './CameraSettings'
-import { updateState, changeState } from '../utils'
+import { updateState } from '../utils'
 
 const styles = {
     container: {
@@ -12,7 +12,6 @@ const styles = {
 };
 
 @updateState
-@changeState
 export default class Settings extends React.Component {
 
     updateState({settings}) { this.setState( state => ({ ...settings })); }
@@ -26,7 +25,7 @@ export default class Settings extends React.Component {
         return <Col className="scroll fill" style={ styles.container }>
 
             <h3>Camera settings:</h3>
-            <CameraSettings settings={this.state.camera} onChange={ camera => this.setState({camera: camera}) } />
+            <CameraSettings settings={this.state.camera} onChange={ camera => this.setState( state => ({ camera }))} />
             <Row>
                 <Button onClick={ (e) => onSave(this.state) }>Save</Button>
             </Row>

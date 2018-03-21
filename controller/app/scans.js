@@ -68,6 +68,8 @@ const paths = (path, scanId) => ({
 const populate = async (path) => {
 
     try {
+        await fs.ensureDir(path);
+
         let directories = await fs.readdir(path);
 
         await Promise.all(directories.map(async scanId => {
@@ -112,7 +114,7 @@ service.hooks({
 
                 const { scanPath, scanJsonPath } = paths(PATH, next.toString());
 
-                await fs.mkdir(scanPath);
+                await fs.ensureDir(scanPath);
 
                 context.data = Object.assign(
                     defaultScan(),
@@ -142,8 +144,13 @@ service.hooks({
                 debug("unsupported update", context.data);
             }
         },
-        patch: context => {
-            debug("unsupported patch:", context.data);
+        patch: async context => {
+            if(context.id) {
+                const { [service.id]:id, path, icon, ...scan } = await service.get(context.id);
+                await fs.outputJson(path, scan);
+            } else {
+                debug("unsupported patch", context.data);
+            }
         },
         remove: context => {
             debug("unsupported remove:", context);
