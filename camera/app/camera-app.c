@@ -74,7 +74,10 @@ WARN_UNUSED enum error_code single_shoot(struct camera_shot_configuration config
 {
     enum error_code result;
 
-    result = omx_still_open(config); if(result!=OK) { return result; }
+    if(config.open)
+    {
+        result = omx_still_open(config); if(result!=OK) { return result; }
+    }
 
     digitalWrite( 17, config.gpio17 ? HIGH : LOW );
     digitalWrite( 18, config.gpio18 ? HIGH : LOW );
@@ -88,7 +91,10 @@ WARN_UNUSED enum error_code single_shoot(struct camera_shot_configuration config
     digitalWrite( 22, LOW );
     digitalWrite( 27, LOW );
 
-    result = omx_still_close(); if(result!=OK) { return result; }
+    if(config.close)
+    {
+        result = omx_still_close(); if(result!=OK) { return result; }
+    }
 
     return OK;
 }

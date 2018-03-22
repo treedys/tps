@@ -42,6 +42,8 @@ const settings = {
         gpio18:       false,
         gpio22:       false,
         gpio27:       false,
+        open:          true,
+        close:         true,
     }
 };
 
@@ -77,7 +79,7 @@ const service = app.service('/api/config');
 
 const _pack = config => {
 
-    const message = Buffer.alloc(19);
+    const message = Buffer.alloc(21);
 
     let offset = 0;
 
@@ -87,6 +89,8 @@ const _pack = config => {
     offset = message.writeInt16LE(config.iso,          offset);
     offset = message.writeInt16LE(config.redGain,      offset);
     offset = message.writeInt16LE(config.blueGain,     offset);
+    offset = message.writeInt8   (config.open,         offset);
+    offset = message.writeInt8   (config.close,        offset);
     offset = message.writeInt8   (config.quality,      offset);
     offset = message.writeInt8   (config.sharpness,    offset);
     offset = message.writeInt8   (config.contrast,     offset);

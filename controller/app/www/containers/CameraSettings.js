@@ -113,6 +113,16 @@ export default class CameraSettings extends React.Component {
                         <td><LabeledSelect options={whiteBalanceOptions} value={this.state.normal    .whiteBalance} onChange={ e => this.changeState({ ...this.state, normal:     { ...this.state.normal,     whiteBalance: e.target.value } } ) } /></td>
                     </tr>
                     <tr>
+                        <td style={styles.label}>Open camera interface</td>
+                        <td><LabeledCheckbox checked={this.state.projection.open} onChange={ e => this.changeState({ ...this.state, projection: { ...this.state.projection, open: e.target.checked } } ) } /></td>
+                        <td><LabeledCheckbox checked={this.state.normal    .open} onChange={ e => this.changeState({ ...this.state, normal:     { ...this.state.normal,     open: e.target.checked } } ) } /></td>
+                    </tr>
+                    <tr>
+                        <td style={styles.label}>Close camera interface</td>
+                        <td><LabeledCheckbox checked={this.state.projection.close} onChange={ e => this.changeState({ ...this.state, projection: { ...this.state.projection, close: e.target.checked } } ) } /></td>
+                        <td><LabeledCheckbox checked={this.state.normal    .close} onChange={ e => this.changeState({ ...this.state, normal:     { ...this.state.normal,     close: e.target.checked } } ) } /></td>
+                    </tr>
+                    <tr>
                         <td style={styles.label}>GPIO 17</td>
                         <td><LabeledCheckbox checked={this.state.projection.gpio17} onChange={ e => this.changeState({ ...this.state, projection: { ...this.state.projection, gpio17: e.target.checked } } ) } /></td>
                         <td><LabeledCheckbox checked={this.state.normal    .gpio17} onChange={ e => this.changeState({ ...this.state, normal:     { ...this.state.normal,     gpio17: e.target.checked } } ) } /></td>

@@ -10,6 +10,8 @@ struct __attribute__((__packed__)) camera_shot_configuration {
     int16_t iso;
     int16_t redGain;
     int16_t blueGain;
+    int8_t  open;
+    int8_t  close;
     int8_t  quality;
     int8_t  sharpness;
     int8_t  contrast;
