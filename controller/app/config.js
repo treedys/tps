@@ -38,10 +38,10 @@ const settings = {
         blueGain:      1000, //    0 ..
         drc:              0, //    0 ..   3 OFF, LOW, MEDIUM, HIGH
         whiteBalance:     1, //    0 ..   8 OFF, AUTO ... HORIZON
-        gpio17:       false,
-        gpio18:       false,
-        gpio22:       false,
-        gpio27:       false,
+        gpioDelay17:      0,
+        gpioDelay18:      0,
+        gpioDelay22:      0,
+        gpioDelay27:      0,
         open:          true,
         close:         true,
     }
@@ -79,7 +79,7 @@ const service = app.service('/api/config');
 
 const _pack = config => {
 
-    const message = Buffer.alloc(21);
+    const message = Buffer.alloc(25);
 
     let offset = 0;
 
@@ -89,6 +89,10 @@ const _pack = config => {
     offset = message.writeInt16LE(config.iso,          offset);
     offset = message.writeInt16LE(config.redGain,      offset);
     offset = message.writeInt16LE(config.blueGain,     offset);
+    offset = message.writeInt16LE(config.gpioDelay17,  offset);
+    offset = message.writeInt16LE(config.gpioDelay18,  offset);
+    offset = message.writeInt16LE(config.gpioDelay22,  offset);
+    offset = message.writeInt16LE(config.gpioDelay27,  offset);
     offset = message.writeInt8   (config.open,         offset);
     offset = message.writeInt8   (config.close,        offset);
     offset = message.writeInt8   (config.quality,      offset);
@@ -98,10 +102,6 @@ const _pack = config => {
     offset = message.writeInt8   (config.saturation,   offset);
     offset = message.writeInt8   (config.drc,          offset);
     offset = message.writeInt8   (config.whiteBalance, offset);
-    offset = message.writeInt8   (config.gpio17,       offset);
-    offset = message.writeInt8   (config.gpio18,       offset);
-    offset = message.writeInt8   (config.gpio22,       offset);
-    offset = message.writeInt8   (config.gpio27,       offset);
 
     return message;
 }

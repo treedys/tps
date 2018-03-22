@@ -123,24 +123,24 @@ export default class CameraSettings extends React.Component {
                         <td><LabeledCheckbox checked={this.state.normal    .close} onChange={ e => this.changeState({ ...this.state, normal:     { ...this.state.normal,     close: e.target.checked } } ) } /></td>
                     </tr>
                     <tr>
-                        <td style={styles.label}>GPIO 17</td>
-                        <td><LabeledCheckbox checked={this.state.projection.gpio17} onChange={ e => this.changeState({ ...this.state, projection: { ...this.state.projection, gpio17: e.target.checked } } ) } /></td>
-                        <td><LabeledCheckbox checked={this.state.normal    .gpio17} onChange={ e => this.changeState({ ...this.state, normal:     { ...this.state.normal,     gpio17: e.target.checked } } ) } /></td>
+                        <td style={styles.label}>GPIO 17 delay</td>
+                        <td><LabeledTextInput value={this.state.projection.gpioDelay17} onChange={ e => this.changeState({ ...this.state, projection: { ...this.state.projection, gpioDelay17: e.target.value } } ) } /></td>
+                        <td><LabeledTextInput value={this.state.normal    .gpioDelay17} onChange={ e => this.changeState({ ...this.state, normal:     { ...this.state.normal,     gpioDelay17: e.target.value } } ) } /></td>
                     </tr>
                     <tr>
-                        <td style={styles.label}>GPIO 18</td>
-                        <td><LabeledCheckbox checked={this.state.projection.gpio18} onChange={ e => this.changeState({ ...this.state, projection: { ...this.state.projection, gpio18: e.target.checked } } ) } /></td>
-                        <td><LabeledCheckbox checked={this.state.normal    .gpio18} onChange={ e => this.changeState({ ...this.state, normal:     { ...this.state.normal,     gpio18: e.target.checked } } ) } /></td>
+                        <td style={styles.label}>GPIO 18 delay</td>
+                        <td><LabeledTextInput value={this.state.projection.gpioDelay18} onChange={ e => this.changeState({ ...this.state, projection: { ...this.state.projection, gpioDelay18: e.target.value } } ) } /></td>
+                        <td><LabeledTextInput value={this.state.normal    .gpioDelay18} onChange={ e => this.changeState({ ...this.state, normal:     { ...this.state.normal,     gpioDelay18: e.target.value } } ) } /></td>
                     </tr>
                     <tr>
-                        <td style={styles.label}>GPIO 22</td>
-                        <td><LabeledCheckbox checked={this.state.projection.gpio22} onChange={ e => this.changeState({ ...this.state, projection: { ...this.state.projection, gpio22: e.target.checked } } ) } /></td>
-                        <td><LabeledCheckbox checked={this.state.normal    .gpio22} onChange={ e => this.changeState({ ...this.state, normal:     { ...this.state.normal,     gpio22: e.target.checked } } ) } /></td>
+                        <td style={styles.label}>GPIO 22 delay</td>
+                        <td><LabeledTextInput value={this.state.projection.gpioDelay22} onChange={ e => this.changeState({ ...this.state, projection: { ...this.state.projection, gpioDelay22: e.target.value } } ) } /></td>
+                        <td><LabeledTextInput value={this.state.normal    .gpioDelay22} onChange={ e => this.changeState({ ...this.state, normal:     { ...this.state.normal,     gpioDelay22: e.target.value } } ) } /></td>
                     </tr>
                     <tr>
-                        <td style={styles.label}>GPIO 27</td>
-                        <td><LabeledCheckbox checked={this.state.projection.gpio27} onChange={ e => this.changeState({ ...this.state, projection: { ...this.state.projection, gpio27: e.target.checked } } ) } /></td>
-                        <td><LabeledCheckbox checked={this.state.normal    .gpio27} onChange={ e => this.changeState({ ...this.state, normal:     { ...this.state.normal,     gpio27: e.target.checked } } ) } /></td>
+                        <td style={styles.label}>GPIO 27 delay</td>
+                        <td><LabeledTextInput value={this.state.projection.gpioDelay27} onChange={ e => this.changeState({ ...this.state, projection: { ...this.state.projection, gpioDelay27: e.target.value } } ) } /></td>
+                        <td><LabeledTextInput value={this.state.normal    .gpioDelay27} onChange={ e => this.changeState({ ...this.state, normal:     { ...this.state.normal,     gpioDelay27: e.target.value } } ) } /></td>
                     </tr>
                 </tbody>
             </table>
