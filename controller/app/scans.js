@@ -3,6 +3,7 @@ const config = require('./config');
 const memory = require('feathers-memory');
 const Path = require('path');
 const fs = require('fs-extra');
+const archiver = require('archiver');
 
 const debug = require('debug')('scans');
 
@@ -57,7 +58,27 @@ app.get('/scan/:scan/preview.jpg', async (browser_request, browser_response) => 
     }
 });
 
+app.get('/scan/:scan.zip', async (browser_request, browser_response) => {
+    try {
+        var archive = archiver('zip', { store: true });
 
+        archive.pipe(browser_response);
+
+        const { scanPath } = paths(Path.join(config.PATH,'/db'), browser_request.scan[service.id]);
+
+        archive.directory(scanPath, false);
+
+        archive.on('warning', error => debug('Archive warning:', error));
+
+        archive.on('error', error => debug('Archive error:', error));
+
+        archive.finalize();
+
+    } catch(error) {
+        debug('Error:', error);
+        browser_response.status(500).send(error);
+    }
+});
 
 const paths = (path, scanId) => ({
     scanPath: Path.join(path, scanId),

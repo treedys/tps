@@ -43,6 +43,8 @@ export default class Scan extends React.Component {
             </div>
             <Col style={ styles.information.container }>
 
+                <a href={`/scan/${scan.id}.zip`}>Download</a>
+
                 <h3>Scan information:</h3>
 
                 <Col style={{ display: "block" }} className="fill scroll">
