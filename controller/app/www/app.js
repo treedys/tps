@@ -8,7 +8,7 @@ import {
     PageList, PageLink,
     Scan, ScanList,
     SwitchList, CameraList,
-    System, Settings
+    Settings
 } from './containers/';
 
 import assets from './assets/';
@@ -38,7 +38,6 @@ export default class App extends React.Component {
         this.switches = services.switches.watch().find().subscribe( switches => this.changeState({ switches }));
         this.cameras  = services. cameras.watch().find().subscribe(  cameras => this.changeState({ cameras  }));
         this.scans    = services.   scans.watch().find().subscribe(    scans => this.changeState({ scans    }));
-        this.status   = services.  status.watch().get( 0 ).subscribe( status => this.changeState({ status }));
         this.config   = services.  config.watch().get('0').subscribe( config => this.changeState({ config }));
     }
 
@@ -46,7 +45,6 @@ export default class App extends React.Component {
         this.switches.unsubscribe();
         this.cameras .unsubscribe();
         this.scans   .unsubscribe();
-        this.status  .unsubscribe();
         this.config  .unsubscribe();
     }
 
@@ -98,10 +96,6 @@ export default class App extends React.Component {
 
                         <Route path="/settings" render={ props =>
                             <Settings settings={this.state.config} onSave={config => services.config.update('0', config)}/>
-                        }/>
-
-                        <Route path="/system" render={ props =>
-                            <System status={this.state.status}/>
                         }/>
 
                     </Col>
