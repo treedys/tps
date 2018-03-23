@@ -35,7 +35,7 @@ const send = {
      ping: async (mac)     => sendCmd([ Buffer.from(mac), 0 ]),
     shoot: async (mac, id) => sendCmd([ Buffer.from(mac), 1, bufferFromInt32LE(id), await config.pack() ]),
     erase: async (mac, id) => sendCmd([ Buffer.from(mac), 2, bufferFromInt32LE(id) ]),
-     exec: async (mac, s)  => sendCmd([ Buffer.from(mac), 3, Buffer.from(s) ]),
+     exec: async (mac, s)  => sendCmd([ Buffer.from(mac), 3, Buffer.from(s), 0 ]),
 
      pingAll: async ()   => send. ping( all     ),
     shootAll: async (id) => send.shoot( all, id ),
