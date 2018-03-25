@@ -5,6 +5,7 @@ const config = require("./config");
 const debug = require("debug")("APP");
 const multicast = require("./multicast");
 
+const pTimeout = require('p-timeout');
 const delay = ms => new Promise(res => setTimeout(res, ms))
 
 const app = require("./app.js");
@@ -93,15 +94,17 @@ app.post("/api/shoot", async (browser_request, browser_response) => {
 
                     // Use HEAD request to check if the target jpg file exists
 
-                    const file_stream = fs.createWriteStream(path.join(config.PATH,`/db/${scanId}/${name}/${index}.jpg`));
+                    const fileName = `/db/${scanId}/${name}/${index}.jpg`;
+
+                    const file_stream = fs.createWriteStream(path.join(config.PATH, fileName));
                     const camera_request = request.get(`http://${camera.address}/${scanId}-${cameraFileIndex}.jpg`);
 
                     camera_request.pipe(file_stream);
 
-                    await Promise.all([
-                        eventToPromise.multi(camera_request, ["finish", "close"], ["error"] ),
-                        eventToPromise.multi(file_stream,    ["finish", "close"], ["error"] )
-                    ]);
+                    await pTimeout(Promise.all([
+                        eventToPromise.multi(camera_request, ["finish", "close", "end", "complete"], ["error", "abort"] ),
+                        eventToPromise.multi(file_stream,    ["finish", "close"], ["error", "unpipe"] )
+                    ]), 120*1000, `Timeout downloading ${fileName}`);
 
                 }));
 

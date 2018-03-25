@@ -35,6 +35,7 @@
     "lodash-decorators": "^4.5.0",
     "nedb": "^1.8.0",
     "netlink-notify": "github:cenuij/netlink-notify",
+    "p-timeout": "^2.0.1",
     "request": "^2.83.0",
     "telnet-client": "^0.15.5",
     "time-since": "^1.0.6",
