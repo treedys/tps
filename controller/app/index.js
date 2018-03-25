@@ -54,6 +54,12 @@ const eventToPromise = require('event-to-promise');
 const fs = require('fs-extra');
 const path = require('path');
 
+const cameraIndex = camera => {
+    const ipAddress = ip.toBuffer(camera.address);
+
+    return (ipAddress[2]-201)*50+camera.port;
+}
+
 app.post("/api/preview", async (browse_requet, browser_response) => {
     try {
         await status.patch(0, { shooting: true });
@@ -92,8 +98,7 @@ app.post("/api/shoot", async (browser_request, browser_response) => {
 
         await Promise.all(Object.entries(cameras).map( async ([mac, camera]) => {
             try {
-                const ipAddress = ip.toBuffer(camera.address);
-                const index = (ipAddress[2]-201)*50+camera.port;
+                const index = cameraIndex(camera);
 
                 if(isNaN(index)) {
                     debug("NaN:",mac, camera);
@@ -289,15 +294,15 @@ let configure = async (interface, desiredAddress, defaultAddress) => {
 
             await device.config("spanning-tree|spanning-tree mode rstp");
 
-            for(let i=0; i<config.SWITCH_PORTS; i++)
-                await device.port(i,"spanning-tree|spanning-tree common-config portfast enable");
+            for(let port=0; port<config.SWITCH_PORTS; port++)
+                await device.port(port, "spanning-tree|spanning-tree common-config portfast enable");
 
             debug("Spanning tree configured");
 
             debug("Configuring PoE");
 
-            for(let i=0; i<config.SWITCH_PORTS; i++)
-                await device.powerDisable(i);
+            for(let port=0; port<config.SWITCH_PORTS; port++)
+                await device.powerDisable(port);
 
             debug("PoE configured");
         }, {
@@ -432,8 +437,11 @@ let run = async () => {
         ));
 
         // Probe and configure all switches
+        debug("Detecting switches.");
+
         for(let { interface, switchAddress } of config.SWITCHES)
             if(!await tplinks[interface].probe(switchAddress)) {
+                debug(`Can't find switch ${switchAddress}`);
                 await configureAllSwitches();
                 break;
             }
