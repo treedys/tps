@@ -59,6 +59,14 @@ export default class App extends React.Component {
         }
     }
 
+    preview = async () => {
+        try {
+            await fetch('/api/preview', { method: 'POST' });
+        } catch(error) {
+            console.log("Preview error:", error);
+        }
+    }
+
     render = () =>
         <Router history={this.history}>
             <Col style={ styles.container }>
@@ -68,7 +76,7 @@ export default class App extends React.Component {
                         <PageLink to="/shoot"       title="Shoot!"      icon={assets.shoot} onClick={this.shoot} />
                         <PageLink to="/session"     title="Session"     icon={assets.session}/>
                         <PageLink to="/calibration" title="Calibration" icon={assets.calibration}/>
-                        <PageLink to="/cameras"     title="Cameras"     icon={assets.cameras}/>
+                        <PageLink to="/cameras"     title="Cameras"     icon={assets.cameras} onClick={this.preview} />
                         <PageLink to="/settings"    title="Settings"    icon={assets.settings}/>
                     </PageList>
 

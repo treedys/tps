@@ -54,6 +54,18 @@ const eventToPromise = require('event-to-promise');
 const fs = require('fs-extra');
 const path = require('path');
 
+app.post("/api/preview", async (browse_requet, browser_response) => {
+    try {
+        await status.patch(0, { shooting: true });
+        await send.shootAll(0);
+        await delay(5*1000);
+        await status.patch(0, { shooting: false });
+        browser_response.status(204).end();
+    } catch(err) {
+        browser_response.status(500).send(err);
+    }
+});
+
 app.post("/api/shoot", async (browser_request, browser_response) => {
 
     let scanId;
