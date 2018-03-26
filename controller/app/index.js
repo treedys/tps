@@ -351,7 +351,7 @@ let lastReboot;
 const powerCycleSwitch = async switchConfig => {
     for(let port=0; port < switchConfig.ports; port++) {
         if(!Object.values(cameras).find(camera => camera.switchAddress==switchConfig.address && camera.port==port)) {
-            await  bootLimiter.schedule( () => powerCycle( switchConfig.address, port ));
+            await bootLimiter.schedule( () => powerCycle( switchConfig.address, port ));
         }
     }
 }
@@ -442,7 +442,7 @@ const enableAllInterfaces = async () => {
     debug("Enable all network interfaces");
 
     await Promise.all(config.SWITCHES.map(
-        async switch0  => {
+        async switch0 => {
             await interfaces.up(switch0.interface, addressEnd( switch0.address, 200 ));
         }
     ));
