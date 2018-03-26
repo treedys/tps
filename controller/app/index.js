@@ -142,26 +142,31 @@ app.post("/api/shoot", async (browser_request, browser_response) => {
     }
 });
 
+const powerCycleAllPorts = async switchConfig =>
+    tplinks[switchConfig.address].session(switchConfig.address, async device => {
+
+        let tasks = [];
+
+        for(let port=0; port < switchConfig.ports; port++) {
+            debug(`Forced power cycle ${switchConfig.address}:${port}`);
+            tasks.push(device.powerCycle(port, 4000));
+        }
+
+        await Promise.all(tasks);
+    });
+
 app.post("/api/cameras/restart", async (browser_request, browser_response) => {
     try {
-        let switchTasks = [];
+        let tasks = [];
 
         await status.patch(0, { restarting: true });
 
         for(let switch0 of config.SWITCHES) {
-            switchTasks.push(tplinks[switch0.address].session(switch0.address, async device => {
 
-                let tasks = [];
-
-                for(let port=0; port < switch0.ports; port++) {
-                    debug(`Forced power cycle ${switch0.address}:${port}`);
-                    tasks.push(device.powerCycle(port, 4000));
-                }
-                await Promise.all(tasks);
-            }));
+            tasks.push(powerCycleAllPorts(switch0));
         }
 
-        await Promise.all(switchTasks);
+        await Promise.all(tasks);
 
         lastReboot = Date.now();
 
@@ -205,27 +210,37 @@ const onMessage = async (message, rinfo) => {
     }
 };
 
+const linkSwitch = async switchConfig =>
+    await tplinks[switchConfig.address].session(switchConfig.address, async device => {
+
+        const table = await device.portMacTable();
+
+        for(let { port, mac } of table) {
+            if(cameras[mac] && port<switchConfig.ports) {
+                if( cameras[mac].switchAddress != switchConfig.address ||
+                    cameras[mac].port          != port ) {
+
+                    debug(`Linking ${switchConfig.address}:${port} to ${cameras[mac].address}`);
+
+                    cameras[mac] = { ...cameras[mac], switchAddress:switchConfig.address, port };
+                    await cameraService.patch(mac, { switchAddress:switchConfig.address, port });
+
+                    linked++;
+                }
+            }
+        }
+    });
+
 const link = async () => {
+    let tasks = [];
+
     // Get MAC addresses from the switches
     for(let switch0 of config.SWITCHES) {
-        await tplinks[switch0.address].session(switch0.address, async device => {
 
-            let table = await device.portMacTable();
-
-            for(let { port, mac } of table)
-                if(cameras[mac])
-                    if( cameras[mac].switchAddress != switch0.address ||
-                        cameras[mac].port          != port ) {
-
-                        debug(`Linking ${interface}:${port} to ${cameras[mac].address}`);
-
-                        cameras[mac] = { ...cameras[mac], switchAddress:switch0.address, port };
-                        await cameraService.patch(mac, { switchAddress:aswitch0.:address, port });
-
-                        linked++;
-                    }
-        });
+        tasks.push(linkSwitch(switch0));
     }
+
+    await Promise.all(tasks);
 }
 
 const discover = async () => {
@@ -333,6 +348,14 @@ let configure = async (interface, switchConfig, defaultAddress) => {
 
 let lastReboot;
 
+const powerCycleSwitch = async switchConfig => {
+    for(let port=0; port < switchConfig.ports; port++) {
+        if(!Object.values(cameras).find(camera => camera.switchAddress==switchConfig.address && camera.port==port)) {
+            await  bootLimiter.schedule( () => powerCycle( switchConfig.address, port ));
+        }
+    }
+}
+
 let loop = async () => {
 
     let tasks = [];
@@ -374,11 +397,7 @@ let loop = async () => {
         let tasks = [];
 
         for(let switch0 of config.SWITCHES) {
-            for(let port=0; port < switch0.ports; port++) {
-                if(!Object.values(cameras).find(camera => camera.switchAddress==switch0.address && camera.port==port)) {
-                    tasks.push( bootLimiter.schedule( () => powerCycle(switch0.address, port )));
-                }
-            }
+            tasks.push(powerCycleSwitch(switch0));
         }
 
         await Promise.all(tasks);
@@ -406,20 +425,20 @@ let retry = async (maxRetries, callback) => {
     throw lastError;
 };
 
-let configureAllSwitches = async () => {
+const probeAndConfigureSwitch = async switch0 => {
 
-    for(let switch0 of config.SWITCHES) {
-        if(!await probeSwitch(switch0, switch0.address)) {
+    if(!await probeSwitch(switch0, switch0.address)) {
 
-            if(!await probeSwitch(switch0, config.SWITCH_DEFAULT_ADDRESS))
-                throw `Can't connect to switch ${switch0.address}`;
+        if(!await probeSwitch(switch0, config.SWITCH_DEFAULT_ADDRESS))
+            throw `Can't connect to switch ${switch0.address}`;
 
-            await configure(switch0.interface, switch0, config.SWITCH_DEFAULT_ADDRESS);
-        }
-
-        debug(`Found switch ${switch0.address}`);
+        await configure(switch0.interface, switch0, config.SWITCH_DEFAULT_ADDRESS);
     }
 
+    debug(`Found switch ${switch0.address}`);
+}
+
+const enableAllInterfaces = async () => {
     debug("Enable all network interfaces");
 
     await Promise.all(config.SWITCHES.map(
@@ -431,11 +450,23 @@ let configureAllSwitches = async () => {
     debug("Network interfaces are enabled");
 };
 
+let configureAllSwitches = async () => {
+
+    debug("Configuring all switches");
+
+    for(let switch0 of config.SWITCHES) {
+        await probeAndConfigureSwitch(switch0);
+    }
+
+    await enableAllInterfaces();
+};
+
 let run = async () => {
 
     let discoverInterval;
 
     try {
+        debug("Configure all network interfaces");
         // Prepare network interfaces
         await Promise.all(config.SWITCHES.map(
             async ({ interface, address }) => {
