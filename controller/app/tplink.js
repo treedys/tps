@@ -95,7 +95,12 @@ module.exports = function() {
                     powerEnable,
                     powerDisable,
                     powerCycle,
-                    portMacTable
+                    portMacTable,
+                    portEnable,
+                    portDisable,
+                    enableAll,
+                    disableAll,
+                    enableOnly
                 };
             } catch(error) {
                 debug(`Connect failed: ${error}`);
@@ -168,6 +173,8 @@ module.exports = function() {
     let port = async (number, commands, options) => config(`interface gigabitEthernet 1/0/${number+1}|${commands}|exit`, options);
     let vlan = async (number, commands, options) => config(`interface vlan ${number+1}|${commands}|exit`, options);
 
+    let portEnable   = async (number, options) => port(number, "no shutdown", options);
+    let portDisable  = async (number, options) => port(number, "shutdown", options);
     let powerEnable  = async (number, options) => port(number, "power inline supply enable", options);
     let powerDisable = async (number, options) => port(number, "power inline supply disable", options);
     let powerCycle   = async (number, ms, options)  => {
@@ -175,6 +182,13 @@ module.exports = function() {
         await powerDisable(number, options);
         await delay(ms);
         await powerEnable(number, options);
+    }
+
+    let disableAll   = async (totalPorts, options) => { for(let port=0; port<totalPorts; port++) await portDisable(port, options); }
+    let enableAll    = async (totalPorts, options) => { for(let port=0; port<totalPorts; port++) await portEnable(port, options); }
+    let enableOnly   = async (portToEnable, totalPorts, options) => {
+        for(let port=0; port<totalPorts; port++)
+            await (port==portToEnable ? portEnable : portDisable)(port, options)
     }
 
     let portMacTable = async (options) => {

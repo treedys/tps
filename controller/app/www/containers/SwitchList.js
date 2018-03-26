@@ -64,7 +64,7 @@ export const SwitchLink = ({switchData, ...props}) =>
             </Circle>
             <Col style={{ margin: "1em" }} className="fill align-center">
                 <Row style={ styles.link.description.primary }>
-                    <span style={{ maxWidth: "6em" }}>{switchData.model}</span>
+                    <span style={{ maxWidth: "6em" }}>{switchData.name}</span>
                     <span style={{ minWidth: "2em" }} className="fill"/>
                     <span>{switchData.interface}</span>
                 </Row>

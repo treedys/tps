@@ -57,7 +57,10 @@ const path = require('path');
 const cameraIndex = camera => {
     const ipAddress = ip.toBuffer(camera.switchAddress);
 
-    return (ipAddress[2]-201)*50+camera.port;
+    if(ipAddress[3]==199)
+        return (ipAddress[2]-201)*50+camera.port;
+    else
+        return (ipAddress[3]-201)*8+camera.port;
 }
 
 app.post("/api/preview", async (browse_requet, browser_response) => {
@@ -164,6 +167,10 @@ app.post("/api/cameras/restart", async (browser_request, browser_response) => {
         for(let switch0 of config.SWITCHES) {
 
             tasks.push(powerCycleAllPorts(switch0));
+
+            for(let switch1 of switch0.switches) {
+                tasks.push(powerCycleAllPorts(switch1));
+            }
         }
 
         await Promise.all(tasks);
@@ -237,7 +244,13 @@ const link = async () => {
     // Get MAC addresses from the switches
     for(let switch0 of config.SWITCHES) {
 
-        tasks.push(linkSwitch(switch0));
+        if(switch0.switches.length==0)
+            tasks.push(linkSwitch(switch0));
+
+        for(let switch1 of switch0.switches) {
+
+            tasks.push(linkSwitch(switch1));
+        }
     }
 
     await Promise.all(tasks);
@@ -279,6 +292,9 @@ const tplinksPrepare = () => {
     for(let switch0 of config.SWITCHES) {
 
         tplinks[switch0.address] = require("./tplink")();
+
+        for(let switch1 of switch0.switches)
+            tplinks[switch1.address] = require("./tplink")();
     }
 };
 
@@ -286,12 +302,26 @@ tplinksPrepare();
 
 const addressEnd = (address, end) => ip.toString( [...ip.toBuffer(address).slice(0, 3), end] );
 
-let probeSwitch = async (switch0, address) => {
+let probeSwitch0 = async (switch0, address)  => {
 
     debug(`Checking switch ${address}`);
 
     await interfaces.upOnly(switch0.interface, addressEnd(address, 200));
     return await tplinks[switch0.address].probe(address, {
+        timeout: 1*60*1000,
+        execTimeout: 1*60*1000
+    });
+}
+
+let probeSwitch1 = async (switch0, switch1, address) => {
+
+    debug(`Checking switch ${address}`);
+
+    await interfaces.upOnly(switch0.interface, addressEnd(switch0.address, 200));
+    await tplinks[switch0.address].session(switch0.address, device => device.enableOnly( switch1.hostPort, switch0.ports ));
+
+    await interfaces.upOnly(switch0.interface, addressEnd(address, 200));
+    return await tplinks[switch1.address].probe(address, {
         timeout: 1*60*1000,
         execTimeout: 1*60*1000
     });
@@ -397,7 +427,12 @@ let loop = async () => {
         let tasks = [];
 
         for(let switch0 of config.SWITCHES) {
-            tasks.push(powerCycleSwitch(switch0));
+            if(switch0.switches.length==0)
+                tasks.push(powerCycleSwitch(switch0));
+
+            for(let switch1 of switch0.switches ) {
+                tasks.push(powerCycleSwitch(switch1));
+            }
         }
 
         await Promise.all(tasks);
@@ -425,11 +460,11 @@ let retry = async (maxRetries, callback) => {
     throw lastError;
 };
 
-const probeAndConfigureSwitch = async switch0 => {
+const probeAndConfigureSwitch0 = async switch0 => {
 
-    if(!await probeSwitch(switch0, switch0.address)) {
+    if(!await probeSwitch0(switch0, switch0.address)) {
 
-        if(!await probeSwitch(switch0, config.SWITCH_DEFAULT_ADDRESS))
+        if(!await probeSwitch0(switch0, config.SWITCH_DEFAULT_ADDRESS))
             throw `Can't connect to switch ${switch0.address}`;
 
         await configure(switch0.interface, switch0, config.SWITCH_DEFAULT_ADDRESS);
@@ -438,12 +473,29 @@ const probeAndConfigureSwitch = async switch0 => {
     debug(`Found switch ${switch0.address}`);
 }
 
+const probeAndConfigureSwitch1 = async (switch0, switch1) => {
+
+    if(!await probeSwitch1(switch0, switch1, switch1.address)) {
+
+        if(!await probeSwitch1(switch0, switch1, config.SWITCH_DEFAULT_ADDRESS))
+            throw `Can't connect to switch ${switch1.address}`;
+
+        await interfaces.address(switch0.interface, addressEnd( switch0.address, 200 ));
+        await tplinks[switch0.address].session(switch0.address, device => device.enableOnly(switch1.hostPort, switch0.ports));
+
+        await configure(switch0.interface, switch1, config.SWITCH_DEFAULT_ADDRESS);
+    }
+
+    debug(`Found switch ${switch1.address}`);
+}
+
 const enableAllInterfaces = async () => {
     debug("Enable all network interfaces");
 
     await Promise.all(config.SWITCHES.map(
         async switch0 => {
             await interfaces.up(switch0.interface, addressEnd( switch0.address, 200 ));
+            await tplinks[switch0.address].session(switch0.address, device => device.enableAll(switch0.ports));
         }
     ));
 
@@ -455,7 +507,11 @@ let configureAllSwitches = async () => {
     debug("Configuring all switches");
 
     for(let switch0 of config.SWITCHES) {
-        await probeAndConfigureSwitch(switch0);
+        await probeAndConfigureSwitch0(switch0);
+
+        for(let switch1 of switch0.switches) {
+            await probeAndConfigureSwitch1(switch0, switch1);
+        }
     }
 
     await enableAllInterfaces();
@@ -483,6 +539,13 @@ let run = async () => {
                 debug(`Can't find switch ${switch0.address}`);
                 await configureAllSwitches();
                 break;
+            } else {
+                for(let switch1 of switch0.switches )
+                    if(!await tplinks[switch1.address].probe(switch1.address)) {
+                        debug(`Can\'t find switch ${switch1.address}`);
+                        await configureAllSwitches();
+                        break;
+                    }
             }
 
         debug("UDP binding");
