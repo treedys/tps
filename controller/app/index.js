@@ -55,6 +55,11 @@ const fs = require('fs-extra');
 const path = require('path');
 
 const cameraIndex = camera => {
+    if(typeof camera == "undefined" ||
+        typeof camera.switchAddress == "undefined" ||
+        typeof camera.port == "undefined")
+        return undefined;
+
     const ipAddress = ip.toBuffer(camera.switchAddress);
 
     if(ipAddress[3]==199)
@@ -108,8 +113,6 @@ app.post("/api/shoot", async (browser_request, browser_response) => {
                     return;
                 }
 
-                debug(`Start ${index}`);
-
                 await Promise.all(shotsConfig.map( async ({ name, index: cameraFileIndex }) => {
 
                     // Use HEAD request to check if the target jpg file exists
@@ -129,8 +132,6 @@ app.post("/api/shoot", async (browser_request, browser_response) => {
                 }));
 
                 await send.erase(mac, scanId);
-
-                debug(`Done ${index}`);
             } catch(error) {
                 debug(error);
             }
@@ -223,7 +224,7 @@ const linkSwitch = async switchConfig =>
         const table = await device.portMacTable();
 
         for(let { port, mac } of table) {
-            if(cameras[mac] && port<switchConfig.ports) {
+            if(cameras[mac] && port<switchConfig.ports && port!=switchConfig.uplinkPort) {
                 if( cameras[mac].switchAddress != switchConfig.address ||
                     cameras[mac].port          != port ) {
 
@@ -323,7 +324,7 @@ let probeSwitch1 = async (switch0, switch1, address) => {
     debug(`Checking switch ${address}`);
 
     await interfaces.upOnly(switch0.interface, addressEnd(switch0.address, 200));
-    await tplinks[switch0.address].session(switch0.address, device => device.enableOnly( switch1.hostPort, switch0.ports ));
+    await tplinks[switch0.address].session(switch0.address, device => device.enableOnly( [switch1.hostPort, switch0.uplinkPort], switch0.ports ));
 
     await interfaces.upOnly(switch0.interface, addressEnd(address, 200));
     return await tplinks[switch1.address].probe(address, {
@@ -486,7 +487,7 @@ const probeAndConfigureSwitch1 = async (switch0, switch1) => {
             throw `Can't connect to switch ${switch1.address}`;
 
         await interfaces.address(switch0.interface, addressEnd( switch0.address, 200 ));
-        await tplinks[switch0.address].session(switch0.address, device => device.enableOnly(switch1.hostPort, switch0.ports));
+        await tplinks[switch0.address].session(switch0.address, device => device.enableOnly([switch1.hostPort, switch0.uplinkPort], switch0.ports));
 
         await configure(switch0.interface, switch1, config.SWITCH_DEFAULT_ADDRESS);
     }
@@ -500,7 +501,7 @@ const enableAllInterfaces = async () => {
     await Promise.all(config.SWITCHES.map(
         async switch0 => {
             await interfaces.up(switch0.interface, addressEnd( switch0.address, 200 ));
-            await tplinks[switch0.address].session(switch0.address, device => device.enableAll(switch0.ports));
+            await tplinks[switch0.address].session(switch0.address, device => device.enableAll([], switch0.ports));
         }
     ));
 

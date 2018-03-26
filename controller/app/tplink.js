@@ -184,11 +184,27 @@ module.exports = function() {
         await powerEnable(number, options);
     }
 
-    let disableAll   = async (totalPorts, options) => { for(let port=0; port<totalPorts; port++) await portDisable(port, options); }
-    let enableAll    = async (totalPorts, options) => { for(let port=0; port<totalPorts; port++) await portEnable(port, options); }
-    let enableOnly   = async (portToEnable, totalPorts, options) => {
+    let disableAll   = async (except, totalPorts, options) => {
+        let excepts = [].concat(except);
+
         for(let port=0; port<totalPorts; port++)
-            await (port==portToEnable ? portEnable : portDisable)(port, options)
+            if(!excepts.includes(port))
+                await portDisable(port, options);
+    }
+
+    let enableAll    = async (except, totalPorts, options) => {
+        let excepts = [].concat(except);
+
+        for(let port=0; port<totalPorts; port++)
+            if(!excepts.includes(port))
+                await portEnable(port, options);
+    }
+
+    let enableOnly   = async (portToEnable, totalPorts, options) => {
+        let ports = [].concat(portToEnable);
+
+        for(let port=0; port<totalPorts; port++)
+            await (ports.includes(port) ? portEnable : portDisable)(port, options)
     }
 
     let portMacTable = async (options) => {
