@@ -60,8 +60,8 @@ export const CameraList = ({ switchData, cameras, ...params }) => {
             if(port<switchData.ports) {
 
                 const camera = cameras.find( camera =>
-                    camera.port==port && camera.interface==switchData.interface)
-                        || { online: false, port: port, interface: switchData.interface } ;
+                    camera.port==port && camera.switchAddress==switchData.address)
+                        || { online: false, port: port, switchAddress: switchData.address } ;
 
                 cols.push(<td style={styles.cell}><CameraLink camera={camera} port={port} {...params}/></td>);
             }

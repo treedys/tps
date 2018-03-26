@@ -55,7 +55,7 @@ const fs = require('fs-extra');
 const path = require('path');
 
 const cameraIndex = camera => {
-    const ipAddress = ip.toBuffer(camera.address);
+    const ipAddress = ip.toBuffer(camera.switchAddress);
 
     return (ipAddress[2]-201)*50+camera.port;
 }
@@ -148,13 +148,13 @@ app.post("/api/cameras/restart", async (browser_request, browser_response) => {
 
         await status.patch(0, { restarting: true });
 
-        for(let {interface, switchAddress} of config.SWITCHES) {
-            switchTasks.push(tplinks[interface].session(switchAddress, async device => {
+        for(let switch0 of config.SWITCHES) {
+            switchTasks.push(tplinks[switch0.address].session(switch0.address, async device => {
 
                 let tasks = [];
 
-                for(let port=0; port < config.SWITCH_PORTS; port++) {
-                    debug(`Forced power cycle ${interface}:${port}`);
+                for(let port=0; port < switch0.ports; port++) {
+                    debug(`Forced power cycle ${switch0.address}:${port}`);
                     tasks.push(device.powerCycle(port, 4000));
                 }
                 await Promise.all(tasks);
@@ -191,7 +191,7 @@ const onMessage = async (message, rinfo) => {
 
             discovered++;
         } else if(cameras[mac].address != address || !cameras[mac].online) {
-            debug(`Recovering ${cameras[mac].interface}:${cameras[mac].port} ${address}`);
+            debug(`Recovering ${cameras[mac].switchAddress}:${cameras[mac].port} ${address}`);
             cameras[mac] = { ...cameras[mac], address, online: true };
             await cameraService.patch(mac, { address, online: true });
         }
@@ -207,21 +207,20 @@ const onMessage = async (message, rinfo) => {
 
 const link = async () => {
     // Get MAC addresses from the switches
-    for(let { interface, switchAddress } of config.SWITCHES) {
-        await tplinks[interface].session(switchAddress, async device => {
+    for(let switch0 of config.SWITCHES) {
+        await tplinks[switch0.address].session(switch0.address, async device => {
 
             let table = await device.portMacTable();
 
             for(let { port, mac } of table)
                 if(cameras[mac])
-                    if( cameras[mac].interface     != interface     ||
-                        cameras[mac].switchAddress != switchAddress ||
+                    if( cameras[mac].switchAddress != switch0.address ||
                         cameras[mac].port          != port ) {
 
                         debug(`Linking ${interface}:${port} to ${cameras[mac].address}`);
 
-                        cameras[mac] = { ...cameras[mac], interface, switchAddress, port };
-                        await cameraService.patch(mac, { interface, switchAddress, port });
+                        cameras[mac] = { ...cameras[mac], switchAddress:switch0.address, port };
+                        await cameraService.patch(mac, { switchAddress:aswitch0.:address, port });
 
                         linked++;
                     }
@@ -251,39 +250,46 @@ const Bottleneck = require("bottleneck");
 const bootLimiter = new Bottleneck({ maxConcurrent: 10 });
 //bootLimiter.on('debug', (msg, data) => debug("BOTTLENECK:", msg, data));
 
-const powerCycle = async (sw, address, port) => {
-    await sw.session( address, device => device.powerDisable(port) );
+const powerCycle = async (address, port) => {
+    debug(`Power cycle ${address}:${port}`);
+    await tplinks[address].session( address, device => device.powerDisable(port) );
     await delay(  3*1000 );
-    await sw.session( address, device => device.powerEnable(port) );
+    await tplinks[address].session( address, device => device.powerEnable(port) );
     await delay( 30*1000 );
 }
 
 let tplinks = {};
 
-for(let { interface } of config.SWITCHES)
-    tplinks[interface] = require("./tplink")();
+const tplinksPrepare = () => {
+    for(let switch0 of config.SWITCHES) {
+
+        tplinks[switch0.address] = require("./tplink")();
+    }
+};
+
+tplinksPrepare();
 
 const addressEnd = (address, end) => ip.toString( [...ip.toBuffer(address).slice(0, 3), end] );
 
-let probeSwitch = async (interface, address) => {
+let probeSwitch = async (switch0, address) => {
 
-    debug(`Checking switch ${interface} ${address}`);
+    debug(`Checking switch ${address}`);
 
-    await interfaces.upOnly(interface, addressEnd(address, 200));
-
-    return await tplinks[interface].probe(address, {
+    await interfaces.upOnly(switch0.interface, addressEnd(address, 200));
+    return await tplinks[switch0.address].probe(address, {
         timeout: 1*60*1000,
         execTimeout: 1*60*1000
     });
 }
 
-let configure = async (interface, desiredAddress, defaultAddress) => {
+let configure = async (interface, switchConfig, defaultAddress) => {
 
-    debug(`Starting session to configure switch at ${interface}`);
+    debug(`Starting session to configure switch at ${switchConfig.address}`);
 
     await retry(5, async () => {
-        await tplinks[interface].session(defaultAddress, async device => {
-            debug(`Configuring switch at ${interface}`);
+        await interfaces.address(interface, addressEnd( defaultAddress, 200 ));
+        await tplinks[switchConfig.address].session(defaultAddress, async device => {
+            debug(`Configuring switch ${switchConfig.address}`);
 
             // First get rid of logging messages that mess with the CLI commands execution
             await device.config("no logging monitor|no logging buffer");
@@ -294,14 +300,14 @@ let configure = async (interface, desiredAddress, defaultAddress) => {
 
             await device.config("spanning-tree|spanning-tree mode rstp");
 
-            for(let port=0; port<config.SWITCH_PORTS; port++)
+            for(let port=0; port<switchConfig.ports; port++)
                 await device.port(port, "spanning-tree|spanning-tree common-config portfast enable");
 
             debug("Spanning tree configured");
 
             debug("Configuring PoE");
 
-            for(let port=0; port<config.SWITCH_PORTS; port++)
+            for(let port=0; port<switchConfig.ports; port++)
                 await device.powerDisable(port);
 
             debug("PoE configured");
@@ -310,13 +316,12 @@ let configure = async (interface, desiredAddress, defaultAddress) => {
             execTimeout: 2*60*1000
         });
 
-        debug(`Changing IP address to ${desiredAddress}`);
-        await tplinks[interface].changeIpAddress(defaultAddress, 0, desiredAddress, "255.255.255.0");
+        debug(`Changing IP address to ${switchConfig.address}`);
+        await tplinks[switchConfig.address].changeIpAddress(defaultAddress, 0, switchConfig.address, "255.255.255.0");
         debug("IP address changed");
 
-        await interfaces.address(interface, addressEnd( desiredAddress, 200 ));
-
-        await tplinks[interface].session(desiredAddress, async device => {
+        await interfaces.address(interface, addressEnd( switchConfig.address, 200 ));
+        await tplinks[switchConfig.address].session(switchConfig.address, async device => {
             debug("Updating startup config");
             await device.privileged("copy running-config startup-config");
             debug("Startup config updated");
@@ -341,7 +346,7 @@ let loop = async () => {
 
         if(camera.online && notSeen) {
 
-            debug(`Lost connection to ${camera.interface}:${camera.port} ${camera.address}`);
+            debug(`Lost connection to ${camera.switchAddress}:${camera.port} ${camera.address}`);
 
             camera.online = false;
 
@@ -352,9 +357,9 @@ let loop = async () => {
 
         if(notSeen && notRebooted) {
 
-            if(camera.interface && camera.switchAddress && camera.port)
+            if(camera.switchAddress && camera.port)
                 tasks.push( bootLimiter.schedule( async () => {
-                    await powerCycle(tplinks[camera.interface], camera.switchAddress, camera.port );
+                    await powerCycle(camera.switchAddress, camera.port );
                     camera.lastReboot = Date.now();
                 }));
         }
@@ -368,11 +373,13 @@ let loop = async () => {
 
         let tasks = [];
 
-        for(let {interface, switchAddress} of config.SWITCHES)
-            for(let port=0; port < config.SWITCH_PORTS; port++)
-                if(!Object.values(cameras).find(camera => camera.interface==interface && camera.port==port)) {
-                    tasks.push( bootLimiter.schedule( () => powerCycle(tplinks[interface], switchAddress, port )));
+        for(let switch0 of config.SWITCHES) {
+            for(let port=0; port < switch0.ports; port++) {
+                if(!Object.values(cameras).find(camera => camera.switchAddress==switch0.address && camera.port==port)) {
+                    tasks.push( bootLimiter.schedule( () => powerCycle(switch0.address, port )));
                 }
+            }
+        }
 
         await Promise.all(tasks);
 
@@ -401,22 +408,24 @@ let retry = async (maxRetries, callback) => {
 
 let configureAllSwitches = async () => {
 
-    for(let { interface, switchAddress } of config.SWITCHES) {
-        if(!await probeSwitch(interface, switchAddress)) {
+    for(let switch0 of config.SWITCHES) {
+        if(!await probeSwitch(switch0, switch0.address)) {
 
-            if(!await probeSwitch(interface, config.SWITCH_DEFAULT_ADDRESS))
-                throw `Can't connect to the switch on port ${interface}`;
+            if(!await probeSwitch(switch0, config.SWITCH_DEFAULT_ADDRESS))
+                throw `Can't connect to switch ${switch0.address}`;
 
-            await configure(interface, switchAddress, config.SWITCH_DEFAULT_ADDRESS);
+            await configure(switch0.interface, switch0, config.SWITCH_DEFAULT_ADDRESS);
         }
 
-        debug(`Found switch ${interface} ${switchAddress}`);
+        debug(`Found switch ${switch0.address}`);
     }
 
     debug("Enable all network interfaces");
 
     await Promise.all(config.SWITCHES.map(
-        ({ interface, hostAddress }) => interfaces.up(interface, hostAddress)
+        async switch0  => {
+            await interfaces.up(switch0.interface, addressEnd( switch0.address, 200 ));
+        }
     ));
 
     debug("Network interfaces are enabled");
@@ -429,27 +438,26 @@ let run = async () => {
     try {
         // Prepare network interfaces
         await Promise.all(config.SWITCHES.map(
-            ({ interface, hostAddress }) => interfaces.add(interface, hostAddress)
-        ));
-
-        await Promise.all(config.SWITCHES.map(
-            ({ interface }) => interfaces.up(interface)
+            async ({ interface, address }) => {
+                await interfaces.add(interface, addressEnd( address, 200));
+                await interfaces.up(interface);
+            }
         ));
 
         // Probe and configure all switches
         debug("Detecting switches.");
 
-        for(let { interface, switchAddress } of config.SWITCHES)
-            if(!await tplinks[interface].probe(switchAddress)) {
-                debug(`Can't find switch ${switchAddress}`);
+        for(let switch0 of config.SWITCHES)
+            if(!await tplinks[switch0.address].probe(switch0.address)) {
+                debug(`Can't find switch ${switch0.address}`);
                 await configureAllSwitches();
                 break;
             }
 
         debug("UDP binding");
 
-        for(let { hostAddress } of config.SWITCHES)
-            await multicast.server(config.MCAST_CAMERA_COMMAND_PORT, hostAddress);
+        for(let { address } of config.SWITCHES)
+            await multicast.server(config.MCAST_CAMERA_COMMAND_PORT, addressEnd( address, 200 ) );
 
         debug("UDP server binded");
 
