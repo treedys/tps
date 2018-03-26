@@ -1,4 +1,5 @@
 import React from 'react';
+import moment from 'moment'
 import { Row, Col, LabeledTextInput, LabeledCheckbox, LabeledSelect } from '../components'
 import { updateState, changeState } from '../utils'
 
@@ -53,7 +54,7 @@ export default class Scan extends React.Component {
 
                 <Col style={{ display: "block" }} className="fill scroll">
                     <LabeledTextInput id="id"     label="ID"      value={this.state.id       } readOnly />
-                    <LabeledTextInput id="date"   label="Date"    value={this.state.date     } readOnly />
+                    <LabeledTextInput id="date"   label="Date"    value={`${moment(this.state.date).toDate()}`} readOnly />
 
                     <LabeledTextInput id="name"   label="Name"    value={this.state.name     } onChange={ (e) => this.changeState({   name: e.target.value }) } />
                     <LabeledTextInput id="email"  label="Email"   value={this.state.email    } onChange={ (e) => this.changeState({  email: e.target.value }) } />

@@ -1,4 +1,5 @@
 import React from 'react';
+import moment from 'moment'
 import { Row, Col, Circle, Icon, LabeledTextInput, Centered } from '../components'
 import { Route, NavLink  } from 'react-router-dom'
 import assets from './assets'
@@ -75,12 +76,12 @@ export const ScanLink = ({scan, ...props}) =>
                 <Row style={ styles.link.description.primary }>
                     <span style={{ maxWidth: "6em" }}>{scan.name}</span>
                     <span style={{ minWidth: "2em" }} className="fill"/>
-                    <span>9:00</span>
+                    <span>{moment(scan.date).format('HH:mm')}</span>
                 </Row>
                 <Row style={ styles.link.description.secondary }>
                     <span>{scan.id}</span>
                     <span style={{ minWidth: "2em" }} className="fill"/>
-                    <span>{scan.date}</span>
+                    <span>{moment(scan.date).toDate().toLocaleDateString()}</span>
                 </Row>
             </Col>
         </Row>
