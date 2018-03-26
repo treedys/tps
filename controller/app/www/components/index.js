@@ -7,3 +7,4 @@ export Button from './Button';
 export LabeledTextInput from './LabeledTextInput';
 export LabeledCheckbox from './LabeledCheckbox';
 export LabeledSelect from './LabeledSelect';
+export Spinner from './Spinner';

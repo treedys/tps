@@ -1,6 +1,6 @@
 import React from 'react';
 import moment from 'moment'
-import { Row, Col, LabeledTextInput, LabeledCheckbox, LabeledSelect } from '../components'
+import { Row, Col, Spinner, LabeledTextInput, LabeledCheckbox, LabeledSelect } from '../components'
 import { updateState, changeState } from '../utils'
 
 const styles = {
@@ -42,9 +42,12 @@ export default class Scan extends React.Component {
 
         return <Row className="fill">
             <div className="fill" style={ styles.preview.container }>
-                <img src={`/scan/${scan.id}/preview-${ this.state.normalProjection ? "1":"2"}.jpg`}
-                    style={ styles.preview.image }
-                    onClick={ this.onImageClick }/>
+                { scan.done
+                    ? <img src={`/scan/${scan.id}/preview-${ this.state.normalProjection ? "1":"2"}.jpg`}
+                        style={ styles.preview.image }
+                        onClick={ this.onImageClick }/>
+                    : <Spinner style={{margin:"20%"}}/>
+                }
             </div>
             <Col style={ styles.information.container }>
 

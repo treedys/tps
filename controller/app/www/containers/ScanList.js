@@ -1,6 +1,6 @@
 import React from 'react';
 import moment from 'moment'
-import { Row, Col, Circle, Icon, LabeledTextInput, Centered } from '../components'
+import { Row, Col, Circle, Icon, LabeledTextInput, Centered, Spinner } from '../components'
 import { Route, NavLink  } from 'react-router-dom'
 import assets from './assets'
 
@@ -70,7 +70,10 @@ export const ScanLink = ({scan, ...props}) =>
                 <Route path={`/scan/${scan.id}`} render={ props => <div style={ styles.link.activeBar }/> }/>
             </div>
             <Circle radius={40} className="align-center" style={ styles.link.circle }>
-                <Icon url={`/scan/${scan.id}/preview-1.jpg`} style={ styles.link.icon }/>
+                { !scan.done && <Spinner/> }
+                { scan.done &&
+                    <Icon url={`/scan/${scan.id}/preview-1.jpg`} style={ styles.link.icon }/>
+                }
             </Circle>
             <Col style={{ margin: "1em" }} className="fill align-center">
                 <Row style={ styles.link.description.primary }>
