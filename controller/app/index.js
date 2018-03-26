@@ -230,7 +230,12 @@ const linkSwitch = async switchConfig =>
                     debug(`Linking ${switchConfig.address}:${port} to ${cameras[mac].address}`);
 
                     cameras[mac] = { ...cameras[mac], switchAddress:switchConfig.address, port };
-                    await cameraService.patch(mac, { switchAddress:switchConfig.address, port });
+
+                    // cameraIndex expects switchAddress and port to be populated
+                    const index = cameraIndex(cameras[mac]);
+                    cameras[mac].index = index;
+
+                    await cameraService.patch(mac, { switchAddress:switchConfig.address, port, index });
 
                     linked++;
                 }

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Row, Col, Button } from '../components'
+import { LabeledTextInput, LabeledCheckbox, LabeledSelect } from '../components'
 import CameraSettings from './CameraSettings'
 import { updateState } from '../utils'
 
@@ -23,6 +24,10 @@ export default class Settings extends React.Component {
             return <h1>No data</h1>;
 
         return <Col className="scroll fill" style={ styles.container }>
+
+            <h3>Scanner settings:</h3>
+
+            <LabeledTextInput id="preview" label="Preview camera" value={this.state.preview} onChange={ (e) => { e.persist(); this.setState( state => ({ preview: e.target.value })); } } />
 
             <h3>Camera settings:</h3>
             <CameraSettings settings={this.state.camera} onChange={ camera => this.setState( state => ({ camera }))} />

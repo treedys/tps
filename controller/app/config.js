@@ -5,7 +5,6 @@ const path = require('path');
 
 const settings = {
     PATH: "/disk/sda1",
-    PREVIEW: "normal/29.jpg",
     SWITCH_DEFAULT_ADDRESS: "192.168.0.1",
     MCAST_GROUP_ADDR: "224.1.1.1",
     MCAST_CAMERA_COMMAND_PORT: 6502,
@@ -48,6 +47,7 @@ const settings = {
 
 const defaultConfig = {
     _id: '0',
+    preview: 1,
     camera: {
         normal: settings.CAMERA,
         projection: settings.CAMERA

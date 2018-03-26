@@ -29,6 +29,8 @@ export default class Scan extends React.Component {
 
     updateState({scan}) { this.setState( state => ({ ...scan })); }
 
+    onImageClick = () => this.setState( state => ({normalProjection: !state.normalProjection}) );
+
     render() {
         const { scan, ...props } = this.props;
 
@@ -39,7 +41,9 @@ export default class Scan extends React.Component {
 
         return <Row className="fill">
             <div className="fill" style={ styles.preview.container }>
-                <img src={`/scan/${scan.id}/preview.jpg`} style={ styles.preview.image }/>
+                <img src={`/scan/${scan.id}/preview-${ this.state.normalProjection ? "1":"2"}.jpg`}
+                    style={ styles.preview.image }
+                    onClick={ this.onImageClick }/>
             </div>
             <Col style={ styles.information.container }>
 

@@ -41,9 +41,14 @@ app.param('scan', async (browser_request, browser_response, next, id) => {
     }
 });
 
-app.get('/scan/:scan/preview.jpg', async (browser_request, browser_response) => {
+app.get('/scan/:scan/preview-:index.jpg', async (browser_request, browser_response) => {
     try {
-        const file_stream = fs.createReadStream(browser_request.scan.icon);
+        const { scanPath } = paths(Path.join(config.PATH,'/db'), browser_request.scan[service.id]);
+        const { preview } = await config.service.get('0');
+        const folder = browser_request.params.index == "2" ? "projection" : "normal";
+        const fileName = Path.join(scanPath, folder, `${preview}.jpg`);
+
+        const file_stream = fs.createReadStream(fileName);
 
         file_stream.pipe(browser_response);
 
@@ -102,19 +107,9 @@ const populate = async (path) => {
                 const exists = await service.find({ query: { [service.id]: scanId } });
 
                 if(exists.length) {
-                    await service.update( scanId, {
-                        ...scan,
-                        "icon": Path.join(scanPath, config.PREVIEW),
-                        "path": scanJsonPath
-                    });
+                    await service.update( scanId, scan );
                 } else {
-                    await service.create({
-                        ...scan,
-
-                        [service.id]: scanId,
-                        "icon": Path.join(scanPath, config.PREVIEW),
-                        "path": scanJsonPath
-                    });
+                    await service.create({ ...scan, [service.id]: scanId });
                 }
             }
         }));
@@ -136,15 +131,7 @@ service.hooks({
 
                 await fs.ensureDir(scanPath);
 
-                context.data = Object.assign(
-                    defaultScan(),
-                    {
-                        [service.id]: next.toString(),
-                        path: scanJsonPath,
-                        icon: Path.join(scanPath, config.PREVIEW)
-                    },
-                    context.data
-                );
+                context.data = Object.assign( defaultScan(), { [service.id]: next.toString(), }, context.data);
             }
         }
     },
@@ -152,22 +139,25 @@ service.hooks({
         create: async context => {
             const scans = [].concat(context.data);
 
-            await Promise.all(scans.map(async ({ [service.id]:id, path, icon, ...scan }) => {
-                await fs.outputJson(path, scan);
+            await Promise.all(scans.map(async ({ [service.id]:id, ...scan }) => {
+                const { scanJsonPath } = paths(Path.join(config.PATH,'/db'), id);
+                await fs.outputJson(scanJsonPath, scan);
             }));
         },
         update: async context => {
             if(context.id) {
-                const { [service.id]:id, path, icon, ...scan } = context.data;
-                await fs.outputJson(path, scan);
+                const { [service.id]:id, ...scan } = context.data;
+                const { scanJsonPath } = paths(Path.join(config.PATH,'/db'), id);
+                await fs.outputJson(scanJsonPath, scan);
             } else {
                 debug("unsupported update", context.data);
             }
         },
         patch: async context => {
             if(context.id) {
-                const { [service.id]:id, path, icon, ...scan } = await service.get(context.id);
-                await fs.outputJson(path, scan);
+                const { [service.id]:id, ...scan } = await service.get(context.id);
+                const { scanJsonPath } = paths(Path.join(config.PATH,'/db'), id);
+                await fs.outputJson(scanJsonPath, scan);
             } else {
                 debug("unsupported patch", context.data);
             }

@@ -69,7 +69,7 @@ export const ScanLink = ({scan, ...props}) =>
                 <Route path={`/scan/${scan.id}`} render={ props => <div style={ styles.link.activeBar }/> }/>
             </div>
             <Circle radius={40} className="align-center" style={ styles.link.circle }>
-                <Icon url={`/scan/${scan.id}/preview.jpg`} style={ styles.link.icon }/>
+                <Icon url={`/scan/${scan.id}/preview-1.jpg`} style={ styles.link.icon }/>
             </Circle>
             <Col style={{ margin: "1em" }} className="fill align-center">
                 <Row style={ styles.link.description.primary }>
