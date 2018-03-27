@@ -10,7 +10,11 @@ const ip = require("ip");
 const doasync = require("doasync");
 const ifconfig = doasync(require("wireless-tools/ifconfig"));
 
-const netlink = require('netlink-notify');
+let netlink = undefined;
+
+if(process.platform=="linux") {
+    netlink = require('netlink-notify');
+}
 
 // Configure the interface with address
 let ipConfiguration = (name, address) => ({
@@ -29,10 +33,12 @@ class networkInterfaces extends EventEmitter {
 
         this.map = new Map();
 
-        netlink.from.on('route',   data => this.onRoute  (JSON.parse(data)) );
-        netlink.from.on('link',    data => this.onLink   (JSON.parse(data)) );
-        netlink.from.on('address', data => this.onAddress(JSON.parse(data)) );
-        netlink.from.on('error',   data => this.onError  (data) );
+        if(process.platform=="linux") {
+            netlink && netlink.from.on('route',   data => this.onRoute  (JSON.parse(data)) );
+            netlink && netlink.from.on('link',    data => this.onLink   (JSON.parse(data)) );
+            netlink && netlink.from.on('address', data => this.onAddress(JSON.parse(data)) );
+            netlink && netlink.from.on('error',   data => this.onError  (data) );
+        }
     }
 
     onRoute(data) {
@@ -103,7 +109,7 @@ class networkInterfaces extends EventEmitter {
             debug("up:", name, address);
             await Promise.all([
                 ifconfig.up(ipConfiguration(name, networkInterface.address)),
-                eventToPromise(this, actionName("running", name))
+                netlink && eventToPromise(this, actionName("running", name))
             ]);
             debug("done up:", name, address);
         }
@@ -115,7 +121,7 @@ class networkInterfaces extends EventEmitter {
             debug("down:", name);
             await Promise.all([
                 ifconfig.down(name),
-                eventToPromise(this, actionName("stopped", name))
+                netlink && eventToPromise(this, actionName("stopped", name))
             ]);
             debug("done down:", name);
         }

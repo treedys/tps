@@ -34,7 +34,6 @@
     "ip": "^1.1.5",
     "lodash-decorators": "^4.5.0",
     "nedb": "^1.8.0",
-    "netlink-notify": "github:cenuij/netlink-notify",
     "p-timeout": "^2.0.1",
     "request": "^2.83.0",
     "telnet-client": "^0.15.5",
@@ -70,5 +69,8 @@
     "url-loader": "^0.6.2",
     "webpack": "^3.10.0",
     "webpack-merge": "^4.1.1"
+  },
+  "optionalDependencies": {
+    "netlink-notify": "github:cenuij/netlink-notify"
   }
 }
