@@ -385,11 +385,16 @@ let configure = async (interface, switchConfig, defaultAddress) => {
 let lastReboot;
 
 const powerCycleSwitch = async switchConfig => {
+    var tasks = [];
+
     for(let port=0; port < switchConfig.ports; port++) {
-        if(!Object.values(cameras).find(camera => camera.switchAddress==switchConfig.address && camera.port==port)) {
-            await bootLimiter.schedule( () => powerCycle( switchConfig.address, port ));
+        if(!Object.values(cameras).find(camera => camera.switchAddress==switchConfig.address && camera.port==port) &&
+            port!=switchConfig.uplinkPort) {
+            tasks.push(bootLimiter.schedule( async () => await powerCycle( switchConfig.address, port )));
         }
     }
+
+    await Promise.all(tasks);
 }
 
 let loop = async () => {
