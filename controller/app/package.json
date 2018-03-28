@@ -11,7 +11,7 @@
     "postinstall": "rm -rf node_modules/uws/uws_linux_46.node node_modules/uws/uws_linux_47.node node_modules/uws/uws_linux_48.node node_modules/uws/uws_linux_51.node",
     "build": "webpack",
     "start": "webpack && node index.js",
-    "debug": "webpack && DEBUG=* node index.js"
+    "debug": "webpack && node index.js"
   },
   "author": "",
   "license": "SEE LICENSE IN LICENSE",
