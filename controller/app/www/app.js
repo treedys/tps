@@ -332,6 +332,10 @@ export default class App extends React.Component {
                             <Settings settings={this.state.config} onChange={ ({settings}) => services.config.update('0', settings) }/>
                         }/>
 
+                        <Route path="/log" render={ props =>
+                            <textarea className="fill" readOnly value={ this.state.status?.log }/>
+                        }/>
+
                     </Switch>
                 </Row>
             </Col>

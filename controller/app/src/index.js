@@ -1,4 +1,15 @@
+let log = "";
+
+const util = require('util');
+
+require('debug').log = async function () {
+    console.log.apply(console, arguments);
+    log += `${util.format.apply(util,arguments)}\n`.replace(/\u001b\[[0-9;]*m/g, '');
+    await status?.service.patch(0, { log });
+}
+
 const debug = require("debug")("APP");
+require('debug').enable('APP*'); // TODO: Enable based on web interface input value at log page
 
 const config = require("./config");
 
@@ -385,6 +396,8 @@ debug("Starting");
 /* app.listen() *MUST* be called after all feathers plugins are initialised
  *  * (especialy the authentication ones) to call their setup() methods. */
 
-const server = app.listen(80);
+const webServerPort = process.env.npm_lifecycle_event=="debug" ? 8080 : 80;
+
+const server = app.listen(webServerPort);
 
 run();

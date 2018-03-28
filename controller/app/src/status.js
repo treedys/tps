@@ -14,6 +14,7 @@ let scannerPreview = 0;
 service.create({
     id:0,
     scannerPreview,
+    log: "",
     shooting: false,
     restarting: false
 });
