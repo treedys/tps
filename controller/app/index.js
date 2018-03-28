@@ -338,7 +338,7 @@ let configure = async (interface, switchConfig, defaultAddress) => {
     debug(`Starting session to configure switch at ${switchConfig.address}`);
 
     await retry(5, async () => {
-        await interfaces.address(interface, addressEnd( defaultAddress, 200 ));
+        await interfaces.upOnly(interface, addressEnd( defaultAddress, 200 ));
         await tplinks[switchConfig.address].session(defaultAddress, async device => {
             debug(`Configuring switch ${switchConfig.address}`);
 
@@ -491,7 +491,7 @@ const probeAndConfigureSwitch1 = async (switch0, switch1) => {
         if(!await probeSwitch1(switch0, switch1, config.SWITCH_DEFAULT_ADDRESS))
             throw `Can't connect to switch ${switch1.address}`;
 
-        await interfaces.address(switch0.interface, addressEnd( switch0.address, 200 ));
+        await interfaces.upOnly(switch0.interface, addressEnd( switch0.address, 200 ));
         await tplinks[switch0.address].session(switch0.address, device => device.enableOnly([switch1.hostPort, switch0.uplinkPort], switch0.ports));
 
         await configure(switch0.interface, switch1, config.SWITCH_DEFAULT_ADDRESS);
