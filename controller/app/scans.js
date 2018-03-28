@@ -12,6 +12,8 @@ app.use('/api/scans', memory() );
 const service = app.service('/api/scans');
 const isDirectory = async path => (await fs.stat(path)).isDirectory();
 
+const scansPath = Path.join(config.PATH,'/scans');
+
 const defaultScan = () => ({
     date   : Date.now(),
     name   : "",
@@ -43,7 +45,7 @@ app.param('scan', async (browser_request, browser_response, next, id) => {
 
 app.get('/scan/:scan/preview-:index.jpg', async (browser_request, browser_response) => {
     try {
-        const { scanPath } = paths(Path.join(config.PATH,'/db'), browser_request.scan[service.id]);
+        const { scanPath } = paths(scansPath, browser_request.scan[service.id]);
         const { preview } = await config.service.get('0');
         const folder = browser_request.params.index == "2" ? "projection" : "normal";
         const fileName = Path.join(scanPath, folder, `${preview}.jpg`);
@@ -69,7 +71,7 @@ app.get('/scan/:scan.zip', async (browser_request, browser_response) => {
 
         archive.pipe(browser_response);
 
-        const { scanPath } = paths(Path.join(config.PATH,'/db'), browser_request.scan[service.id]);
+        const { scanPath } = paths(scansPath, browser_request.scan[service.id]);
 
         archive.directory(scanPath, false);
 
@@ -90,23 +92,24 @@ const paths = (path, scanId) => ({
     scanJsonPath: Path.join(Path.join(path, scanId), "scan.json")
 });
 
-const populate = async (path) => {
+const populate = async () => {
 
     try {
-        await fs.ensureDir(path);
+        await fs.ensureDir(scansPath);
 
-        let directories = await fs.readdir(path);
+        let scanIds = await fs.readdir(scansPath);
 
-        await Promise.all(directories.map(async scanId => {
+        await Promise.all(scanIds.map(async scanId => {
 
-            const { scanPath, scanJsonPath } = paths(path, scanId);
+            const { scanPath, scanJsonPath } = paths(scansPath, scanId);
 
             if(await isDirectory(scanPath) && await fs.exists(scanJsonPath)) {
+
                 let scan = JSON.parse(await fs.readFile(scanJsonPath));
 
-                const exists = await service.find({ query: { [service.id]: scanId } });
+                const alreadyExists = await service.find({ query: { [service.id]: scanId } });
 
-                if(exists.length) {
+                if(alreadyExists.length) {
                     await service.update( scanId, scan );
                 } else {
                     await service.create({ ...scan, [service.id]: scanId });
@@ -123,11 +126,11 @@ service.hooks({
         create: async context => {
             if(!context.data[service.id]) {
 
-                const directories = await fs.readdir(Path.join(config.PATH,'/db'));
+                const directories = await fs.readdir(scansPath);
                 const numbers = directories.filter(directory=>!isNaN(directory)).map(directory=>parseInt(directory));
                 const next = numbers && numbers.length && Math.max(...numbers)+1 || 1;
 
-                const { scanPath, scanJsonPath } = paths(Path.join(config.PATH,'/db'), next.toString());
+                const { scanPath } = paths(scansPath, next.toString());
 
                 await fs.ensureDir(scanPath);
 
@@ -140,14 +143,14 @@ service.hooks({
             const scans = [].concat(context.data);
 
             await Promise.all(scans.map(async ({ [service.id]:id, ...scan }) => {
-                const { scanJsonPath } = paths(Path.join(config.PATH,'/db'), id);
+                const { scanJsonPath } = paths(scansPath, id);
                 await fs.outputJson(scanJsonPath, scan);
             }));
         },
         update: async context => {
             if(context.id) {
                 const { [service.id]:id, ...scan } = context.data;
-                const { scanJsonPath } = paths(Path.join(config.PATH,'/db'), id);
+                const { scanJsonPath } = paths(scansPath, id);
                 await fs.outputJson(scanJsonPath, scan);
             } else {
                 debug("unsupported update", context.data);
@@ -156,7 +159,7 @@ service.hooks({
         patch: async context => {
             if(context.id) {
                 const { [service.id]:id, ...scan } = await service.get(context.id);
-                const { scanJsonPath } = paths(Path.join(config.PATH,'/db'), id);
+                const { scanJsonPath } = paths(scansPath, id);
                 await fs.outputJson(scanJsonPath, scan);
             } else {
                 debug("unsupported patch", context.data);
@@ -168,6 +171,6 @@ service.hooks({
     }
 });
 
-populate(Path.join(config.PATH,'/db'));
+populate();
 
 module.exports = service;

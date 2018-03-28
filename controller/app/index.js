@@ -117,7 +117,7 @@ app.post("/api/shoot", async (browser_request, browser_response) => {
 
                     // Use HEAD request to check if the target jpg file exists
 
-                    const fileName = `/db/${scanId}/${name}/${index}.jpg`;
+                    const fileName = `/scans/${scanId}/${name}/${index}.jpg`;
 
                     const file_stream = fs.createWriteStream(path.join(config.PATH, fileName));
                     const camera_request = request.get(`http://${camera.address}/${scanId}-${cameraFileIndex}.jpg`);
