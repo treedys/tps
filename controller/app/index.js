@@ -545,19 +545,29 @@ let run = async () => {
         // Probe and configure all switches
         debug("Detecting switches.");
 
-        for(let switch0 of config.SWITCHES)
-            if(!await tplinks[switch0.address].probe(switch0.address)) {
-                debug(`Can't find switch ${switch0.address}`);
-                await configureAllSwitches();
-                break;
-            } else {
-                for(let switch1 of switch0.switches )
-                    if(!await tplinks[switch1.address].probe(switch1.address)) {
-                        debug(`Can\'t find switch ${switch1.address}`);
+        for(;;) {
+            try {
+                for(let switch0 of config.SWITCHES) {
+                    if(!await tplinks[switch0.address].probe(switch0.address)) {
+                        debug(`Can't find switch ${switch0.address}`);
                         await configureAllSwitches();
                         break;
+                    } else {
+                        for(let switch1 of switch0.switches )
+                            if(!await tplinks[switch1.address].probe(switch1.address)) {
+                                debug(`Can\'t find switch ${switch1.address}`);
+                                await configureAllSwitches();
+                                break;
+                            }
                     }
+                }
+
+                break;
+            } catch(error) {
+                debug(error);
+                continue;
             }
+        }
 
         debug("UDP binding");
 
@@ -580,6 +590,8 @@ let run = async () => {
         await delay(15000);
 
         debug("Starting main loop");
+
+        await status.patch(0, { operating: true });
 
         while(true)
             await loop();

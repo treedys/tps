@@ -13,6 +13,9 @@ const styles = {
             borderBottom: "#16171B 2px solid",
             color: "#5A7287"
         },
+        disabled: {
+            color: "#5A728700"
+        },
         active: {
             backgroundColor: "#191D25",
             borderTop: "#161A21 2px solid",
@@ -32,10 +35,13 @@ const styles = {
     }
 };
 
-export const PageLink = ({to, title, icon, ...props}) =>
+const preventDefault = e => e.preventDefault();
+
+export const PageLink = ({to, title, icon, disabled, onClick, ...props}) =>
     <NavLink to={to} activeClassName="active"
-        style={ styles.link.normal }
+        style={{ ...styles.link.normal, ...(disabled && styles.link.disabled) }}
         activeStyle={ styles.link.active }
+        onClick={ disabled ? preventDefault : onClick }
         {...props}>
         <Col>
             { icon && <Icon url={icon} style={ styles.link.icon }/> }

@@ -23,6 +23,6 @@ const styles = {
 };
 
 export default ({ disabled, children, style, ...props}) =>
-    <button style={{ ...styles.button, ...(disabled?styles.disabled:styles.enabled), ...style }} { ...props }>
+    <button disabled={disabled} style={{ ...styles.button, ...(disabled?styles.disabled:styles.enabled), ...style }} { ...props }>
         {children}
     </button>

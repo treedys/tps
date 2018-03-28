@@ -73,11 +73,11 @@ export default class App extends React.Component {
                 <Header/>
                 <Row className="fill">
                     <PageList>
-                        <PageLink to="/shoot"       title="Shoot!"      icon={assets.shoot} onClick={this.shoot} />
-                        <PageLink to="/session"     title="Session"     icon={assets.session}/>
-                        <PageLink to="/calibration" title="Calibration" icon={assets.calibration}/>
-                        <PageLink to="/cameras"     title="Cameras"     icon={assets.cameras} onClick={this.preview} />
-                        <PageLink to="/settings"    title="Settings"    icon={assets.settings}/>
+                        <PageLink to="/shoot"       title="Shoot!"      icon={assets.shoot}       disabled={!this.state.status||!this.state.status.operational} onClick={this.shoot}   />
+                        <PageLink to="/session"     title="Session"     icon={assets.session}     disabled={!this.state.status||!this.state.status.operational}                        />
+                        <PageLink to="/calibration" title="Calibration" icon={assets.calibration} disabled={!this.state.status||!this.state.status.operational}                        />
+                        <PageLink to="/cameras"     title="Cameras"     icon={assets.cameras}                                                                   onClick={this.preview} />
+                        <PageLink to="/settings"    title="Settings"    icon={assets.settings}                                                                                         />
                     </PageList>
 
                     <Switch>
