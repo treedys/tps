@@ -98,7 +98,7 @@ export const ScanList = ({scans, ...props}) =>
             </Centered>
         </LabeledTextInput>
         <Col className="fill scroll">
-            {scans && scans.map( (scan) => <ScanLink key={scan.id} scan={scan} {...props} /> )}
+            {scans && scans.sort((a,b)=>b.id-a.id).map( (scan) => <ScanLink key={scan.id} scan={scan} {...props} /> )}
         </Col>
     </Col>
 
