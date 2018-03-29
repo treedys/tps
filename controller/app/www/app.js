@@ -59,6 +59,15 @@ export default class App extends React.Component {
         }
     }
 
+    deleteScan = async scanId => {
+        try {
+            this.history.replace('/scan');
+            await services.scans.remove(scanId);
+        } catch(error) {
+            console.log("Delete error:", error);
+        }
+    }
+
     preview = async () => {
         try {
             await fetch('/api/preview', { method: 'POST' });
@@ -95,6 +104,7 @@ export default class App extends React.Component {
                         <Route path="/scan/:scanId" render={ props =>
                             <Scan scan={ this.state.scans && this.state.scans.find(scan => scan.id == props.match.params.scanId)}
                                 onChange={ scan => services.scans.update( props.match.params.scanId, scan)}
+                                onDelete={ () => this.deleteScan( props.match.params.scanId )}
                             />
                         }/>
 

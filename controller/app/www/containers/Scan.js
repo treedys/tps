@@ -1,6 +1,7 @@
 import React from 'react';
 import moment from 'moment'
-import { Row, Col, Spinner, LabeledTextInput, LabeledCheckbox, LabeledSelect } from '../components'
+import { Row, Col, Spinner, Button } from '../components'
+import { LabeledTextInput, LabeledCheckbox, LabeledSelect } from '../components'
 import { updateState, changeState } from '../utils'
 
 const styles = {
@@ -51,7 +52,10 @@ export default class Scan extends React.Component {
             </div>
             <Col style={ styles.information.container }>
 
-                <a href={`/scan/${scan.id}.zip`}>Download</a>
+                <Row>
+                    <Button href={`/scan/${scan.id}.zip`}>Download</Button>
+                    <Button onClick={this.props.onDelete}>Delete</Button>
+                </Row>
 
                 <h3>Scan information:</h3>
 

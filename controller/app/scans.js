@@ -177,8 +177,22 @@ service.hooks({
                 debug("after patch", error);
             }
         },
-        remove: context => {
-            debug("unsupported remove:", context);
+        remove: async context => {
+            try {
+                const { [service.id]:id } = context;
+
+                if(id) {
+
+                    const { scanPath } = paths(scansPath, id);
+
+                    debug(`Removing  ${scanPath}`);
+                    await fs.remove(scanPath);
+                } else {
+                    debug("unsupported remove:", context);
+                }
+            } catch(error) {
+                debug("after remove", error);
+            }
         }
     }
 });

@@ -10,7 +10,9 @@ const styles = {
         fontSize: "1em",
         fontWeight: "bold",
         minWidth: "5em",
-        boxShadow: 'rgba(0, 0, 0, 0.156863) 0px 0px 10px, rgba(0, 0, 0, 0.227451) 0px 0px 10px'
+        boxShadow: 'rgba(0, 0, 0, 0.156863) 0px 0px 10px, rgba(0, 0, 0, 0.227451) 0px 0px 10px',
+        textDecoration: 'none',
+        cursor: 'pointer'
     },
     enabled: {
         color: '#FFFFFF',
@@ -22,7 +24,10 @@ const styles = {
     }
 };
 
-export default ({ disabled, children, style, ...props}) =>
-    <button disabled={disabled} style={{ ...styles.button, ...(disabled?styles.disabled:styles.enabled), ...style }} { ...props }>
+export default ({ disabled, children, style, href, ...props}) => href
+    ? <a href={href} disabled={disabled} style={{ ...styles.button, ...(disabled?styles.disabled:styles.enabled), ...style }} { ...props }>
+        {children}
+    </a>
+    : <button disabled={disabled} style={{ ...styles.button, ...(disabled?styles.disabled:styles.enabled), ...style }} { ...props }>
         {children}
     </button>
