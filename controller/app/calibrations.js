@@ -1,0 +1,190 @@
+const app = require('./app.js');
+const config = require('./config');
+const memory = require('feathers-memory');
+const Path = require('path');
+const fs = require('fs-extra');
+const archiver = require('archiver');
+
+const debug = require('debug')('calibrations');
+
+app.use('/api/calibrations', memory() );
+
+const service = app.service('/api/calibrations');
+const isDirectory = async path => (await fs.stat(path)).isDirectory();
+
+const calibrationsPath = Path.join(config.PATH,'/calibrations');
+
+const defaultCalibration = () => ({
+    date   : Date.now()
+});
+
+app.param('calibration', async (browser_request, browser_response, next, id) => {
+    try {
+        browser_request.calibration = await service.get(id);
+
+        if(!browser_request.calibration) {
+            next(new Error("Wrong calibration ID"));
+        } else {
+            next();
+        }
+    } catch(error) {
+        next(error);
+    }
+});
+
+app.get('/calibration/:calibration/preview.jpg', async (browser_request, browser_response) => {
+    try {
+        const { calibrationPath } = paths(calibrationsPath, browser_request.calibration[service.id]);
+        const { preview } = await config.service.get('0');
+        const fileName = Path.join(calibrationPath, 'calibration', `${preview}.jpg`);
+
+        const file_stream = fs.createReadStream(fileName);
+
+        file_stream.pipe(browser_response);
+
+        file_stream.on('error', error => {
+            if(!browser_response.headersSend && !browser_response.finished)
+                browser_response.redirect('/noise.jpg');
+            file_stream.destroy();
+        });
+
+    } catch(error) {
+        browser_response.status(500).send(error);
+    }
+});
+
+app.get('/calibration/:calibration.zip', async (browser_request, browser_response) => {
+    try {
+        var archive = archiver('zip', { store: true });
+
+        archive.pipe(browser_response);
+
+        const { calibrationPath } = paths(calibrationsPath, browser_request.calibration[service.id]);
+
+        archive.directory(calibrationPath, false);
+
+        archive.on('warning', error => debug('Archive warning:', error));
+
+        archive.on('error', error => debug('Archive error:', error));
+
+        archive.finalize();
+
+    } catch(error) {
+        debug('Error:', error);
+        browser_response.status(500).send(error);
+    }
+});
+
+const paths = (path, calibrationId) => ({
+    calibrationPath: Path.join(path, calibrationId),
+    calibrationJsonPath: Path.join(Path.join(path, calibrationId), "calibration.json")
+});
+
+const populate = async () => {
+
+    try {
+        await fs.ensureDir(calibrationsPath);
+
+        let calibrationIds = await fs.readdir(calibrationsPath);
+
+        await Promise.all(calibrationIds.map(async calibrationId => {
+
+            const { calibrationPath, calibrationJsonPath } = paths(calibrationsPath, calibrationId);
+
+            if(await isDirectory(calibrationPath) && await fs.exists(calibrationJsonPath)) {
+
+                let calibration = JSON.parse(await fs.readFile(calibrationJsonPath));
+
+                const alreadyExists = await service.find({ query: { [service.id]: calibrationId } });
+
+                if(alreadyExists.length) {
+                    await service.update( calibrationId, calibration );
+                } else {
+                    await service.create({ ...calibration, [service.id]: calibrationId });
+                }
+            }
+        }));
+    } catch(error) {
+        debug("Error populating database", error);
+    }
+}
+
+service.hooks({
+    before: {
+        create: async context => {
+            if(!context.data[service.id]) {
+
+                const directories = await fs.readdir(calibrationsPath);
+                const numbers = directories.filter(directory=>!isNaN(directory)).map(directory=>parseInt(directory));
+                const next = numbers && numbers.length && Math.max(...numbers)+1 || 1;
+
+                const { calibrationPath } = paths(calibrationsPath, next.toString());
+
+                await fs.ensureDir(calibrationPath);
+
+                context.data = Object.assign( defaultCalibration(), { [service.id]: next.toString(), }, context.data);
+            }
+        }
+    },
+    after: {
+        create: async context => {
+            try {
+                const calibrations = [].concat(context.data);
+
+                await Promise.all(calibrations.map(async ({ [service.id]:id, ...calibration }) => {
+                    const { calibrationJsonPath } = paths(calibrationsPath, id);
+                    await fs.outputJson(calibrationJsonPath, calibration);
+                }));
+            } catch(error) {
+                debug("after create", error);
+            }
+        },
+        update: async context => {
+            try {
+                if(context.id) {
+                    const { [service.id]:id, ...calibration } = context.data;
+                    const { calibrationJsonPath } = paths(calibrationsPath, id);
+                    await fs.outputJson(calibrationJsonPath, calibration);
+                } else {
+                    debug("unsupported update", context.data);
+                }
+            } catch(error) {
+                debug("after update", error);
+            }
+        },
+        patch: async context => {
+            try {
+                if(context.id) {
+                    const { [service.id]:id, ...calibration } = await service.get(context.id);
+                    const { calibrationJsonPath } = paths(calibrationsPath, id);
+                    await fs.outputJson(calibrationJsonPath, calibration);
+                } else {
+                    debug("unsupported patch", context.data);
+                }
+            } catch(error) {
+                debug("after patch", error);
+            }
+        },
+        remove: async context => {
+            try {
+                const { [service.id]:id } = context;
+
+                if(id) {
+
+                    const { calibrationPath } = paths(calibrationsPath, id);
+
+                    debug(`Removing  ${calibrationPath}`);
+                    await fs.remove(calibrationPath);
+                } else {
+                    debug("unsupported remove:", context);
+                }
+            } catch(error) {
+                debug("after remove", error);
+            }
+        }
+    }
+});
+
+populate();
+
+module.exports = service;

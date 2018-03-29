@@ -13,6 +13,7 @@ const status = require('./status.js');
 const switches = require('./switches.js');
 const cameraService = require('./cameras.js');
 const scans = require('./scans.js');
+const calibrations = require('./calibrations.js');
 
 const cameras = {};
 
@@ -143,6 +144,68 @@ app.post("/api/shoot/scan", async (browser_request, browser_response) => {
 
     } catch(error) {
         debug(`Error Scan:${scanId}`, error);
+    }
+});
+
+app.post("/api/shoot/calibration", async (browser_request, browser_response) => {
+
+    let calibrationId;
+
+    try {
+        const calibration = await calibrations.create({});
+        calibrationId = calibration[calibrations.id];
+        browser_response.send({ id: calibrationId });
+        debug(`Start calibration ${calibrationId}`);
+    } catch(error) {
+        browser_response.status(500).send(error);
+        return;
+    }
+
+    try {
+        await status.patch(0, { shooting: true });
+        await send.shootAll(calibrationId);
+        await delay(5*1000);
+        await status.patch(0, { shooting: false });
+
+        await Promise.all(shotsConfig.map( ({ name }) =>
+            fs.ensureDir(path.join(config.PATH,`calibrations/${calibrationId}/${name}/`))
+        ));
+
+        await Promise.all(Object.entries(cameras).map( async ([mac, camera]) => {
+            try {
+                const index = cameraIndex(camera);
+
+                if(isNaN(index)) {
+                    debug("NaN:",mac, camera);
+                    return;
+                }
+
+                // Use HEAD request to check if the target jpg file exists
+
+                const fileName = `/calibrations/${calibrationId}/calibration/${index}.jpg`;
+
+                const file_stream = fs.createWriteStream(path.join(config.PATH, fileName));
+                const camera_request = request.get(`http://${camera.address}/${calibrationId}-1.jpg`);
+
+                camera_request.pipe(file_stream);
+
+                await pTimeout(Promise.all([
+                    eventToPromise.multi(camera_request, ["finish", "close", "end", "complete"], ["error", "abort"] ),
+                    eventToPromise.multi(file_stream,    ["finish", "close"], ["error", "unpipe"] )
+                ]), 120*1000, `Timeout downloading ${fileName}`);
+
+                await send.erase(mac, calibrationId);
+            } catch(error) {
+                debug(`Error Calibration:${calibrationId} Camera:${index}`, error);
+            }
+        }));
+
+        debug(`Done calibration ${calibrationId}`);
+
+        await calibrations.patch(calibrationId, { done: Date.now() });
+
+    } catch(error) {
+        debug(`Error Calibration:${calibrationId}`, error);
     }
 });
 

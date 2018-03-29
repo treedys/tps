@@ -7,6 +7,7 @@ import {
     Header,
     PageList, PageLink,
     Scan, ScanList,
+    Calibration, CalibrationList,
     SwitchList, CameraList,
     Settings
 } from './containers/';
@@ -38,6 +39,7 @@ export default class App extends React.Component {
         this.switches     = services.    switches.watch().find()  .subscribe(     switches => this.changeState({ switches     }));
         this.cameras      = services.     cameras.watch().find()  .subscribe(      cameras => this.changeState({ cameras      }));
         this.scans        = services.       scans.watch().find()  .subscribe(        scans => this.changeState({ scans        }));
+        this.calibrations = services.calibrations.watch().find()  .subscribe( calibrations => this.changeState({ calibrations }));
         this.status       = services.      status.watch().get( 0 ).subscribe(       status => this.changeState({ status       }));
         this.config       = services.      config.watch().get('0').subscribe(       config => this.changeState({ config       }));
     }
@@ -46,6 +48,7 @@ export default class App extends React.Component {
         this.switches    .unsubscribe();
         this.cameras     .unsubscribe();
         this.scans       .unsubscribe();
+        this.calibrations.unsubscribe();
         this.status      .unsubscribe();
         this.config      .unsubscribe();
     }
@@ -58,6 +61,17 @@ export default class App extends React.Component {
             this.history.replace(`/scan/${scanId}`);
         } catch(error) {
             console.log("Shoot scan error:", error);
+        }
+    }
+
+    shootCalibration = async () => {
+        try {
+            const response = await fetch('/api/shoot/calibration', { method: 'POST' });
+            const { [service.calibrations.id]:calibrationId } = await response.json();
+
+            this.history.replace(`/calibration/${calibrationId}`);
+        } catch(error) {
+            console.log("Shoot calibration error:", error);
         }
     }
 
@@ -78,6 +92,15 @@ export default class App extends React.Component {
         }
     }
 
+    deleteCalibration = async calibrationId  => {
+        try {
+            this.history.replace('/calibration');
+            await services.calibrations.remove(calibrationId);
+        } catch(error) {
+            console.log("Delete calibration error:", error);
+        }
+    }
+
     render = () =>
         <Router history={this.history}>
             <Col style={ styles.container }>
@@ -95,6 +118,10 @@ export default class App extends React.Component {
                             <ScanList scans={ this.state.scans } onShoot={this.shootScan } operational={this.state.status&&this.state.status.operational} />
                         }/>
 
+                        <Route path="/calibration" render={ props =>
+                            <CalibrationList calibrations={ this.state.calibrations } onShoot={this.shootCalibration} operational={this.state.status&&this.state.status.operational} />
+                        }/>
+
                         <Route path="/cameras" render={ props =>
                             <SwitchList switches={ this.state.switches } onShoot={this.shootPreview} />
                         }/>
@@ -106,6 +133,13 @@ export default class App extends React.Component {
                             <Scan scan={ this.state.scans && this.state.scans.find(scan => scan.id == props.match.params.scanId)}
                                 onChange={ scan => services.scans.update( props.match.params.scanId, scan)}
                                 onDelete={ () => this.deleteScan( props.match.params.scanId )}
+                            />
+                        }/>
+
+                        <Route path="/calibration/:calibrationId" render={ props =>
+                            <Calibration calibration={ this.state.calibrations && this.state.calibrations.find(calibration => calibration.id == props.match.params.calibrationId)}
+                                onChange={ calibration => services.calibrations.update( props.match.params.calibrationId, calibration)}
+                                onDelete={ () => this.deleteCalibration( props.match.params.calibrationId )}
                             />
                         }/>
 
