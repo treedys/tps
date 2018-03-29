@@ -48,9 +48,6 @@ export const Header = (props) =>
     <Row style={ styles.container }>
         <Centered> <Logo/>     </Centered>
         <span className="fill"/>
-        <Centered> <Language/> </Centered>
-        <Centered> <Alerts/>   </Centered>
-        <Centered> <User/>     </Centered>
     </Row>
 
 export default Header;

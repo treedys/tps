@@ -1,5 +1,5 @@
 import React from 'react';
-import { Row, Col, Circle, Icon, LabeledTextInput, Centered } from '../components'
+import { Row, Col, Circle, Icon, Button, Centered } from '../components'
 import { Route, NavLink  } from 'react-router-dom'
 
 import assets from './assets/';
@@ -43,7 +43,7 @@ const styles = {
     list: {
         container: {
             height: '100%',
-            minWidth: '200px',
+            width: '350px',
             boxShadow: 'rgba(0, 0, 0, 0.156863) 0px 0px 10px, rgba(0, 0, 0, 0.227451) 0px 0px 10px',
             zIndex: '1'
         }
@@ -77,12 +77,17 @@ export const SwitchLink = ({switchData, ...props}) =>
         </Row>
     </NavLink>
 
-export const SwitchList = ({switches, children, ...props}) =>
+export const SwitchList = ({switches, children, operational, ...props}) =>
     <Col style={ styles.list.container } className="scroll">
-        { switches && switches.map( (switchData) =>
-            <SwitchLink key={switchData.id} switchData={switchData} {...props} />
-        )}
-        { children }
+        <Row>
+            <Button onClick={ () => this.props.onShoot } disabled={!operational} style={{width:"100%"}}>Preview</Button>
+        </Row>
+        <Col className="fill scroll">
+            { switches && switches.map( (switchData) =>
+                <SwitchLink key={switchData.id} switchData={switchData} {...props} />
+            )}
+            { children }
+        </Col>
     </Col>
 
 export default SwitchList;

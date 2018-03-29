@@ -35,27 +35,37 @@ export default class App extends React.Component {
     }
 
     componentDidMount() {
-        this.switches = services.switches.watch().find().subscribe( switches => this.changeState({ switches }));
-        this.cameras  = services. cameras.watch().find().subscribe(  cameras => this.changeState({ cameras  }));
-        this.scans    = services.   scans.watch().find().subscribe(    scans => this.changeState({ scans    }));
-        this.config   = services.  config.watch().get('0').subscribe( config => this.changeState({ config }));
+        this.switches     = services.    switches.watch().find()  .subscribe(     switches => this.changeState({ switches     }));
+        this.cameras      = services.     cameras.watch().find()  .subscribe(      cameras => this.changeState({ cameras      }));
+        this.scans        = services.       scans.watch().find()  .subscribe(        scans => this.changeState({ scans        }));
+        this.status       = services.      status.watch().get( 0 ).subscribe(       status => this.changeState({ status       }));
+        this.config       = services.      config.watch().get('0').subscribe(       config => this.changeState({ config       }));
     }
 
     componentWillUnmount() {
-        this.switches.unsubscribe();
-        this.cameras .unsubscribe();
-        this.scans   .unsubscribe();
-        this.config  .unsubscribe();
+        this.switches    .unsubscribe();
+        this.cameras     .unsubscribe();
+        this.scans       .unsubscribe();
+        this.status      .unsubscribe();
+        this.config      .unsubscribe();
     }
 
-    shoot = async () => {
+    shootScan = async () => {
         try {
-            const response = await fetch('/api/shoot', { method: 'POST' });
-            const { id:scanId } = await response.json();
+            const response = await fetch('/api/shoot/scan', { method: 'POST' });
+            const { [services.scans.id]:scanId } = await response.json();
 
             this.history.replace(`/scan/${scanId}`);
         } catch(error) {
-            console.log("Shoot error:", error);
+            console.log("Shoot scan error:", error);
+        }
+    }
+
+    shootPreview = async () => {
+        try {
+            await fetch('/api/shoot/preview', { method: 'POST' });
+        } catch(error) {
+            console.log("Shoot preview error:", error);
         }
     }
 
@@ -64,15 +74,7 @@ export default class App extends React.Component {
             this.history.replace('/scan');
             await services.scans.remove(scanId);
         } catch(error) {
-            console.log("Delete error:", error);
-        }
-    }
-
-    preview = async () => {
-        try {
-            await fetch('/api/preview', { method: 'POST' });
-        } catch(error) {
-            console.log("Preview error:", error);
+            console.log("Delete scan error:", error);
         }
     }
 
@@ -82,20 +84,19 @@ export default class App extends React.Component {
                 <Header/>
                 <Row className="fill">
                     <PageList>
-                        <PageLink to="/shoot"       title="Shoot!"      icon={assets.shoot}       disabled={!this.state.status||!this.state.status.operational} onClick={this.shoot}   />
-                        <PageLink to="/session"     title="Session"     icon={assets.session}     disabled={!this.state.status||!this.state.status.operational}                        />
-                        <PageLink to="/calibration" title="Calibration" icon={assets.calibration} disabled={!this.state.status||!this.state.status.operational}                        />
-                        <PageLink to="/cameras"     title="Cameras"     icon={assets.cameras}                                                                   onClick={this.preview} />
-                        <PageLink to="/settings"    title="Settings"    icon={assets.settings}                                                                                         />
+                        <PageLink to="/scan"        title="Scan"        icon={assets.shoot}       />
+                        <PageLink to="/calibration" title="Calibration" icon={assets.calibration} />
+                        <PageLink to="/cameras"     title="Cameras"     icon={assets.cameras}     />
+                        <PageLink to="/settings"    title="Settings"    icon={assets.settings}    />
                     </PageList>
 
                     <Switch>
-                        <Route path="/cameras" render={ props =>
-                            <SwitchList switches={ this.state.switches }/>
+                        <Route path="/scan" render={ props =>
+                            <ScanList scans={ this.state.scans } onShoot={this.shootScan } operational={this.state.status&&this.state.status.operational} />
                         }/>
 
-                        <Route render={ props =>
-                                <ScanList scans={ this.state.scans }/>
+                        <Route path="/cameras" render={ props =>
+                            <SwitchList switches={ this.state.switches } onShoot={this.shootPreview} />
                         }/>
                     </Switch>
 

@@ -53,8 +53,8 @@ export default class Scan extends React.Component {
             <Col style={ styles.information.container }>
 
                 <Row>
-                    <Button href={`/scan/${scan.id}.zip`}>Download</Button>
-                    <Button onClick={this.props.onDelete}>Delete</Button>
+                    <Button href={`/scan/${scan.id}.zip`} className="fill">Download</Button>
+                    <Button onClick={this.props.onDelete} className="fill">Delete  </Button>
                 </Row>
 
                 <h3>Scan information:</h3>

@@ -1,6 +1,6 @@
 import React from 'react';
 import moment from 'moment'
-import { Row, Col, Circle, Icon, LabeledTextInput, Centered, Spinner } from '../components'
+import { Row, Col, Circle, Icon, Button, Centered, Spinner } from '../components'
 import { Route, NavLink  } from 'react-router-dom'
 import assets from './assets'
 
@@ -43,7 +43,7 @@ const styles = {
     list: {
         container: {
             height: '100%',
-            minWidth: '200px',
+            width: '350px',
             boxShadow: 'rgba(0, 0, 0, 0.156863) 0px 0px 10px, rgba(0, 0, 0, 0.227451) 0px 0px 10px',
             zIndex: '1'
         },
@@ -90,15 +90,16 @@ export const ScanLink = ({scan, ...props}) =>
         </Row>
     </NavLink>
 
-export const ScanList = ({scans, ...props}) =>
+export const ScanList = ({scans, operational, children, ...props}) =>
     <Col style={ styles.list.container }>
-        <LabeledTextInput containerStyle={ styles.list.search.container }>
-            <Centered>
-                <Icon style={ styles.list.search.icon } url={ assets.search }/>
-            </Centered>
-        </LabeledTextInput>
+        <Row>
+            <Button onClick={ () => this.props.onShoot } disabled={!operational} style={{width:"100%"}} >Scan</Button>
+        </Row>
         <Col className="fill scroll">
-            {scans && scans.sort((a,b)=>b.id-a.id).map( (scan) => <ScanLink key={scan.id} scan={scan} {...props} /> )}
+            {scans && scans.sort((a,b)=>b.id-a.id).map( (scan) =>
+                <ScanLink key={scan.id} scan={scan} {...props} />
+            )}
+            { children }
         </Col>
     </Col>
 

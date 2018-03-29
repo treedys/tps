@@ -68,7 +68,7 @@ const cameraIndex = camera => {
         return (ipAddress[3]-201)*8+camera.port;
 }
 
-app.post("/api/preview", async (browse_requet, browser_response) => {
+app.post("/api/shoot/preview", async (browser_request, browser_response) => {
     try {
         await status.patch(0, { shooting: true });
         await send.shootAll(0);
@@ -80,7 +80,7 @@ app.post("/api/preview", async (browse_requet, browser_response) => {
     }
 });
 
-app.post("/api/shoot", async (browser_request, browser_response) => {
+app.post("/api/shoot/scan", async (browser_request, browser_response) => {
 
     let scanId;
 
@@ -101,7 +101,7 @@ app.post("/api/shoot", async (browser_request, browser_response) => {
         await status.patch(0, { shooting: false });
 
         await Promise.all(shotsConfig.map( ({ name }) =>
-            fs.ensureDir(path.join(config.PATH,`db/${scanId}/${name}/`))
+            fs.ensureDir(path.join(config.PATH,`scans/${scanId}/${name}/`))
         ));
 
         await Promise.all(Object.entries(cameras).map( async ([mac, camera]) => {

@@ -27,7 +27,9 @@ export default class Settings extends React.Component {
 
             <h3>Scanner settings:</h3>
 
-            <LabeledTextInput id="preview" label="Preview camera" value={this.state.preview} onChange={ (e) => { e.persist(); this.setState( state => ({ preview: e.target.value })); } } />
+            <Col style={ styles.container }>
+                <LabeledTextInput id="preview" label="Preview camera" value={this.state.preview} onChange={ (e) => { e.persist(); this.setState( state => ({ preview: e.target.value })); } } />
+            </Col>
 
             <h3>Camera settings:</h3>
             <CameraSettings settings={this.state.camera} onChange={ camera => this.setState( state => ({ camera }))} />

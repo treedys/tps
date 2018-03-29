@@ -48,7 +48,7 @@ export default class CameraSettings extends React.Component {
         const {settings, ...props} = this.props;
 
         return <Col className="scroll fill" style={ styles.container }>
-            <table>
+            <table style={{width:"100%"}}>
                 <thead>
                     <tr>
                         <th style={styles.label}/>
