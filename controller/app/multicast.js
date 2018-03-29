@@ -36,8 +36,8 @@ module.exports = {
 
         for(let host in servers)
             tasks.push(new Promise((resolve, reject) =>
-                servers[host].send(msg, offset, length, port, address, err =>
-                    err ? reject(err) : resolve())));
+                servers[host].send(msg, offset, length, port, address, error =>
+                    error ? reject(error) : resolve())));
 
         await Promise.all(tasks);
     },

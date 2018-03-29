@@ -2,6 +2,7 @@ const app = require('./app.js');
 const nedb = require('nedb');
 const feathersNedb = require('feathers-nedb');
 const path = require('path');
+const debug = require('debug')('APP:config');
 
 const settings = {
     PATH: "/disk/sda1",
@@ -62,6 +63,7 @@ const initDefault = async () => {
         if(configs.length==0)
             await service.create(defaultConfig);
     } catch(error) {
+        debug("initDefault:", error);
         await service.create(defaultConfig);
     }
 };

@@ -38,8 +38,8 @@ app.param('scan', async (browser_request, browser_response, next, id) => {
         } else {
             next();
         }
-    } catch(err) {
-        next(err);
+    } catch(error) {
+        next(error);
     }
 });
 
@@ -60,8 +60,8 @@ app.get('/scan/:scan/preview-:index.jpg', async (browser_request, browser_respon
             file_stream.destroy();
         });
 
-    } catch(err) {
-        browser_response.status(500).send(err);
+    } catch(error) {
+        browser_response.status(500).send(error);
     }
 });
 
@@ -140,29 +140,41 @@ service.hooks({
     },
     after: {
         create: async context => {
-            const scans = [].concat(context.data);
+            try {
+                const scans = [].concat(context.data);
 
-            await Promise.all(scans.map(async ({ [service.id]:id, ...scan }) => {
-                const { scanJsonPath } = paths(scansPath, id);
-                await fs.outputJson(scanJsonPath, scan);
-            }));
+                await Promise.all(scans.map(async ({ [service.id]:id, ...scan }) => {
+                    const { scanJsonPath } = paths(scansPath, id);
+                    await fs.outputJson(scanJsonPath, scan);
+                }));
+            } catch(error) {
+                debug("after create", error);
+            }
         },
         update: async context => {
-            if(context.id) {
-                const { [service.id]:id, ...scan } = context.data;
-                const { scanJsonPath } = paths(scansPath, id);
-                await fs.outputJson(scanJsonPath, scan);
-            } else {
-                debug("unsupported update", context.data);
+            try {
+                if(context.id) {
+                    const { [service.id]:id, ...scan } = context.data;
+                    const { scanJsonPath } = paths(scansPath, id);
+                    await fs.outputJson(scanJsonPath, scan);
+                } else {
+                    debug("unsupported update", context.data);
+                }
+            } catch(error) {
+                debug("after update", error);
             }
         },
         patch: async context => {
-            if(context.id) {
-                const { [service.id]:id, ...scan } = await service.get(context.id);
-                const { scanJsonPath } = paths(scansPath, id);
-                await fs.outputJson(scanJsonPath, scan);
-            } else {
-                debug("unsupported patch", context.data);
+            try {
+                if(context.id) {
+                    const { [service.id]:id, ...scan } = await service.get(context.id);
+                    const { scanJsonPath } = paths(scansPath, id);
+                    await fs.outputJson(scanJsonPath, scan);
+                } else {
+                    debug("unsupported patch", context.data);
+                }
+            } catch(error) {
+                debug("after patch", error);
             }
         },
         remove: context => {

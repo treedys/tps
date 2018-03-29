@@ -75,8 +75,8 @@ app.post("/api/preview", async (browse_requet, browser_response) => {
         await delay(5*1000);
         await status.patch(0, { shooting: false });
         browser_response.status(204).end();
-    } catch(err) {
-        browser_response.status(500).send(err);
+    } catch(error) {
+        browser_response.status(500).send(error);
     }
 });
 
@@ -89,8 +89,8 @@ app.post("/api/shoot", async (browser_request, browser_response) => {
         scanId = scan[scans.id];
         browser_response.send({ id: scanId });
         debug(`Start scan ${scanId}`);
-    } catch(err) {
-        browser_response.status(500).send(err);
+    } catch(error) {
+        browser_response.status(500).send(error);
         return;
     }
 
@@ -133,7 +133,7 @@ app.post("/api/shoot", async (browser_request, browser_response) => {
 
                 await send.erase(mac, scanId);
             } catch(error) {
-                debug(error);
+                debug(`Error Scan:${scanId} Camera:${index}`, error);
             }
         }));
 
@@ -142,21 +142,25 @@ app.post("/api/shoot", async (browser_request, browser_response) => {
         await scans.patch(scanId, { done: Date.now() });
 
     } catch(error) {
-        debug(error);
+        debug(`Error Scan:${scanId}`, error);
     }
 });
 
 const powerCycleAllPorts = async switchConfig =>
     tplinks[switchConfig.address].session(switchConfig.address, async device => {
 
-        let tasks = [];
+        try {
+            let tasks = [];
 
-        for(let port=0; port < switchConfig.ports; port++) {
-            debug(`Forced power cycle ${switchConfig.address}:${port}`);
-            tasks.push(device.powerCycle(port, 4000));
+            for(let port=0; port < switchConfig.ports; port++) {
+                debug(`Forced power cycle ${switchConfig.address}:${port}`);
+                tasks.push(async () => await device.powerCycle(port, 4000));
+            }
+
+            await Promise.all(tasks);
+        } catch(error) {
+            debug(`Power cycle ${switchConfig.address}`, error);
         }
-
-        await Promise.all(tasks);
     });
 
 app.post("/api/cameras/restart", async (browser_request, browser_response) => {
@@ -167,10 +171,10 @@ app.post("/api/cameras/restart", async (browser_request, browser_response) => {
 
         for(let switch0 of config.SWITCHES) {
 
-            tasks.push(powerCycleAllPorts(switch0));
+            tasks.push(async () => await powerCycleAllPorts(switch0));
 
             for(let switch1 of switch0.switches) {
-                tasks.push(powerCycleAllPorts(switch1));
+                tasks.push(async () => await powerCycleAllPorts(switch1));
             }
         }
 
@@ -182,9 +186,9 @@ app.post("/api/cameras/restart", async (browser_request, browser_response) => {
 
         browser_response.status(204).end();
 
-    } catch(err) {
+    } catch(error) {
         await status.patch(0, { restarting: false });
-        browser_response.status(500).send(err);
+        browser_response.status(500).send(error);
     }
 });
 
@@ -198,15 +202,23 @@ const onMessage = async (message, rinfo) => {
         const mac = message.toString("ascii", 0, 17);
 
         if(!cameras[mac]) {
-            debug(`Found new ${mac} ${address}`);
-            cameras[mac] = { address, online:true, lastSeen: Date.now() };
-            await cameraService.create({ id: mac, address, mac, online:true });
+            try {
+                debug(`Found new ${mac} ${address}`);
+                await cameraService.create({ id: mac, address, mac, online:true });
+                cameras[mac] = { address, online:true, lastSeen: Date.now() };
 
-            discovered++;
+                discovered++;
+            } catch(error) {
+                debug("onMessage new:", error);
+            }
         } else if(cameras[mac].address != address || !cameras[mac].online) {
-            debug(`Recovering ${cameras[mac].switchAddress}:${cameras[mac].port} ${address}`);
-            cameras[mac] = { ...cameras[mac], address, online: true };
-            await cameraService.patch(mac, { address, online: true });
+            try {
+                debug(`Recovering ${cameras[mac].switchAddress}:${cameras[mac].port} ${address}`);
+                await cameraService.patch(mac, { address, online: true });
+                cameras[mac] = { ...cameras[mac], address, online: true };
+            } catch(error) {
+                debug("onMessage update:", error);
+            }
         }
 
         cameras[mac].lastSeen = Date.now();
@@ -221,57 +233,69 @@ const onMessage = async (message, rinfo) => {
 const linkSwitch = async switchConfig =>
     await tplinks[switchConfig.address].session(switchConfig.address, async device => {
 
-        const table = await device.portMacTable();
+        try {
+            const table = await device.portMacTable();
 
-        for(let { port, mac } of table) {
-            if(cameras[mac] && port<switchConfig.ports && port!=switchConfig.uplinkPort) {
-                if( cameras[mac].switchAddress != switchConfig.address ||
-                    cameras[mac].port          != port ) {
+            for(let { port, mac } of table) {
+                if(cameras[mac] && port<switchConfig.ports && port!=switchConfig.uplinkPort) {
+                    if( cameras[mac].switchAddress != switchConfig.address ||
+                        cameras[mac].port          != port ) {
 
-                    debug(`Linking ${switchConfig.address}:${port} to ${cameras[mac].address}`);
+                        debug(`Linking ${switchConfig.address}:${port} to ${cameras[mac].address}`);
 
-                    cameras[mac] = { ...cameras[mac], switchAddress:switchConfig.address, port };
+                        cameras[mac] = { ...cameras[mac], switchAddress:switchConfig.address, port };
 
-                    // cameraIndex expects switchAddress and port to be populated
-                    const index = cameraIndex(cameras[mac]);
-                    cameras[mac].index = index;
+                        // cameraIndex expects switchAddress and port to be populated
+                        const index = cameraIndex(cameras[mac]);
+                        cameras[mac].index = index;
 
-                    await cameraService.patch(mac, { switchAddress:switchConfig.address, port, index });
+                        await cameraService.patch(mac, { switchAddress:switchConfig.address, port, index });
 
-                    linked++;
+                        linked++;
+                    }
                 }
             }
+        } catch(error) {
+            debug(`linkSwitch ${switchConfig.address}:`, error);
         }
     });
 
 const link = async () => {
-    let tasks = [];
+    try {
+        let tasks = [];
 
-    // Get MAC addresses from the switches
-    for(let switch0 of config.SWITCHES) {
+        // Get MAC addresses from the switches
+        for(let switch0 of config.SWITCHES) {
 
-        if(switch0.switches.length==0)
-            tasks.push(linkSwitch(switch0));
+            if(switch0.switches.length==0)
+                tasks.push(async () => await linkSwitch(switch0));
 
-        for(let switch1 of switch0.switches) {
+            for(let switch1 of switch0.switches) {
 
-            tasks.push(linkSwitch(switch1));
+                tasks.push(async () => await linkSwitch(switch1));
+            }
         }
-    }
 
-    await Promise.all(tasks);
+        await Promise.all(tasks);
+    } catch(error) {
+        debug("link:", error);
+    }
 }
 
 const discover = async () => {
 
-    await send.pingAll();
+    try {
+        await send.pingAll();
 
-    if(discovered != linked && !linking) {
-        linking = true;
+        if(discovered != linked && !linking) {
+            linking = true;
 
-        try { await link() } catch(error) { debug("Link:", error); }
+            try { await link() } catch(error) { debug("Link:", error); }
 
-        linking = false;
+            linking = false;
+        }
+    } catch(error) {
+        debug("discover:", error);
     }
 }
 
@@ -285,11 +309,15 @@ const bootLimiter = new Bottleneck({ maxConcurrent: 10 });
 //bootLimiter.on('debug', (msg, data) => debug("BOTTLENECK:", msg, data));
 
 const powerCycle = async (address, port) => {
-    debug(`Power cycle ${address}:${port}`);
-    await tplinks[address].session( address, device => device.powerDisable(port) );
-    await delay(  3*1000 );
-    await tplinks[address].session( address, device => device.powerEnable(port) );
-    await delay( 30*1000 );
+    try {
+        debug(`Power cycle ${address}:${port}`);
+        await tplinks[address].session( address, device => device.powerDisable(port) );
+        await delay(  3*1000 );
+        await tplinks[address].session( address, device => device.powerEnable(port) );
+        await delay( 30*1000 );
+    } catch(error) {
+        debug(`Power cycle ${address}:${port}`, error);
+    }
 }
 
 let tplinks = {};
@@ -309,28 +337,36 @@ tplinksPrepare();
 const addressEnd = (address, end) => ip.toString( [...ip.toBuffer(address).slice(0, 3), end] );
 
 let probeSwitch0 = async (switch0, address)  => {
+    try {
+        debug(`Checking switch0 ${address}`);
 
-    debug(`Checking switch ${address}`);
-
-    await interfaces.upOnly(switch0.interface, addressEnd(address, 200));
-    return await tplinks[switch0.address].probe(address, {
-        timeout: 1*60*1000,
-        execTimeout: 1*60*1000
-    });
+        await interfaces.upOnly(switch0.interface, addressEnd(address, 200));
+        return await tplinks[switch0.address].probe(address, {
+            timeout: 1*60*1000,
+            execTimeout: 1*60*1000
+        });
+    } catch(error) {
+        debug(`Checking switch0 ${address}`, error);
+        return false;
+    }
 }
 
 let probeSwitch1 = async (switch0, switch1, address) => {
+    try {
+        debug(`Checking switch1 ${address}`);
 
-    debug(`Checking switch ${address}`);
+        await interfaces.upOnly(switch0.interface, addressEnd(switch0.address, 200));
+        await tplinks[switch0.address].session(switch0.address, device => device.enableOnly( [switch1.hostPort, switch0.uplinkPort], switch0.ports ));
 
-    await interfaces.upOnly(switch0.interface, addressEnd(switch0.address, 200));
-    await tplinks[switch0.address].session(switch0.address, device => device.enableOnly( [switch1.hostPort, switch0.uplinkPort], switch0.ports ));
-
-    await interfaces.upOnly(switch0.interface, addressEnd(address, 200));
-    return await tplinks[switch1.address].probe(address, {
-        timeout: 1*60*1000,
-        execTimeout: 1*60*1000
-    });
+        await interfaces.upOnly(switch0.interface, addressEnd(address, 200));
+        return await tplinks[switch1.address].probe(address, {
+            timeout: 1*60*1000,
+            execTimeout: 1*60*1000
+        });
+    } catch(error) {
+        debug(`Checking switch1 ${address}`);
+        return false;
+    }
 }
 
 let configure = async (interface, switchConfig, defaultAddress) => {
@@ -385,16 +421,20 @@ let configure = async (interface, switchConfig, defaultAddress) => {
 let lastReboot;
 
 const powerCycleSwitch = async switchConfig => {
-    var tasks = [];
+    try {
+        var tasks = [];
 
-    for(let port=0; port < switchConfig.ports; port++) {
-        if(!Object.values(cameras).find(camera => camera.switchAddress==switchConfig.address && camera.port==port) &&
-            port!=switchConfig.uplinkPort) {
-            tasks.push(bootLimiter.schedule( async () => await powerCycle( switchConfig.address, port )));
+        for(let port=0; port < switchConfig.ports; port++) {
+            if(!Object.values(cameras).find(camera => camera.switchAddress==switchConfig.address && camera.port==port) &&
+                port!=switchConfig.uplinkPort) {
+                tasks.push(async () => await bootLimiter.schedule( async () => await powerCycle( switchConfig.address, port )));
+            }
         }
-    }
 
-    await Promise.all(tasks);
+        await Promise.all(tasks);
+    } catch(error) {
+        debug(`powerCycleSwitch ${switchConfig.address}`, error);
+    }
 }
 
 let loop = async () => {
@@ -414,15 +454,13 @@ let loop = async () => {
 
             camera.online = false;
 
-            tasks.push(
-                cameraService.patch(mac, { online: false })
-            );
+            tasks.push( async () => await cameraService.patch(mac, { online: false }) );
         }
 
         if(notSeen && notRebooted) {
 
             if(camera.switchAddress && camera.port)
-                tasks.push( bootLimiter.schedule( async () => {
+                tasks.push( async () => await bootLimiter.schedule( async () => {
                     await powerCycle(camera.switchAddress, camera.port );
                     camera.lastReboot = Date.now();
                 }));
@@ -439,10 +477,10 @@ let loop = async () => {
 
         for(let switch0 of config.SWITCHES) {
             if(switch0.switches.length==0)
-                tasks.push(powerCycleSwitch(switch0));
+                tasks.push(async () => await powerCycleSwitch(switch0));
 
             for(let switch1 of switch0.switches ) {
-                tasks.push(powerCycleSwitch(switch1));
+                tasks.push(async () => await powerCycleSwitch(switch1));
             }
         }
 
@@ -564,7 +602,7 @@ let run = async () => {
 
                 break;
             } catch(error) {
-                debug(error);
+                debug("Retrying switch detection on:", error);
                 continue;
             }
         }

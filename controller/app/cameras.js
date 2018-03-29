@@ -16,8 +16,8 @@ app.param('camera', async (browser_request, browser_response, next, id) => {
         } else {
             next();
         }
-    } catch(err) {
-        next(err);
+    } catch(error) {
+        next(error);
     }
 });
 
@@ -46,8 +46,8 @@ app.get('/preview/:camera*', async (browser_request, browser_response) => {
             debug('Error:', error);
         });
 
-    } catch(err) {
-        browser_response.status(500).send(err);
+    } catch(error) {
+        browser_response.status(500).send(error);
     }
 });
 
