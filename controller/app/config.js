@@ -24,15 +24,24 @@ const settings = {
         {
             interface: "p1p1",
             address: "192.168.201.199",
-            ports: 47
+            ports: 48,
+            uplinkPort: 47,
+            switches: [
+            ]
         }, {
             interface: "p12p1",
             address: "192.168.202.199",
-            ports: 47
+            ports: 48,
+            uplinkPort: 47,
+            switches: [
+            ]
         }, {
             interface: "p13p1",
             address: "192.168.203.199",
-            ports: 47
+            ports: 48,
+            uplinkPort: 47,
+            switches: [
+            ]
         }
     ],
     CAMERA: {
