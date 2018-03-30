@@ -183,7 +183,7 @@ app.post("/api/shoot/calibration", async (browser_request, browser_response) => 
                 const fileName = `/calibrations/${calibrationId}/calibration/${index}.jpg`;
 
                 const file_stream = fs.createWriteStream(path.join(config.PATH, fileName));
-                const camera_request = request.get(`http://${camera.address}/${calibrationId}-1.jpg`);
+                const camera_request = request.get(`http://${camera.address}/${calibrationId}-2.jpg`);
 
                 camera_request.pipe(file_stream);
 
