@@ -217,7 +217,7 @@ const powerCycleAllPorts = async switchConfig =>
 
             for(let port=0; port < switchConfig.ports; port++) {
                 debug(`Forced power cycle ${switchConfig.address}:${port}`);
-                tasks.push(async () => await device.powerCycle(port, 4000));
+                tasks.push(device.powerCycle(port, 4000));
             }
 
             await Promise.all(tasks);
@@ -234,10 +234,10 @@ app.post("/api/cameras/restart", async (browser_request, browser_response) => {
 
         for(let switch0 of config.SWITCHES) {
 
-            tasks.push(async () => await powerCycleAllPorts(switch0));
+            tasks.push(powerCycleAllPorts(switch0));
 
             for(let switch1 of switch0.switches) {
-                tasks.push(async () => await powerCycleAllPorts(switch1));
+                tasks.push(powerCycleAllPorts(switch1));
             }
         }
 
@@ -331,11 +331,11 @@ const link = async () => {
         for(let switch0 of config.SWITCHES) {
 
             if(switch0.switches.length==0)
-                tasks.push(async () => await linkSwitch(switch0));
+                tasks.push(linkSwitch(switch0));
 
             for(let switch1 of switch0.switches) {
 
-                tasks.push(async () => await linkSwitch(switch1));
+                tasks.push(linkSwitch(switch1));
             }
         }
 
@@ -470,7 +470,7 @@ let configure = async (interface, switchConfig, defaultAddress) => {
         await tplinks[switchConfig.address].changeIpAddress(defaultAddress, 0, switchConfig.address, "255.255.255.0");
         debug("IP address changed");
 
-        await interfaces.address(interface, addressEnd( switchConfig.address, 200 ));
+        await interfaces.upOnly(interface, addressEnd( switchConfig.address, 200 ));
         await tplinks[switchConfig.address].session(switchConfig.address, async device => {
             debug("Updating startup config");
             await device.privileged("copy running-config startup-config");
@@ -490,7 +490,7 @@ const powerCycleSwitch = async switchConfig => {
         for(let port=0; port < switchConfig.ports; port++) {
             if(!Object.values(cameras).find(camera => camera.switchAddress==switchConfig.address && camera.port==port) &&
                 port!=switchConfig.uplinkPort) {
-                tasks.push(async () => await bootLimiter.schedule( async () => await powerCycle( switchConfig.address, port )));
+                tasks.push(bootLimiter.schedule(async () => await powerCycle( switchConfig.address, port )));
             }
         }
 
@@ -517,13 +517,13 @@ let loop = async () => {
 
             camera.online = false;
 
-            tasks.push( async () => await cameraService.patch(mac, { online: false }) );
+            tasks.push(await cameraService.patch(mac, { online: false }) );
         }
 
         if(notSeen && notRebooted) {
 
             if(camera.switchAddress && camera.port)
-                tasks.push( async () => await bootLimiter.schedule( async () => {
+                tasks.push(bootLimiter.schedule( async () => {
                     await powerCycle(camera.switchAddress, camera.port );
                     camera.lastReboot = Date.now();
                 }));
@@ -540,10 +540,10 @@ let loop = async () => {
 
         for(let switch0 of config.SWITCHES) {
             if(switch0.switches.length==0)
-                tasks.push(async () => await powerCycleSwitch(switch0));
+                tasks.push(powerCycleSwitch(switch0));
 
             for(let switch1 of switch0.switches ) {
-                tasks.push(async () => await powerCycleSwitch(switch1));
+                tasks.push(powerCycleSwitch(switch1));
             }
         }
 
