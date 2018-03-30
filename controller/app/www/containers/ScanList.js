@@ -90,10 +90,10 @@ export const ScanLink = ({scan, ...props}) =>
         </Row>
     </NavLink>
 
-export const ScanList = ({scans, operational, children, ...props}) =>
+export const ScanList = ({scans, operational, onShoot, children, ...props}) =>
     <Col style={ styles.list.container }>
         <Row>
-            <Button onClick={ () => this.props.onShoot } disabled={!operational} style={{width:"100%"}} >Scan</Button>
+            <Button onClick={ onShoot } disabled={!operational} style={{width:"100%"}} >Scan</Button>
         </Row>
         <Col className="fill scroll">
             {scans && scans.sort((a,b)=>b.id-a.id).map( (scan) =>

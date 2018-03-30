@@ -55,7 +55,9 @@ app.get('/scan/:scan/preview-:index.jpg', async (browser_request, browser_respon
         file_stream.pipe(browser_response);
 
         file_stream.on('error', error => {
-            if(!browser_response.headersSend && !browser_response.finished)
+            debug('Scan preview error:', error);
+
+            if(!browser_response.headersSent && !browser_response.finished)
                 browser_response.redirect('/noise.jpg');
             file_stream.destroy();
         });

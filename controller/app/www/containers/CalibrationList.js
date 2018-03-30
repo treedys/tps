@@ -89,10 +89,10 @@ export const CalibrationLink = ({calibration, ...props}) =>
         </Row>
     </NavLink>
 
-export const CalibrationList = ({calibrations, operational, children, ...props}) =>
+export const CalibrationList = ({calibrations, operational, onShoot, children, ...props}) =>
     <Col style={ styles.list.container }>
         <Row>
-            <Button onClick={ () => this.props.onShoot } disabled={!operational} style={{width:"100%"}}>Calibration</Button>
+            <Button onClick={ onShoot } disabled={!operational} style={{width:"100%"}}>Calibration</Button>
         </Row>
         <Col className="fill scroll">
             {calibrations && calibrations.sort((a,b)=>b.id-a.id).map( (calibration) =>

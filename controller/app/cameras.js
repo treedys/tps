@@ -40,10 +40,10 @@ app.get('/preview/:camera*', async (browser_request, browser_response) => {
         });
 
         camera_request.on('error', error => {
-            if(!browser_response.headersSend && !browser_response.finished)
+            if(!browser_response.headersSent && !browser_response.finished)
                 browser_response.redirect('/noise.jpg');
             camera_request.abort();
-            debug('Error:', error);
+            debug('Camera preview Error:', error);
         });
 
     } catch(error) {

@@ -106,9 +106,9 @@ app.post("/api/shoot/scan", async (browser_request, browser_response) => {
         ));
 
         await Promise.all(Object.entries(cameras).map( async ([mac, camera]) => {
-            try {
-                const index = cameraIndex(camera);
+            const index = cameraIndex(camera);
 
+            try {
                 if(isNaN(index)) {
                     debug("NaN:",mac, camera);
                     return;
@@ -167,14 +167,12 @@ app.post("/api/shoot/calibration", async (browser_request, browser_response) => 
         await delay(5*1000);
         await status.patch(0, { shooting: false });
 
-        await Promise.all(shotsConfig.map( ({ name }) =>
-            fs.ensureDir(path.join(config.PATH,`calibrations/${calibrationId}/${name}/`))
-        ));
+        await fs.ensureDir(path.join(config.PATH,`calibrations/${calibrationId}/calibration/`));
 
         await Promise.all(Object.entries(cameras).map( async ([mac, camera]) => {
-            try {
-                const index = cameraIndex(camera);
+            const index = cameraIndex(camera);
 
+            try {
                 if(isNaN(index)) {
                     debug("NaN:",mac, camera);
                     return;
@@ -692,7 +690,7 @@ let run = async () => {
 
         debug("Starting main loop");
 
-        await status.patch(0, { operating: true });
+        await status.patch(0, { operational: true });
 
         while(true)
             await loop();

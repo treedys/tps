@@ -77,10 +77,10 @@ export const SwitchLink = ({switchData, ...props}) =>
         </Row>
     </NavLink>
 
-export const SwitchList = ({switches, children, operational, ...props}) =>
+export const SwitchList = ({switches, operational, onShoot, children, ...props}) =>
     <Col style={ styles.list.container } className="scroll">
         <Row>
-            <Button onClick={ () => this.props.onShoot } disabled={!operational} style={{width:"100%"}}>Preview</Button>
+            <Button onClick={ onShoot } disabled={!operational} style={{width:"100%"}}>Preview</Button>
         </Row>
         <Col className="fill scroll">
             { switches && switches.map( (switchData) =>

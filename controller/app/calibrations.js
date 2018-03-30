@@ -43,7 +43,9 @@ app.get('/calibration/:calibration/preview.jpg', async (browser_request, browser
         file_stream.pipe(browser_response);
 
         file_stream.on('error', error => {
-            if(!browser_response.headersSend && !browser_response.finished)
+            debug('Calibration preview error:', error);
+
+            if(!browser_response.headersSent && !browser_response.finished)
                 browser_response.redirect('/noise.jpg');
             file_stream.destroy();
         });

@@ -56,7 +56,7 @@ export default class App extends React.Component {
     shootScan = async () => {
         try {
             const response = await fetch('/api/shoot/scan', { method: 'POST' });
-            const { [services.scans.id]:scanId } = await response.json();
+            const { id:scanId } = await response.json();
 
             this.history.replace(`/scan/${scanId}`);
         } catch(error) {
@@ -67,7 +67,7 @@ export default class App extends React.Component {
     shootCalibration = async () => {
         try {
             const response = await fetch('/api/shoot/calibration', { method: 'POST' });
-            const { [service.calibrations.id]:calibrationId } = await response.json();
+            const { id:calibrationId } = await response.json();
 
             this.history.replace(`/calibration/${calibrationId}`);
         } catch(error) {
@@ -123,7 +123,7 @@ export default class App extends React.Component {
                         }/>
 
                         <Route path="/cameras" render={ props =>
-                            <SwitchList switches={ this.state.switches } onShoot={this.shootPreview} />
+                            <SwitchList switches={ this.state.switches } onShoot={this.shootPreview} operational={this.state.status&&this.state.status.operational} />
                         }/>
                     </Switch>
 
