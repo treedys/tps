@@ -107,7 +107,7 @@ const populate = async () => {
 
             if(await isDirectory(scanPath) && await fs.exists(scanJsonPath)) {
 
-                let scan = JSON.parse(await fs.readFile(scanJsonPath));
+                let { scanId: unusedScanId, ...scan } = JSON.parse(await fs.readFile(scanJsonPath));
 
                 const alreadyExists = await service.find({ query: { [service.id]: scanId } });
 
@@ -147,7 +147,7 @@ service.hooks({
 
                 await Promise.all(scans.map(async ({ [service.id]:id, ...scan }) => {
                     const { scanJsonPath } = paths(scansPath, id);
-                    await fs.outputJson(scanJsonPath, scan);
+                    await fs.outputJson(scanJsonPath, { scanId:id, ...scan });
                 }));
             } catch(error) {
                 debug("after create", error);
@@ -158,7 +158,7 @@ service.hooks({
                 if(context.id) {
                     const { [service.id]:id, ...scan } = context.data;
                     const { scanJsonPath } = paths(scansPath, id);
-                    await fs.outputJson(scanJsonPath, scan);
+                    await fs.outputJson(scanJsonPath, { scanId:id, ...scan });
                 } else {
                     debug("unsupported update", context.data);
                 }
@@ -171,7 +171,7 @@ service.hooks({
                 if(context.id) {
                     const { [service.id]:id, ...scan } = await service.get(context.id);
                     const { scanJsonPath } = paths(scansPath, id);
-                    await fs.outputJson(scanJsonPath, scan);
+                    await fs.outputJson(scanJsonPath, { scanId:id, ...scan });
                 } else {
                     debug("unsupported patch", context.data);
                 }

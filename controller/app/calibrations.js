@@ -95,7 +95,7 @@ const populate = async () => {
 
             if(await isDirectory(calibrationPath) && await fs.exists(calibrationJsonPath)) {
 
-                let calibration = JSON.parse(await fs.readFile(calibrationJsonPath));
+                let { calibrationId: unusedCalibrationId, ...calibration } = JSON.parse(await fs.readFile(calibrationJsonPath));
 
                 const alreadyExists = await service.find({ query: { [service.id]: calibrationId } });
 
@@ -135,7 +135,7 @@ service.hooks({
 
                 await Promise.all(calibrations.map(async ({ [service.id]:id, ...calibration }) => {
                     const { calibrationJsonPath } = paths(calibrationsPath, id);
-                    await fs.outputJson(calibrationJsonPath, calibration);
+                    await fs.outputJson(calibrationJsonPath, { calibrationId:id, calibration });
                 }));
             } catch(error) {
                 debug("after create", error);
@@ -146,7 +146,7 @@ service.hooks({
                 if(context.id) {
                     const { [service.id]:id, ...calibration } = context.data;
                     const { calibrationJsonPath } = paths(calibrationsPath, id);
-                    await fs.outputJson(calibrationJsonPath, calibration);
+                    await fs.outputJson(calibrationJsonPath, { calibrationId:id, calibration });
                 } else {
                     debug("unsupported update", context.data);
                 }
@@ -159,7 +159,7 @@ service.hooks({
                 if(context.id) {
                     const { [service.id]:id, ...calibration } = await service.get(context.id);
                     const { calibrationJsonPath } = paths(calibrationsPath, id);
-                    await fs.outputJson(calibrationJsonPath, calibration);
+                    await fs.outputJson(calibrationJsonPath, { calibrationId:id, calibration });
                 } else {
                     debug("unsupported patch", context.data);
                 }
