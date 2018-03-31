@@ -14,12 +14,15 @@ const isDirectory = async path => (await fs.stat(path)).isDirectory();
 
 const scansPath = Path.join(config.PATH,'/db');
 
-const defaultScan = () => ({
+const calibrations = require('./calibrations');
+
+const defaultScan = async () => ({
     date   : Date.now(),
     name   : "",
     email  : "",
     gender : "male",
     age    : "",
+    calibrationId: Math.max(...(await calibrations.find()).map(calibration => calibration[calibrations.id])),
 
     SKETCHFAB_ENABLE : false,
     bodylabprocess   : false,
@@ -136,7 +139,7 @@ service.hooks({
 
                 await fs.ensureDir(scanPath);
 
-                context.data = Object.assign( defaultScan(), { [service.id]: next.toString(), }, context.data);
+                context.data = Object.assign( await defaultScan(), { [service.id]: next.toString(), }, context.data);
             }
         }
     },
