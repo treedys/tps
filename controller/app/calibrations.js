@@ -12,7 +12,7 @@ app.use('/api/calibrations', memory() );
 const service = app.service('/api/calibrations');
 const isDirectory = async path => (await fs.stat(path)).isDirectory();
 
-const calibrationsPath = Path.join(config.PATH,'/calibrations');
+const calibrationsPath = Path.join(config.PATH,'/db');
 
 const defaultCalibration = () => ({
     date   : Date.now()

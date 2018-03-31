@@ -12,7 +12,7 @@ app.use('/api/scans', memory() );
 const service = app.service('/api/scans');
 const isDirectory = async path => (await fs.stat(path)).isDirectory();
 
-const scansPath = Path.join(config.PATH,'/scans');
+const scansPath = Path.join(config.PATH,'/db');
 
 const defaultScan = () => ({
     date   : Date.now(),

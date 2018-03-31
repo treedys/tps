@@ -102,7 +102,7 @@ app.post("/api/shoot/scan", async (browser_request, browser_response) => {
         await status.patch(0, { shooting: false });
 
         await Promise.all(shotsConfig.map( ({ name }) =>
-            fs.ensureDir(path.join(config.PATH,`scans/${scanId}/${name}/`))
+            fs.ensureDir(path.join(config.PATH,`db/${scanId}/${name}/`))
         ));
 
         await Promise.all(Object.entries(cameras).map( async ([mac, camera]) => {
@@ -118,7 +118,7 @@ app.post("/api/shoot/scan", async (browser_request, browser_response) => {
 
                     // Use HEAD request to check if the target jpg file exists
 
-                    const fileName = `/scans/${scanId}/${name}/${index}.jpg`;
+                    const fileName = `/db/${scanId}/${name}/${index}.jpg`;
 
                     const file_stream = fs.createWriteStream(path.join(config.PATH, fileName));
                     const camera_request = request.get(`http://${camera.address}/${scanId}-${cameraFileIndex}.jpg`);
@@ -167,7 +167,7 @@ app.post("/api/shoot/calibration", async (browser_request, browser_response) => 
         await delay(5*1000);
         await status.patch(0, { shooting: false });
 
-        await fs.ensureDir(path.join(config.PATH,`calibrations/${calibrationId}/calibration/`));
+        await fs.ensureDir(path.join(config.PATH,`db/${calibrationId}/calibration/`));
 
         await Promise.all(Object.entries(cameras).map( async ([mac, camera]) => {
             const index = cameraIndex(camera);
@@ -180,7 +180,7 @@ app.post("/api/shoot/calibration", async (browser_request, browser_response) => 
 
                 // Use HEAD request to check if the target jpg file exists
 
-                const fileName = `/calibrations/${calibrationId}/calibration/${index}.jpg`;
+                const fileName = `/db/${calibrationId}/calibration/${index}.jpg`;
 
                 const file_stream = fs.createWriteStream(path.join(config.PATH, fileName));
                 const camera_request = request.get(`http://${camera.address}/${calibrationId}-2.jpg`);
