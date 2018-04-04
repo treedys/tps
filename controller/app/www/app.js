@@ -2,6 +2,8 @@ import React from 'react';
 import { createHashHistory as createHistory } from 'history';
 import { Router, Route, Switch } from 'react-router-dom';
 
+import dataminrUtils from 'dataminr-react-components/dist/utils/Utils';
+
 import { Row, Col, Button } from './components/';
 import {
     Header,
@@ -24,6 +26,12 @@ const styles = {
         height: "100%"
     }
 }
+
+const confirmDialog = async (title, text) =>
+    new Promise( (resolve,reject) =>
+        dataminrUtils.confirmDialog(title, text,
+            () => resolve(true),
+            () => resolve(false) ));
 
 @changeState
 export default class App extends React.Component {
@@ -85,8 +93,17 @@ export default class App extends React.Component {
 
     deleteScan = async scanId => {
         try {
+            scan = await services.scans.get(scanId);
+
+            await confirmDialog('TEST', 'asdf asd asd asd');
+
+            if(!scan.zipDownloaded && !await confirmDialog('Confirm delete',
+                    'The scan is never downloaded, are you sure that want to delete it?'))
+                return;
+
             this.history.replace('/scan');
             await services.scans.remove(scanId);
+
         } catch(error) {
             console.log("Delete scan error:", error);
         }

@@ -72,17 +72,26 @@ app.get('/scan/:scan/preview-:index.jpg', async (browser_request, browser_respon
 
 app.get('/scan/:scan.zip', async (browser_request, browser_response) => {
     try {
-        var archive = archiver('zip', { store: true });
+        const archive = archiver('zip', { store: true });
+        const scanId = browser_request.scan[service.id];
 
         archive.pipe(browser_response);
 
-        const { scanPath } = paths(scansPath, browser_request.scan[service.id]);
+        const { scanPath } = paths(scansPath, scanId);
 
         archive.directory(scanPath, false);
 
         archive.on('warning', error => debug('Archive warning:', error));
 
         archive.on('error', error => debug('Archive error:', error));
+
+        archive.on('progress', async data => {
+            if(data.entries.total==data.entries.processed &&
+                data.fs.totalBytes==data.fs.processedBytes) {
+
+                service.patch(scanId, { zipDownloaded: true });
+            }
+        });
 
         archive.finalize();
 
