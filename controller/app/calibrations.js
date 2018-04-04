@@ -60,14 +60,23 @@ app.get('/calibration/:calibration.zip', async (browser_request, browser_respons
         var archive = archiver('zip', { store: true });
 
         archive.pipe(browser_response);
+        const calibrationId = browser_request.calibration[service.id];
 
-        const { calibrationPath } = paths(calibrationsPath, browser_request.calibration[service.id]);
+        const { calibrationPath } = paths(calibrationsPath, calibrationId);
 
         archive.directory(calibrationPath, false);
 
         archive.on('warning', error => debug('Archive warning:', error));
 
         archive.on('error', error => debug('Archive error:', error));
+
+        archive.on('progress', async data => {
+            if(data.entries.total==data.entries.processed &&
+                data.fs.totalBytes==data.fs.processedBytes) {
+
+                service.patch(calibrationId, { zipDownloaded: true });
+            }
+        });
 
         archive.finalize();
 

@@ -27,6 +27,8 @@ const styles = {
     }
 }
 
+import componentCss from 'dataminr-react-components/dist/react-components.css';
+
 const confirmDialog = async (title, text) =>
     new Promise( (resolve,reject) =>
         dataminrUtils.confirmDialog(title, text,
@@ -93,9 +95,7 @@ export default class App extends React.Component {
 
     deleteScan = async scanId => {
         try {
-            scan = await services.scans.get(scanId);
-
-            await confirmDialog('TEST', 'asdf asd asd asd');
+            const scan = await services.scans.get(scanId);
 
             if(!scan.zipDownloaded && !await confirmDialog('Confirm delete',
                     'The scan is never downloaded, are you sure that want to delete it?'))
@@ -111,6 +111,12 @@ export default class App extends React.Component {
 
     deleteCalibration = async calibrationId  => {
         try {
+            const calibration = await services.calibrations.get(calibrationId);
+
+            if(!calibration.zipDownloaded && !await confirmDialog('Confirm delete',
+                    'The calibration is never downloaded, are you sure that want to delete it?'))
+                return;
+
             this.history.replace('/calibration');
             await services.calibrations.remove(calibrationId);
         } catch(error) {
