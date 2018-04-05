@@ -27,13 +27,26 @@ const styles = {
     }
 }
 
+/* bugfixing various synchronisation issues */
+const postpone = async () =>
+    new Promise( (resolve, reject) =>
+        setTimeout(resolve, 0)
+    );
+
 import componentCss from 'dataminr-react-components/dist/react-components.css';
 
-const confirmDialog = async (title, text) =>
-    new Promise( (resolve,reject) =>
+const confirmDialog = async (title, text) => {
+    const result = await new Promise( (resolve,reject) =>
         dataminrUtils.confirmDialog(title, text,
-            () => resolve(true),
-            () => resolve(false) ));
+            () => { resolve(true);  return true; } ,
+            () => { resolve(false); return true; } ));
+
+    /* FIXME: await two iterations to solve nasty confirmDialog bug */
+    await postpone();
+    await postpone();
+
+    return result;
+}
 
 @changeState
 export default class App extends React.Component {
@@ -41,7 +54,10 @@ export default class App extends React.Component {
     constructor(props) {
         super(props);
 
-        this.state = {};
+        this.state = {
+            scansSelection: {},
+            calibrationsSelection: {}
+        };
         this.history = createHistory();
     }
 
@@ -93,32 +109,89 @@ export default class App extends React.Component {
         }
     }
 
+    onScanSelectedChange = async (scanId, checked) => {
+
+        /* FIXME: await one iteration to solve nasty react checkbox bug */
+        await postpone();
+
+        this.setState( state => ({
+            ...state,
+            scansSelection: {
+                ...state.scansSelection,
+                [scanId]: checked
+            }
+        }));
+    }
+
     deleteScan = async scanId => {
+
+        let list = Object.entries(this.state.scansSelection).filter( entry => !!entry[1] ).map( entry => entry[0] );
+        list = list.length ? list : [scanId];
+
         try {
-            const scan = await services.scans.get(scanId);
+            for(let id of list) {
+                const scan = this.state.scans.find( s => s.id==id );
 
-            if(!scan.zipDownloaded && !await confirmDialog('Confirm delete',
-                    'The scan is never downloaded, are you sure that want to delete it?'))
-                return;
+                /* check if someone else already delete this scan */
+                if(!scan) {
+                    this.onScanSelectedChange(id, false);
+                    continue;
+                }
 
-            this.history.replace('/scan');
-            await services.scans.remove(scanId);
+                if(!scan.zipDownloaded && !await confirmDialog('Confirm delete',
+                    `Scan ${scan.id} is never downloaded, are you sure that want to delete it?`))
+                    continue;
+
+                if(id==scanId)
+                    this.history.replace('/scan');
+
+                await services.scans.remove(id);
+                this.onScanSelectedChange(id, false);
+            }
 
         } catch(error) {
             console.log("Delete scan error:", error);
         }
     }
 
+    onCalibrationSelectedChange = async (calibrationId, checked) => {
+
+        /* FIXME: await one iteration to solve nasty react checkbox bug */
+        await postpone();
+
+        this.setState( state => ({
+            ...state,
+            calibrationsSelection: {
+                ...state.calibrationsSelection,
+                [calibrationId]: checked
+            }
+        }));
+    }
+
     deleteCalibration = async calibrationId  => {
+
+        let list = Object.entries(this.state.calibrationsSelection).filter( entry => !!entry[1] ).map( entry => entry[0] );
+        list = list.length ? list : [calibrationId];
+
         try {
-            const calibration = await services.calibrations.get(calibrationId);
+            for(let id of list) {
+                const calibration = this.state.calibrations.find( c => c.id==id );
 
-            if(!calibration.zipDownloaded && !await confirmDialog('Confirm delete',
-                    'The calibration is never downloaded, are you sure that want to delete it?'))
-                return;
+                if(!calibration) {
+                    this.onCalibrationSelectedChange(id, false);
+                    continue;
+                }
 
-            this.history.replace('/calibration');
-            await services.calibrations.remove(calibrationId);
+                if(!calibration.zipDownloaded && !await confirmDialog('Confirm delete',
+                    `Calibration ${calibration.id} is never downloaded, are you sure that want to delete it?`))
+                    continue;
+
+                if(id==calibrationId)
+                    this.history.replace('/calibration');
+
+                await services.calibrations.remove(id);
+                this.onCalibrationSelectedChange(id, false);
+            }
         } catch(error) {
             console.log("Delete calibration error:", error);
         }
@@ -138,11 +211,19 @@ export default class App extends React.Component {
 
                     <Switch>
                         <Route path="/scan" render={ props =>
-                            <ScanList scans={ this.state.scans } onShoot={this.shootScan } operational={this.state.status&&this.state.status.operational} />
+                            <ScanList scans={ this.state.scans }
+                                selected={ this.state.scansSelection }
+                                onShoot={ this.shootScan }
+                                onSelectedChange={ this.onScanSelectedChange }
+                                operational={ this.state.status && this.state.status.operational } />
                         }/>
 
                         <Route path="/calibration" render={ props =>
-                            <CalibrationList calibrations={ this.state.calibrations } onShoot={this.shootCalibration} operational={this.state.status&&this.state.status.operational} />
+                            <CalibrationList calibrations={ this.state.calibrations }
+                                selected={ this.state.calibrationsSelection }
+                                onShoot={ this.shootCalibration }
+                                onSelectedChange={ this.onCalibrationSelectedChange }
+                            operational={this.state.status&&this.state.status.operational} />
                         }/>
 
                         <Route path="/cameras" render={ props =>

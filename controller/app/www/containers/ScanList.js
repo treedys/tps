@@ -1,6 +1,7 @@
 import React from 'react';
 import moment from 'moment'
 import { Row, Col, Circle, Icon, Button, Centered, Spinner } from '../components'
+import { LabeledCheckbox } from '../components'
 import { Route, NavLink  } from 'react-router-dom'
 import assets from './assets'
 
@@ -61,7 +62,7 @@ const styles = {
     }
 };
 
-export const ScanLink = ({scan, ...props}) =>
+export const ScanLink = ({scan, selected, onSelectedChange, ...props}) =>
     <NavLink to={`/scan/${scan.id}`}
         style={ styles.link.normal }
         activeStyle={ styles.link.active }>
@@ -69,6 +70,7 @@ export const ScanLink = ({scan, ...props}) =>
             <div style={{ width: "8px" }}>
                 <Route path={`/scan/${scan.id}`} render={ props => <div style={ styles.link.activeBar }/> }/>
             </div>
+            <Centered><LabeledCheckbox checked={selected} onChange={ e => onSelectedChange(scan.id, e.target.checked) }/></Centered>
             <Circle radius={40} className="align-center" style={ styles.link.circle }>
                 { !scan.done && <Spinner/> }
                 { scan.done &&
@@ -90,14 +92,14 @@ export const ScanLink = ({scan, ...props}) =>
         </Row>
     </NavLink>
 
-export const ScanList = ({scans, operational, onShoot, children, ...props}) =>
+export const ScanList = ({scans, selected, operational, onShoot, children, ...props}) =>
     <Col style={ styles.list.container }>
         <Row>
             <Button onClick={ onShoot } disabled={!operational} style={{width:"100%"}} >Scan</Button>
         </Row>
         <Col className="fill scroll">
             {scans && scans.sort((a,b)=>b.id-a.id).map( (scan) =>
-                <ScanLink key={scan.id} scan={scan} {...props} />
+                <ScanLink key={scan.id} scan={scan} selected={!!selected[scan.id]} {...props} />
             )}
             { children }
         </Col>

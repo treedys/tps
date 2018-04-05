@@ -1,6 +1,7 @@
 import React from 'react';
 import moment from 'moment'
 import { Row, Col, Circle, Icon, Button, Centered, Spinner } from '../components'
+import { LabeledCheckbox } from '../components'
 import { Route, NavLink  } from 'react-router-dom'
 import assets from './assets'
 
@@ -61,7 +62,7 @@ const styles = {
     }
 };
 
-export const CalibrationLink = ({calibration, ...props}) =>
+export const CalibrationLink = ({calibration, selected, onSelectedChange, ...props}) =>
     <NavLink to={`/calibration/${calibration.id}`}
         style={ styles.link.normal }
         activeStyle={ styles.link.active }>
@@ -69,6 +70,7 @@ export const CalibrationLink = ({calibration, ...props}) =>
             <div style={{ width: "8px" }}>
                 <Route path={`/calibration/${calibration.id}`} render={ props => <div style={ styles.link.activeBar }/> }/>
             </div>
+            <Centered><LabeledCheckbox checked={selected} onChange={ e => onSelectedChange(calibration.id, e.target.checked) }/></Centered>
             <Circle radius={40} className="align-center" style={ styles.link.circle }>
                 { !calibration.done && <Spinner/> }
                 { calibration.done &&
@@ -89,14 +91,14 @@ export const CalibrationLink = ({calibration, ...props}) =>
         </Row>
     </NavLink>
 
-export const CalibrationList = ({calibrations, operational, onShoot, children, ...props}) =>
+export const CalibrationList = ({calibrations, selected, operational, onShoot, children, ...props}) =>
     <Col style={ styles.list.container }>
         <Row>
             <Button onClick={ onShoot } disabled={!operational} style={{width:"100%"}}>Calibration</Button>
         </Row>
         <Col className="fill scroll">
             {calibrations && calibrations.sort((a,b)=>b.id-a.id).map( (calibration) =>
-                <CalibrationLink key={calibration.id} calibration={calibration} {...props} />
+                <CalibrationLink key={calibration.id} calibration={calibration} selected={!!selected[calibration.id]} {...props} />
             )}
             { children }
         </Col>
