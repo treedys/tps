@@ -98,8 +98,23 @@ app.post("/api/shoot/scan", async (browser_request, browser_response) => {
     try {
         await status.patch(0, { shooting: true });
         await send.shootAll(scanId);
-        await delay(5*1000);
+        await delay(2*1000);
         await status.patch(0, { shooting: false });
+    } catch(error) {
+        debug(`Error Scan:${scanId}`, error);
+    }
+});
+
+app.post("/scan/:scan/download", async (browser_request, browser_response) => {
+
+    const scanId = browser_request.scan[scans.id];
+
+    debug(`Downloading scan ${scanId}`);
+
+    try {
+        browser_response.status(204).end();
+
+        await status.patch(0, { downloading: true });
 
         await Promise.all(shotsConfig.map( ({ name }) =>
             fs.ensureDir(path.join(config.PATH,`db/${scanId}/${name}/`))
@@ -140,6 +155,7 @@ app.post("/api/shoot/scan", async (browser_request, browser_response) => {
 
         debug(`Done scan ${scanId}`);
 
+        await status.patch(0, { downloading: false });
         await scans.patch(scanId, { done: Date.now() });
 
     } catch(error) {

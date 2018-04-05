@@ -4,6 +4,7 @@ const memory = require('feathers-memory');
 const Path = require('path');
 const fs = require('fs-extra');
 const archiver = require('archiver');
+const camerasService = require('./cameras');
 
 const debug = require('debug')('scans');
 
@@ -48,10 +49,19 @@ app.param('scan', async (browser_request, browser_response, next, id) => {
 
 app.get('/scan/:scan/preview-:index.jpg', async (browser_request, browser_response) => {
     try {
-        const { scanPath } = paths(scansPath, browser_request.scan[service.id]);
+        const scanId = browser_request.scan[service.id];
+        const { scanPath } = paths(scansPath, scanId);
         const { preview } = await config.service.get('0');
         const folder = browser_request.params.index == "2" ? "projection" : "normal";
         const fileName = Path.join(scanPath, folder, `${preview}.jpg`);
+
+        if(!browser_request.scan.done) {
+
+            const cameras = await camerasService.find({query:{index:preview}});
+
+            browser_response.redirect(`/preview/${cameras[0].mac}/${scanId}-${browser_request.params.index}.jpg`);
+            return;
+        }
 
         const file_stream = fs.createReadStream(fileName);
 

@@ -123,6 +123,23 @@ export default class App extends React.Component {
         }));
     }
 
+    acceptScan = async scanId => {
+        try {
+            await fetch(`/scan/${scanId}/download`, { method: 'POST' });
+        } catch(error) {
+            console.log("Scan accept error:", error);
+        }
+    }
+
+    rejectScan = async scanId => {
+        try {
+            await services.scans.remove(scanId);
+            this.onScanSelectedChange(scanId, false);
+        } catch(error) {
+            console.log("Scan reject error:", error);
+        }
+    }
+
     deleteScan = async scanId => {
 
         let list = Object.entries(this.state.scansSelection).filter( entry => !!entry[1] ).map( entry => entry[0] );
@@ -235,8 +252,11 @@ export default class App extends React.Component {
 
                         <Route path="/scan/:scanId" render={ props =>
                             <Scan scan={ this.state.scans && this.state.scans.find(scan => scan.id == props.match.params.scanId)}
-                                onChange={ scan => services.scans.update( props.match.params.scanId, scan)}
-                                onDelete={ () => this.deleteScan( props.match.params.scanId )}
+                                status={ this.state.status }
+                                onAccept={ scan => this.acceptScan( scan.id )}
+                                onReject={ scan => this.rejectScan( scan.id )}
+                                onChange={ scan => services.scans.update( scan.id, scan)}
+                                onDelete={ scan => this.deleteScan( scan.id )}
                             />
                         }/>
 

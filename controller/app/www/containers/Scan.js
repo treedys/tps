@@ -34,16 +34,16 @@ export default class Scan extends React.Component {
     onImageClick = () => this.setState( state => ({normalProjection: !state.normalProjection}) );
 
     render() {
-        const { scan, ...props } = this.props;
+        const { scan, status, ...props } = this.props;
 
-        if( !scan )
+        if( !scan || !status)
             return <Row className="fill">
                 <h1>No data</h1>
             </Row>
 
         return <Row className="fill">
             <div className="fill" style={ styles.preview.container }>
-                { scan.done
+                { scan.done || !status.shooting
                     ? <img src={`/scan/${scan.id}/preview-${ this.state.normalProjection ? "1":"2"}.jpg`}
                         style={ styles.preview.image }
                         onClick={ this.onImageClick }/>
@@ -53,8 +53,11 @@ export default class Scan extends React.Component {
             <Col style={ styles.information.container }>
 
                 <Row>
-                    <Button href={`/scan/${scan.id}.zip`} className="fill">Download</Button>
-                    <Button onClick={this.props.onDelete} className="fill">Delete  </Button>
+                    { !scan.done && <Button onClick={ () => this.props.onAccept(scan) } className="fill">Accept  </Button> }
+                    { !scan.done && <Button onClick={ () => this.props.onReject(scan) } className="fill">Reject  </Button> }
+
+                    {  scan.done && <Button href={`/scan/${scan.id}.zip`}               className="fill">Download</Button> }
+                    {  scan.done && <Button onClick={ () => this.props.onDelete(scan) } className="fill">Delete  </Button> }
                 </Row>
 
                 <h3>Scan information:</h3>
