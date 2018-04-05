@@ -10,6 +10,16 @@ const settings = {
     MCAST_GROUP_ADDR: "224.1.1.1",
     MCAST_CAMERA_COMMAND_PORT: 6502,
     MCAST_CAMERA_REPLY_PORT: 6501,
+    SWITCH_PROBE_TIMEOUTS: {
+        timeout: 1*10*1000,
+        execTimeout: 1*10*1000
+    },
+    SWITCH_CONFIG_TIMEOUTS: {
+        timeout: 2*60*1000,
+        execTimeout: 2*60*1000
+    },
+    SWITCH_CONFIG_SPANNING_TREE: false,
+    SWITCH_CONFIG_PoE: false,
     SWITCHES: [
         {
             interface: "eth1",

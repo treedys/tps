@@ -402,10 +402,7 @@ let probeSwitch0 = async (switch0, address)  => {
         debug(`Checking switch0 ${address}`);
 
         await interfaces.upOnly(switch0.interface, addressEnd(address, 200));
-        return await tplinks[switch0.address].probe(address, {
-            timeout: 1*60*1000,
-            execTimeout: 1*60*1000
-        });
+        return await tplinks[switch0.address].probe(address, config.SWITCH_PROBE_TIMEOUTS);
     } catch(error) {
         debug(`Checking switch0 ${address}`, error);
         return false;
@@ -420,10 +417,7 @@ let probeSwitch1 = async (switch0, switch1, address) => {
         await tplinks[switch0.address].session(switch0.address, device => device.enableOnly( [switch1.hostPort, switch0.uplinkPort], switch0.ports ));
 
         await interfaces.upOnly(switch0.interface, addressEnd(address, 200));
-        return await tplinks[switch1.address].probe(address, {
-            timeout: 1*60*1000,
-            execTimeout: 1*60*1000
-        });
+        return await tplinks[switch1.address].probe(address, config.SWITCH_PROBE_TIMEOUTS);
     } catch(error) {
         debug(`Checking switch1 ${address}`);
         return false;
@@ -444,25 +438,26 @@ let configure = async (interface, switchConfig, defaultAddress) => {
 
             debug("Monitor disabled");
 
-            debug("Configuring spanning tree");
+            if(config.SWITCH_CONFIG_SPANNING_TREE) {
+                debug("Configuring spanning tree");
 
-            await device.config("spanning-tree|spanning-tree mode rstp");
+                await device.config("spanning-tree|spanning-tree mode rstp");
 
-            for(let port=0; port<switchConfig.ports; port++)
-                await device.port(port, "spanning-tree|spanning-tree common-config portfast enable");
+                for(let port=0; port<switchConfig.ports; port++)
+                    await device.port(port, "spanning-tree|spanning-tree common-config portfast enable");
 
-            debug("Spanning tree configured");
+                debug("Spanning tree configured");
+            }
 
-            debug("Configuring PoE");
+            if(config.SWITCH_CONFIG_PoE) {
+                debug("Configuring PoE");
 
-            for(let port=0; port<switchConfig.ports; port++)
-                await device.powerDisable(port);
+                for(let port=0; port<switchConfig.ports; port++)
+                    await device.powerDisable(port);
 
-            debug("PoE configured");
-        }, {
-            timeout: 2*60*1000,
-            execTimeout: 2*60*1000
-        });
+                debug("PoE configured");
+            }
+        }, config.SWITCH_CONFIG_TIMEOUTS);
 
         debug(`Changing IP address to ${switchConfig.address}`);
         await tplinks[switchConfig.address].changeIpAddress(defaultAddress, 0, switchConfig.address, "255.255.255.0");
