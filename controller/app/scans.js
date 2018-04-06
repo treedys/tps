@@ -57,10 +57,13 @@ app.get('/scan/:scan/preview-:index.jpg', async (browser_request, browser_respon
 
         if(!browser_request.scan.done) {
 
-            const cameras = await camerasService.find({query:{index:preview}});
+            const cameras = await camerasService.find();
+            const camera = cameras.find( camera => camera.index==preview );
 
-            browser_response.redirect(`/preview/${cameras[0].mac}/${scanId}-${browser_request.params.index}.jpg`);
-            return;
+            if(camera) {
+                browser_response.redirect(`/preview/${camera.mac}/${scanId}-${browser_request.params.index}.jpg`);
+                return;
+            }
         }
 
         const file_stream = fs.createReadStream(fileName);

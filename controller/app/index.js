@@ -300,8 +300,9 @@ const onMessage = async (message, rinfo) => {
 
         cameras[mac].lastSeen = Date.now();
     } else if(message.length==500) {
+        const camera = Object.values(cameras).find( c => c.address==rinfo.address );
         // TODO: Log message to external file on the SSD
-        debug(message.toString("ascii", 0, 500));
+        debug(`CAMERA ${camera&&camera.switchAddress}:${camera&&camera.port} ERROR:`, message.toString("ascii", 0, 500));
     } else {
         debug("Received:", message.length, message);
     }
