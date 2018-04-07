@@ -60,6 +60,7 @@ const defaultConfig = {
     _id: '0',
     preview: 1,
     nextId: 1,
+    scanFields: 'First Name;Last Name;Email;Gender:Male,Female,Other',
     camera: {
         normal: settings.CAMERA,
         projection: settings.CAMERA

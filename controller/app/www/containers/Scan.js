@@ -34,7 +34,7 @@ export default class Scan extends React.Component {
     onImageClick = () => this.setState( state => ({normalProjection: !state.normalProjection}) );
 
     render() {
-        const { scan, status, ...props } = this.props;
+        const { scan, status, fields, ...props } = this.props;
 
         if( !scan || !status)
             return <Row className="fill">
@@ -66,20 +66,16 @@ export default class Scan extends React.Component {
                     <LabeledTextInput id="id"     label="ID"      value={this.state.id       } readOnly />
                     <LabeledTextInput id="date"   label="Date"    value={`${moment(this.state.date).toDate()}`} readOnly />
 
-                    <LabeledTextInput id="name"   label="Name"    value={this.state.name     } onChange={ (e) => this.changeState({   name: e.target.value }) } />
-                    <LabeledTextInput id="email"  label="Email"   value={this.state.email    } onChange={ (e) => this.changeState({  email: e.target.value }) } />
-                    <LabeledSelect    id="gender" label="Gender"  value={this.state.gender   } onChange={ (e) => this.changeState({ gender: e.target.value }) } options={["male","female"]}/>
-                    <LabeledTextInput if="age"    label="Age"     value={this.state.age      } onChange={ (e) => this.changeState({    age: e.target.value }) } />
-                    <LabeledTextInput if="uid"    label="UID"     value={this.state.uid      } onChange={ (e) => this.changeState({    uid: e.target.value }) } />
+                    {
+                        fields && fields.split(';').map(field => {
+                            const [id,label,options] = field.split(':');
 
-                    { /*
-                    <LabeledCheckbox id="SKETCHFAB_ENABLE" label="SKETCHFAB_ENABLE" value={this.state.SKETCHFAB_ENABLE } onChange={ (e) => this.changeState({ SKETCHFAB_ENABLE: e.target.value})} />
-                    <LabeledCheckbox id="bodylabprocess"   label="BodyLab process"  value={this.state.bodylabprocess   } onChange={ (e) => this.changeState({   bodylabprocess: e.target.value})} />
-                    <LabeledCheckbox id="cleanScan"        label="Clean Scan"       value={this.state.cleanScan        } onChange={ (e) => this.changeState({        cleanScan: e.target.value})} />
-                    <LabeledCheckbox id="closeFit"         label="Close Fit"        value={this.state.closeFit         } onChange={ (e) => this.changeState({         closeFit: e.target.value})} />
-                    <LabeledCheckbox id="refineHead"       label="Refine Head"      value={this.state.refineHead       } onChange={ (e) => this.changeState({       refineHead: e.target.value})} />
-                    <LabeledSelect   id="hands"            label="Hands"            value={this.state.hands            } onChange={ (e) => this.changeState({            hands: e.target.value})} options={["open", "closed"]} />
-                    */ }
+                            if(!options)
+                                return <LabeledTextInput key={id} id={id} label={label} value={this.state[id]} onChange={ (e) => this.changeState({ [id]: e.target.value }) } />;
+                            else
+                                return <LabeledSelect    key={id} id={id} label={label} value={this.state[id]} onChange={ (e) => this.changeState({ [id]: e.target.value }) } options={options.split(',')} />;
+                        })
+                    }
 
                 </Col>
             </Col>

@@ -253,6 +253,7 @@ export default class App extends React.Component {
                         <Route path="/scan/:scanId" render={ props =>
                             <Scan scan={ this.state.scans && this.state.scans.find(scan => scan.id == props.match.params.scanId)}
                                 status={ this.state.status }
+                                fields={ this.state.config && this.state.config.scanFields }
                                 onAccept={ scan => this.acceptScan( scan.id )}
                                 onReject={ scan => this.rejectScan( scan.id )}
                                 onChange={ scan => services.scans.update( scan.id, scan)}
