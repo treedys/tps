@@ -19,18 +19,7 @@ const calibrations = require('./calibrations');
 
 const defaultScan = async () => ({
     date   : Date.now(),
-    name   : "",
-    email  : "",
-    gender : "male",
-    age    : "",
     calibrationId: Math.max(...(await calibrations.find()).map(calibration => calibration[calibrations.id])),
-
-    SKETCHFAB_ENABLE : false,
-    bodylabprocess   : false,
-    cleanScan        : false,
-    closeFit         : false,
-    refineHead       : false,
-    hands            : "open"
 });
 
 app.param('scan', async (browser_request, browser_response, next, id) => {
