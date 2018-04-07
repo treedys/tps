@@ -153,15 +153,14 @@ service.hooks({
         create: async context => {
             if(!context.data[service.id]) {
 
-                const directories = await fs.readdir(scansPath);
-                const numbers = directories.filter(directory=>!isNaN(directory)).map(directory=>parseInt(directory));
-                const next = numbers && numbers.length && Math.max(...numbers)+1 || 1;
+                const { nextId } = await config.service.get('0');
+                await config.service.patch('0', { nextId: nextId+1 });
 
-                const { scanPath } = paths(scansPath, next.toString());
+                const { scanPath } = paths(scansPath, nextId.toString());
 
                 await fs.ensureDir(scanPath);
 
-                context.data = Object.assign( await defaultScan(), { [service.id]: next.toString(), }, context.data);
+                context.data = Object.assign( await defaultScan(), { [service.id]: nextId.toString(), }, context.data);
             }
         }
     },

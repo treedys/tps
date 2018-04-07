@@ -59,6 +59,7 @@ const settings = {
 const defaultConfig = {
     _id: '0',
     preview: 1,
+    nextId: 1,
     camera: {
         normal: settings.CAMERA,
         projection: settings.CAMERA

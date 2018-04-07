@@ -125,15 +125,14 @@ service.hooks({
         create: async context => {
             if(!context.data[service.id]) {
 
-                const directories = await fs.readdir(calibrationsPath);
-                const numbers = directories.filter(directory=>!isNaN(directory)).map(directory=>parseInt(directory));
-                const next = numbers && numbers.length && Math.max(...numbers)+1 || 1;
+                const { nextId } = await config.service.get('0');
+                await config.service.patch('0', { nextId: nextId+1 });
 
-                const { calibrationPath } = paths(calibrationsPath, next.toString());
+                const { calibrationPath } = paths(calibrationsPath, nextId.toString());
 
                 await fs.ensureDir(calibrationPath);
 
-                context.data = Object.assign( defaultCalibration(), { [service.id]: next.toString(), }, context.data);
+                context.data = Object.assign( defaultCalibration(), { [service.id]: nextId.toString(), }, context.data);
             }
         }
     },
