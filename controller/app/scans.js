@@ -143,7 +143,7 @@ service.hooks({
             if(!context.data[service.id]) {
 
                 const { nextId } = await config.service.get('0');
-                await config.service.patch('0', { nextId: nextId+1 });
+                await config.service.patch('0', { nextId: +nextId+1 });
 
                 const { scanPath } = paths(scansPath, nextId.toString());
 
