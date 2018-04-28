@@ -10,7 +10,7 @@ import {
     PageList, PageLink,
     Scan, ScanList,
     Calibration, CalibrationList,
-    SwitchList, CameraList,
+    SwitchList, SwitchCameraList,
     Settings
 } from './containers/';
 
@@ -269,7 +269,7 @@ export default class App extends React.Component {
                         }/>
 
                         <Route path="/cameras/:switchId" render={ props =>
-                            <CameraList cameras={this.state.cameras} switchData={ this.state.switches && this.state.switches[props.match.params.switchId] }/>
+                            <SwitchCameraList cameras={this.state.cameras} switchData={ this.state.switches && this.state.switches[props.match.params.switchId] }/>
                         }/>
 
                         <Route path="/settings" render={ props =>

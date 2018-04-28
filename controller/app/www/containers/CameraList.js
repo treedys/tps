@@ -42,7 +42,7 @@ export const CameraLink = ({ camera, port, ...params }) =>
         <div style={{ ...styles.led, ...( camera.online ? styles.on : styles.off) }}/>
     </div>
 
-export const CameraList = ({ switchData, cameras, ...params }) => {
+export const SwitchCameraList = ({ switchData, cameras, ...params }) => {
 
     if(!switchData || !cameras)
         return <h1>Switch is not connected</h1>;
@@ -72,4 +72,4 @@ export const CameraList = ({ switchData, cameras, ...params }) => {
     return <table><tbody>{rows}</tbody></table>;
 };
 
-export default CameraList;
+export default SwitchCameraList;
