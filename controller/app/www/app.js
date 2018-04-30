@@ -248,7 +248,7 @@ export default class App extends React.Component {
                         }/>
                     </Switch>
 
-                    <Col className="fill scroll">
+                    <Switch>
 
                         <Route path="/scan/:scanId" render={ props =>
                             <Scan scan={ this.state.scans && this.state.scans.find(scan => scan.id == props.match.params.scanId)}
@@ -276,7 +276,7 @@ export default class App extends React.Component {
                             <Settings settings={this.state.config} onSave={config => services.config.update('0', config)}/>
                         }/>
 
-                    </Col>
+                    </Switch>
                 </Row>
             </Col>
         </Router>

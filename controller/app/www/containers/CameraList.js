@@ -62,13 +62,13 @@ export const SwitchCameraList = ({ switchData, cameras, ...params }) => {
                     camera.port==port && camera.switchAddress==switchData.address)
                         || { online: false, port: port, switchAddress: switchData.address } ;
 
-                cols.push(<td style={styles.cell}><CameraLink camera={camera} port={port} {...params}/></td>);
+                cols.push(<td style={styles.cell} key={port}><CameraLink camera={camera} port={port} {...params}/></td>);
             }
         }
-        rows.push(<tr>{cols}</tr>);
+        rows.push(<tr key={row}>{cols}</tr>);
     }
 
-    return <table><tbody>{rows}</tbody></table>;
+    return <div className='fill scroll'><table><tbody>{rows}</tbody></table></div>;
 };
 
 export default SwitchCameraList;
