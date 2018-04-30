@@ -1,6 +1,6 @@
 import React from 'react';
-import { Col, Icon } from '../components'
-import { NavLink  } from 'react-router-dom'
+import { Col, Row, Centered, Circle, Icon, LabeledCheckbox, Spinner } from '../components'
+import { Route, NavLink  } from 'react-router-dom'
 
 const styles = {
     link: {
@@ -27,6 +27,32 @@ const styles = {
             height: "80px"
         },
     },
+    sublink: {
+        normal: {
+            color: "#5A7287",
+            backgroundColor: "#FFFFFF",
+            borderBottom: "2px solid #EDEDED",
+            textDecoration: "none"
+        },
+        active: {
+            color: "#00B7EC",
+            backgroundColor: "#F9F9F9"
+        },
+        activeBar: {
+            width: "100%",
+            height: "100%",
+            backgroundColor: "#00B7EC"
+        },
+        circle: {
+            border: "3px solid white",
+            margin: "0.5em",
+            boxShadow: 'rgba(0, 0, 0, 0.156863) 0px 0px 10px, rgba(0, 0, 0, 0.227451) 0px 0px 10px'
+        },
+        icon: {
+            width: "100%",
+            height: "auto"
+        }
+    },
     list: {
         last: {
             backgroundColor: "#2A303B",
@@ -49,8 +75,24 @@ export const PageLink = ({to, title, icon, disabled, onClick, ...props}) =>
         </Col>
     </NavLink>
 
+export const PageSubLink = ({to, spinner, icon, checkbox, selected, onChange, children, ...props}) =>
+    <NavLink to={to}
+        style={ styles.sublink.normal }
+        activeStyle={ styles.sublink.active }
+        {...props}>
+        <Row className="fill">
+            <div style={{ width: "8px" }}>
+                <Route path={to} render={ () => <div style={ styles.sublink.activeBar }/> }/>
+            </div>
+            { checkbox!==undefined && <Centered><LabeledCheckbox checked={selected} onChange={ e => onChange(e) }/></Centered> }
+            { (spinner||icon) && <Circle radius={40} className="align-center" style={ styles.sublink.circle }>{ spinner ? <Spinner/> : <Icon url={icon} style={ styles.sublink.icon }/> }</Circle> }
+            {children}
+        </Row>
+    </NavLink>
+
 export const PageList = ({children, ...props}) =>
-    <Col className="scroll">
+    <Col className="scroll"
+        {...props}>
         {children}
         <div className="fill" style={ styles.list.last }/>
     </Col>

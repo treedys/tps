@@ -1,5 +1,4 @@
 import React from 'react';
-import { Row, Centered, Circle, Icon } from '../components'
 import assets from './assets'
 
 const styles = {
