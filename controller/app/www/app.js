@@ -273,7 +273,7 @@ export default class App extends React.Component {
                         }/>
 
                         <Route path="/settings" render={ props =>
-                            <Settings settings={this.state.config} onSave={config => services.config.update('0', config)}/>
+                            <Settings settings={this.state.config} onChange={ config => services.config.update('0', config) }/>
                         }/>
 
                     </Switch>

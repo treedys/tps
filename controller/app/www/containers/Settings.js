@@ -2,7 +2,7 @@ import React from 'react';
 import { Row, Col, Button } from '../components'
 import { LabeledTextInput, LabeledCheckbox, LabeledSelect } from '../components'
 import CameraSettings from './CameraSettings'
-import { updateState } from '../utils'
+import { updateState, changeState } from '../utils'
 
 const styles = {
     container: {
@@ -13,6 +13,7 @@ const styles = {
 };
 
 @updateState
+@changeState
 export default class Settings extends React.Component {
 
     updateState({settings}) { this.setState( state => ({ ...settings })); }
@@ -28,16 +29,13 @@ export default class Settings extends React.Component {
             <h3>Scanner settings:</h3>
 
             <Col style={ styles.container }>
-                <LabeledTextInput id="preview" label="Preview camera" value={this.state.preview} onChange={ (e) => { e.persist(); this.setState( state => ({ preview: e.target.value })); } } />
-                <LabeledTextInput id="nextId" label="Next ID" value={this.state.nextId} onChange={ (e) => { e.persist(); this.setState( state => ({ nextId: e.target.value })); } } />
-                <LabeledTextInput id="scanFields" label="Scan fields" value={this.state.scanFields} onChange={ (e) => { e.persist(); this.setState( state => ({ scanFields: e.target.value })); } } />
+                <LabeledTextInput id="preview"    label="Preview camera" value={this.state.preview   } onChange={ (e) => { e.persist(); this.changeState( state => ({    preview: e.target.value })); } } />
+                <LabeledTextInput id="nextId"     label="Next ID"        value={this.state.nextId    } onChange={ (e) => { e.persist(); this.changeState( state => ({     nextId: e.target.value })); } } />
+                <LabeledTextInput id="scanFields" label="Scan fields"    value={this.state.scanFields} onChange={ (e) => { e.persist(); this.changeState( state => ({ scanFields: e.target.value })); } } />
             </Col>
 
             <h3>Camera settings:</h3>
-            <CameraSettings settings={this.state.camera} onChange={ camera => this.setState( state => ({ camera }))} />
-            <Row>
-                <Button onClick={ (e) => onSave(this.state) }>Save</Button>
-            </Row>
+            <CameraSettings settings={this.state.camera} onChange={ camera => this.changeState( state => ({ camera }))} />
         </Col>
     }
 }

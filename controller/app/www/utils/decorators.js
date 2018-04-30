@@ -9,7 +9,7 @@ export const changeState = mixin({
     changeState(newState) {
         return new Promise( resolve =>
             this.setState(
-                (oldState) => ({...oldState, ...newState}),
+                (newState instanceof Function) ? newState : (oldState) => ({...oldState, ...newState}),
                 () => {
                     this.props.onChange && this.props.onChange(this.state);
                     resolve();
