@@ -10,7 +10,7 @@ import {
     PageList, PageLink,
     Scan, ScanList,
     Calibration, CalibrationList,
-    SwitchList, SwitchCameraList,
+    SwitchList, SwitchCameraList, CameraList,
     Settings
 } from './containers/';
 
@@ -269,7 +269,7 @@ export default class App extends React.Component {
                         }/>
 
                         <Route path="/cameras/map" render={ props =>
-                                null
+                                <CameraList cameras={this.state.cameras} config={this.state.config} onConfigChange={ config => services.config.update('0', config) }/>
                         }/>
 
                         <Route path="/cameras/:switchId" render={ props =>
