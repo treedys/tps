@@ -269,8 +269,6 @@ app.post("/api/cameras/restart", async (browser_request, browser_response) => {
     }
 });
 
-let discovered = 0;
-let linked = 0;
 let linking = false;
 
 const onMessage = async (message, rinfo) => {
@@ -283,8 +281,6 @@ const onMessage = async (message, rinfo) => {
                 debug(`Found new ${mac} ${address}`);
                 await cameraService.create({ id: mac, address, mac, online:true });
                 cameras[mac] = { address, online:true, lastSeen: Date.now() };
-
-                discovered++;
             } catch(error) {
                 debug("onMessage new:", error);
             }
@@ -328,8 +324,6 @@ const linkSwitch = async switchConfig =>
                         cameras[mac].index = index;
 
                         await cameraService.patch(mac, { switchAddress:switchConfig.address, port, index });
-
-                        linked++;
                     }
                 }
             }
@@ -365,7 +359,7 @@ const discover = async () => {
     try {
         await send.pingAll();
 
-        if(discovered != linked && !linking) {
+        if(!linking) {
             linking = true;
 
             try { await link() } catch(error) { debug("Link:", error); }
