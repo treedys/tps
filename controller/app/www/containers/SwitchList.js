@@ -28,6 +28,16 @@ const styles = {
     }
 };
 
+export const CamerasMapLink = props =>
+    <PageSubLink to={'/cameras/map'}
+        icon={assets.cameras}>
+        <Col style={{ margin: "1em" }} className="fill align-center">
+            <Row style={ styles.link.description.primary }>
+                <span style={{ maxWidth: "6em" }}>Map</span>
+            </Row>
+        </Col>
+    </PageSubLink>
+
 export const SwitchLink = ({switchData, ...props}) =>
     <PageSubLink to={`/cameras/${switchData.id}`}
         icon={assets.switchIcon}>
@@ -51,6 +61,7 @@ export const SwitchList = ({switches, operational, onShoot, children, ...props})
             <Button onClick={ onShoot } disabled={!operational} style={{width:"100%"}}>Preview</Button>
         </Row>
         <Col className="fill scroll">
+            <CamerasMapLink/>
             { switches && switches.map( (switchData) =>
                 <SwitchLink key={switchData.id} switchData={switchData} {...props} />
             )}

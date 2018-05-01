@@ -268,6 +268,10 @@ export default class App extends React.Component {
                             />
                         }/>
 
+                        <Route path="/cameras/map" render={ props =>
+                                null
+                        }/>
+
                         <Route path="/cameras/:switchId" render={ props =>
                             <SwitchCameraList cameras={this.state.cameras} switchData={ this.state.switches && this.state.switches[props.match.params.switchId] }/>
                         }/>
