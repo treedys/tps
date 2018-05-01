@@ -22,15 +22,15 @@ const settings = {
     SWITCH_CONFIG_PoE: false,
     SWITCHES: [
         {
-            interface: "eth1",
+            interface: "p1p1",
             address: "192.168.201.199",
             ports: 47
         }, {
-            interface: "eth2",
+            interface: "p12p1",
             address: "192.168.202.199",
             ports: 47
         }, {
-            interface: "eth3",
+            interface: "p13p1",
             address: "192.168.203.199",
             ports: 47
         }

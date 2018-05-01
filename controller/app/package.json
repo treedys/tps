@@ -1,5 +1,5 @@
 {
-  "name": "app",
+  "name": "treedys-controller",
   "version": "0.0.0",
   "description": "Treedys scanner controller application",
   "main": "index.js",
