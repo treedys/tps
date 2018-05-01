@@ -271,6 +271,9 @@ app.post("/api/cameras/restart", async (browser_request, browser_response) => {
 
 let linking = false;
 
+const mutex = require("await-mutex").default;
+let newCameraMutex = new mutex();
+
 const onMessage = async (message, rinfo) => {
     if(message.length==18) {
         const address = rinfo.address;
@@ -281,6 +284,25 @@ const onMessage = async (message, rinfo) => {
                 debug(`Found new ${mac} ${address}`);
                 await cameraService.create({ id: mac, address, mac, online:true });
                 cameras[mac] = { address, online:true, lastSeen: Date.now() };
+
+                let unlock = await newCameraMutex.lock();
+
+                try {
+                    let { scanner } = configRecord;
+
+                    scanner = scanner || {};
+                    scanner.map = scanner.map || [];
+                    scanner.new = scanner.new || [];
+
+                    if(!scanner.map.includes(mac) && !scanner.new.includes(mac)) {
+                        scanner.new.push(mac);
+                        await config.service.patch('0', { scanner } );
+                    }
+                    unlock();
+                } catch(error) {
+                    unlock();
+                    throw error;
+                }
             } catch(error) {
                 debug("onMessage new:", error);
             }
