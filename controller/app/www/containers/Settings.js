@@ -32,6 +32,11 @@ export default class Settings extends React.Component {
                 <LabeledTextInput id="preview"    label="Preview camera" value={this.state.preview   } onChange={ (e) => { e.persist(); this.changeState( state => ({    preview: e.target.value })); } } />
                 <LabeledTextInput id="nextId"     label="Next ID"        value={this.state.nextId    } onChange={ (e) => { e.persist(); this.changeState( state => ({     nextId: e.target.value })); } } />
                 <LabeledTextInput id="scanFields" label="Scan fields"    value={this.state.scanFields} onChange={ (e) => { e.persist(); this.changeState( state => ({ scanFields: e.target.value })); } } />
+                <Row style={{width:"100%"}}>
+                    <LabeledTextInput id="columns" label="Columns" value={this.state.scanner.columns} onChange={ (e) => { e.persist(); this.changeState( state => ({ scanner: { ...state.scanner, columns: e.target.value }})); } } containerStyle={{ width:`${100/3}%`, padding:'0.5em 0.0em 0.5em 0.0em' }} />
+                    <LabeledTextInput id="rows"    label="Rows"    value={this.state.scanner.rows   } onChange={ (e) => { e.persist(); this.changeState( state => ({ scanner: { ...state.scanner,    rows: e.target.value }})); } } containerStyle={{ width:`${100/3}%`, padding:'0.5em 0.0em 0.5em 0.5em' }} />
+                    <LabeledTextInput id="extra"   label="Extra"   value={this.state.scanner.extra  } onChange={ (e) => { e.persist(); this.changeState( state => ({ scanner: { ...state.scanner,   extra: e.target.value }})); } } containerStyle={{ width:`${100/3}%`, padding:'0.5em 0.0em 0.5em 0.5em' }} />
+                </Row>
             </Col>
 
             <h3>Camera settings:</h3>

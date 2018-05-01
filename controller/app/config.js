@@ -64,6 +64,13 @@ const defaultConfig = {
     camera: {
         normal: settings.CAMERA,
         projection: settings.CAMERA
+    },
+    scanner: {
+        columns: 18,
+        rows: 7,
+        extra: 3,
+        map: [],
+        new: []
     }
 };
 
@@ -125,6 +132,29 @@ const pack = async () => {
 
     return Buffer.concat([_pack(projection), _pack(normal)]);
 };
+
+const cleanCameraMap = async context => {
+    const oldRecord = await service.get(context.id);
+
+    if(oldRecord.scanner && context.data.scanner) {
+        if((context.data.scanner.columns!=undefined && (context.data.scanner.columns != oldRecord.scanner.columns)) ||
+           (context.data.scanner.rows   !=undefined && (context.data.scanner.rows    != oldRecord.scanner.rows   )) ||
+           (context.data.scanner.extra  !=undefined && (context.data.scanner.extra   != oldRecord.scanner.extra  ))) {
+
+            context.data.scanner.new = [].concat(context.data.scanner.new || oldRecord.scanner.new, context.data.scanner.map || oldRecord.scanner.map).filter(mac=>!!mac);
+            context.data.scanner.map = [];
+        }
+    }
+
+    return context;
+};
+
+service.hooks({
+    before: {
+        update: cleanCameraMap,
+        patch: cleanCameraMap
+    }
+});
 
 module.exports = { ...settings, service, pack };
 
