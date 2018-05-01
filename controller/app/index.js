@@ -55,18 +55,13 @@ const eventToPromise = require('event-to-promise');
 const fs = require('fs-extra');
 const path = require('path');
 
-const cameraIndex = camera => {
-    if(typeof camera == "undefined" ||
-        typeof camera.switchAddress == "undefined" ||
-        typeof camera.port == "undefined")
-        return undefined;
+let configRecord;
+config.service.watch().get('0').subscribe(config => { configRecord = config; });
 
-    const ipAddress = ip.toBuffer(camera.switchAddress);
+const cameraIndex = mac => {
+    const index = configRecord && configRecord.scanner && configRecord.scanner.map && configRecord.scanner.map.indexOf(mac);
 
-    if(ipAddress[3]==199)
-        return (ipAddress[2]-201)*50+camera.port;
-    else
-        return (ipAddress[3]-201)*8+camera.port;
+    return index!=undefined && index>=0 ? index : undefined;
 }
 
 app.post("/api/shoot/preview", async (browser_request, browser_response) => {
@@ -121,7 +116,7 @@ app.post("/scan/:scan/download", async (browser_request, browser_response) => {
         ));
 
         await Promise.all(Object.entries(cameras).map( async ([mac, camera]) => {
-            const index = cameraIndex(camera);
+            const index = cameraIndex(mac);
 
             try {
                 if(isNaN(index)) {
@@ -186,7 +181,7 @@ app.post("/api/shoot/calibration", async (browser_request, browser_response) => 
         await fs.ensureDir(path.join(config.PATH,`db/${calibrationId}/calibration/`));
 
         await Promise.all(Object.entries(cameras).map( async ([mac, camera]) => {
-            const index = cameraIndex(camera);
+            const index = cameraIndex(mac);
 
             try {
                 if(isNaN(index)) {
@@ -335,17 +330,23 @@ const linkSwitch = async switchConfig =>
             for(let { port, mac } of table) {
                 if(cameras[mac] && port<switchConfig.ports && port!=switchConfig.uplinkPort) {
                     if( cameras[mac].switchAddress != switchConfig.address ||
-                        cameras[mac].port          != port ) {
+                        cameras[mac].port          != port                 ||
+                        cameras[mac].index         != cameraIndex(mac)) {
+
+                        cameras[mac] = {
+                            ...cameras[mac],
+                            switchAddress:switchConfig.address,
+                            port,
+                            index:cameraIndex(mac)
+                        };
+
+                        await cameraService.patch(mac, {
+                            switchAddress:switchConfig.address,
+                            port,
+                            index: cameras[mac].index
+                        });
 
                         debug(`Linking ${switchConfig.address}:${port} to ${cameras[mac].address}`);
-
-                        cameras[mac] = { ...cameras[mac], switchAddress:switchConfig.address, port };
-
-                        // cameraIndex expects switchAddress and port to be populated
-                        const index = cameraIndex(cameras[mac]);
-                        cameras[mac].index = index;
-
-                        await cameraService.patch(mac, { switchAddress:switchConfig.address, port, index });
                     }
                 }
             }
