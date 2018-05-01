@@ -3,6 +3,7 @@ const path = require("path");
 const feathers = require('@feathersjs/feathers');
 const express = require('@feathersjs/express');
 const socketio = require('@feathersjs/socketio');
+const rx = require('feathers-reactive');
 
 // This creates an app that is both, an Express and Feathers app
 const app = express(feathers());
@@ -11,6 +12,7 @@ const app = express(feathers());
 app.configure(express.rest());
 
 app.configure(socketio({ serveClient: false }));
+app.configure(rx({idField: "id"}));
 
 // Turn on JSON body parsing for REST services
 app.use(express.json())
