@@ -55,8 +55,12 @@ const eventToPromise = require('event-to-promise');
 const fs = require('fs-extra');
 const path = require('path');
 
+const defer = () => { let resolve, reject, promise = new Promise((_resolve, _reject) => { resolve=_resolve; reject=_reject; }); return { resolve, reject, promise }; };
+
+const configRecordDefer = defer();
+
 let configRecord;
-config.service.watch().get('0').subscribe(config => { configRecord = config; });
+config.service.watch().get('0').subscribe(config => { configRecordDefer.resolve(config); configRecord = config; });
 
 const cameraIndex = mac => {
     const index = configRecord && configRecord.scanner && configRecord.scanner.map && configRecord.scanner.map.indexOf(mac);
@@ -659,6 +663,8 @@ let configureAllSwitches = async () => {
 let run = async () => {
 
     let discoverInterval;
+
+    await configRecordDefer.promise;
 
     try {
         debug("Configure all network interfaces");
