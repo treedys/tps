@@ -1,0 +1,2 @@
+KERNEL=="sd*", SUBSYSTEM=="block",	ACTION=="add",    RUN+="/sbin/automount.script"
+KERNEL=="sd*",                      ACTION=="remove", RUN+="/sbin/automount.script"

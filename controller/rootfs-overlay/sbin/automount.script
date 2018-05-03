@@ -5,6 +5,8 @@ if [ x$ACTION = "x" ] ; then
 	exit -1
 fi
 
+MDEV="${DEVNAME##*/}"
+
 if [ $ACTION = "remove" ] ; then
 	umount -f /dev/$MDEV
 	rmdir /disk/$MDEV
