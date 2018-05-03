@@ -56,10 +56,14 @@ const common = {
                 ] },}
         ]
     },
+    optimization: {
+        splitChunks: {
+            chunks: "all"
+        }
+    },
     plugins: [
         new CleanPlugin([BUILD]),
         new webpack.LoaderOptionsPlugin({ minimize: true }),
-        new webpack.optimize.CommonsChunkPlugin({ names: ["vendors", "manifest"] }),
         new webpack.ProvidePlugin({
             feathers: "@feathersjs/client"
         })
@@ -68,6 +72,7 @@ const common = {
 };
 
 const debug = {
+    mode: "development",
     module: {
         rules: [
             {
@@ -82,13 +87,13 @@ const debug = {
     },
     devtool: 'source-map',
     plugins: [
-        new webpack.NamedModulesPlugin(),
         new HtmlWebpackPlugin({ template: path.resolve(WWW, "index.html") }),
-        new  ExtractTextPlugin({ filename: "[name].css" })
+        new ExtractTextPlugin({ filename: "[name].css" })
     ]
 };
 
 const release = {
+    mode: "production",
     output: {
         filename: "[name].[chunkhash:8].js",
         chunkFilename: "[name].[chunkhash:8].js"
@@ -108,26 +113,7 @@ const release = {
         ]
     },
     plugins: [
-        new webpack.optimize.UglifyJsPlugin({
-            sourceMap: true,
-            compress: {
-                warnings: false,
-                screw_ie8: true,
-                conditionals: true,
-                unused: true,
-                comparisons: true,
-                sequences: true,
-                dead_code: true,
-                evaluate: true,
-                if_return: true,
-                join_vars: true
-            }, output: {
-                comments: false
-            }
-        }),
-        new webpack.optimize.ModuleConcatenationPlugin(),
         new webpack.HashedModuleIdsPlugin(),
-        new webpack.DefinePlugin({ 'process.env.NODE_ENV': JSON.stringify('production') }),
         new HtmlWebpackPlugin({
             template: path.resolve(WWW, "index.html"),
             minify: {
