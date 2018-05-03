@@ -49,8 +49,8 @@ export default class Calibration extends React.Component {
             <Col style={ styles.information.container }>
 
                 <Row>
-                    <Button href={`/calibration/${calibration.id}.zip`}>Download</Button>
-                    <Button onClick={this.props.onDelete}>Delete</Button>
+                    <Button href={`/calibration/${calibration.id}.zip`} disabled={!calibration.done} className="fill">Download</Button>
+                    <Button onClick={this.props.onDelete}               disabled={!calibration.done} className="fill">Delete</Button>
                 </Row>
 
                 <h3>Calibration information:</h3>
