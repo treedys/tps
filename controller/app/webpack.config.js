@@ -19,7 +19,7 @@ const common = {
     },
     entry: {
         app: [
-            'babel-polyfill',
+            '@babel/polyfill',
             path.resolve(WWW, "index.js"),
             path.resolve(WWW, "styles.css"),
             ...static_files
@@ -45,14 +45,15 @@ const common = {
             { test: static_files, loader: "file-loader", options: { name: "[name].[ext]" } },
             { test: /\.(js|jsx)$/, loader: "babel-loader", exclude: /(node_modules)/, options: {
                 presets: [
-                    [ "env", { "targets":{ "browsers": "defaults" }, "modules": false }],
-                    "react"
+                    [ "@babel/preset-env", { "targets":{ "browsers": "defaults" }, "modules": false }],
+                    "@babel/preset-react"
                 ],
                 plugins: [
-                    "transform-class-properties",
-                    "transform-export-extensions",
-                    "transform-decorators-legacy",
-                    "transform-object-rest-spread"
+                    "@babel/proposal-class-properties",
+                    "@babel/syntax-export-extensions",
+                    ["@babel/proposal-decorators", { legacy: true }],
+                    "@babel/proposal-object-rest-spread",
+                    "@babel/proposal-export-default-from"
                 ] },}
         ]
     },
