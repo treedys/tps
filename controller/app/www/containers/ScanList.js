@@ -57,7 +57,7 @@ export const ScanLink = ({scan, selected, onSelectedChange, ...props}) =>
         </Col>
     </PageSubLink>
 
-export const ScanList = ({scans, selected, operational, onShoot, children, ...props}) =>
+export const ScanList = ({scans, selected, operational, onShoot, onSelectAll, children, ...props}) =>
     <Col style={ styles.list.container }>
         <Row>
             <Button onClick={ onShoot } disabled={!operational} style={{width:"100%"}} >Scan</Button>
@@ -68,6 +68,9 @@ export const ScanList = ({scans, selected, operational, onShoot, children, ...pr
             )}
             { children }
         </Col>
+        <Row>
+            <Button onClick={ onSelectAll } style={{width:"100%"}}>Select All</Button>
+        </Row>
     </Col>
 
 export default ScanList;

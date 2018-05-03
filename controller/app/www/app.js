@@ -125,6 +125,13 @@ export default class App extends React.Component {
         }));
     }
 
+    onScanSelectAll = () => this.setState( state => ({
+        ...state,
+        scansSelection: {
+            ...state.scans.reduce((selection, scan)=>({ ...selection, [scan.id]:true }), {})
+        }
+    }));
+
     acceptScan = async scanId => {
         try {
             await fetch(`/scan/${scanId}/download`, { method: 'POST' });
@@ -187,6 +194,13 @@ export default class App extends React.Component {
         }));
     }
 
+    onCalibrationSelectAll = () => this.setState( state => ({
+        ...state,
+        calibrationsSelection: {
+            ...state.calibrations.reduce((selection, calibration)=>({ ...selection, [calibration.id]:true }), {})
+        }
+    }));
+
     deleteCalibration = async calibrationId  => {
 
         let list = Object.entries(this.state.calibrationsSelection).filter( entry => !!entry[1] ).map( entry => entry[0] );
@@ -243,6 +257,7 @@ export default class App extends React.Component {
                                 selected={ this.state.scansSelection }
                                 onShoot={ this.shootScan }
                                 onSelectedChange={ this.onScanSelectedChange }
+                                onSelectAll={ this.onScanSelectAll }
                                 operational={!this.scannerBusy()} />
                         }/>
 
@@ -251,6 +266,7 @@ export default class App extends React.Component {
                                 selected={ this.state.calibrationsSelection }
                                 onShoot={ this.shootCalibration }
                                 onSelectedChange={ this.onCalibrationSelectedChange }
+                                onSelectAll={ this.onCalibrationSelectAll }
                                 operational={!this.scannerBusy()} />
                         }/>
 

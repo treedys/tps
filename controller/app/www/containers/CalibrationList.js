@@ -56,7 +56,7 @@ export const CalibrationLink = ({calibration, selected, onSelectedChange, ...pro
         </Col>
     </PageSubLink>
 
-export const CalibrationList = ({calibrations, selected, operational, onShoot, children, ...props}) =>
+export const CalibrationList = ({calibrations, selected, operational, onShoot, onSelectAll, children, ...props}) =>
     <Col style={ styles.list.container }>
         <Row>
             <Button onClick={ onShoot } disabled={!operational} style={{width:"100%"}}>Calibration</Button>
@@ -67,6 +67,9 @@ export const CalibrationList = ({calibrations, selected, operational, onShoot, c
             )}
             { children }
         </Col>
+        <Row>
+            <Button onClick={ onSelectAll } style={{width:"100%"}}>Select All</Button>
+        </Row>
     </Col>
 
 export default CalibrationList;
