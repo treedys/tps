@@ -73,7 +73,9 @@ export const SwitchCameraList = ({ switchData, cameras, ...params }) => {
         rows.push(<tr key={row}>{cols}</tr>);
     }
 
-    return <div className='fill scroll'><table style={{padding:"10px"}}><tbody>{rows}</tbody></table></div>;
+    return <Col className='fill scroll'>
+        <table style={{padding:"10px"}}><tbody>{rows}</tbody></table>
+    </Col>;
 };
 
 const cameraDrag = 'CAMERA';
