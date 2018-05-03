@@ -42,6 +42,7 @@ export const ScanLink = ({scan, selected, onSelectedChange, ...props}) =>
     <PageSubLink to={`/scan/${scan.id}`}
         checkbox selected={selected} onChange={ e => onSelectedChange(scan.id, e.target.checked) }
         spinner={!scan.done} icon={`/scan/${scan.id}/preview-1.jpg`}
+        style={{ backgroundColor: scan.zipDownloaded ? "#EEEEEE":"#FFFFFF" }}
         {...props}>
         <Col style={{ margin: "1em" }} className="fill align-center">
             <Row style={ styles.link.description.primary }>

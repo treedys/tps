@@ -42,6 +42,7 @@ export const CalibrationLink = ({calibration, selected, onSelectedChange, ...pro
     <PageSubLink to={`/calibration/${calibration.id}`}
         checkbox selected={selected} onChange={ e => onSelectedChange(calibration.id, e.target.checked) }
         spinner={!calibration.done} icon={`/calibration/${calibration.id}/preview.jpg`}
+        style={{ backgroundColor: calibration.zipDownloaded ? "#EEEEEE":"#FFFFFF" }}
         {...props}>
         <Col style={{ margin: "1em" }} className="fill align-center">
             <Row style={ styles.link.description.primary }>
