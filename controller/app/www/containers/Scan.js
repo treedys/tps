@@ -53,8 +53,8 @@ export default class Scan extends React.Component {
             <Col style={ styles.information.container }>
 
                 <Row>
-                    { !scan.done && <Button onClick={ () => this.props.onAccept(scan) } className="fill">Accept  </Button> }
-                    { !scan.done && <Button onClick={ () => this.props.onReject(scan) } className="fill">Reject  </Button> }
+                    { !scan.done && <Button onClick={ () => this.props.onAccept(scan) } disabled={status.shooting||status.downloading} className="fill">Accept  </Button> }
+                    { !scan.done && <Button onClick={ () => this.props.onReject(scan) } disabled={status.shooting||status.downloading} className="fill">Reject  </Button> }
 
                     {  scan.done && <Button href={`/scan/${scan.id}.zip`}               className="fill">Download</Button> }
                     {  scan.done && <Button onClick={ () => this.props.onDelete(scan) } className="fill">Delete  </Button> }
