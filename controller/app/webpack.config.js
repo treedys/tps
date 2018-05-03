@@ -53,7 +53,8 @@ const common = {
                     "@babel/syntax-export-extensions",
                     ["@babel/proposal-decorators", { legacy: true }],
                     "@babel/proposal-object-rest-spread",
-                    "@babel/proposal-export-default-from"
+                    "@babel/proposal-export-default-from",
+                    "@babel/proposal-optional-chaining"
                 ] },}
         ]
     },

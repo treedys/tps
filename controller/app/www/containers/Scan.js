@@ -67,7 +67,7 @@ export default class Scan extends React.Component {
                     <LabeledTextInput id="date"   label="Date"    value={`${moment(this.state.date).toDate()}`} readOnly />
 
                     {
-                        fields && fields.split(';').map(field => {
+                        fields?.split(';').map(field => {
                             const [id,label,options] = field.split(':');
 
                             if(!options)

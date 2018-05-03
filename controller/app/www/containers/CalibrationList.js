@@ -62,7 +62,7 @@ export const CalibrationList = ({calibrations, selected, operational, onShoot, c
             <Button onClick={ onShoot } disabled={!operational} style={{width:"100%"}}>Calibration</Button>
         </Row>
         <Col className="fill scroll">
-            {calibrations && calibrations.sort((a,b)=>b.id-a.id).map( (calibration) =>
+            {calibrations?.sort((a,b)=>b.id-a.id).map( (calibration) =>
                 <CalibrationLink key={calibration.id} calibration={calibration} selected={!!selected[calibration.id]} {...props} />
             )}
             { children }

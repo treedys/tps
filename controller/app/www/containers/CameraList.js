@@ -90,7 +90,7 @@ const cameraDrag = 'CAMERA';
 @DropTarget(cameraDrag,
     {
         canDrop: (props, monitor) => true,
-        drop: (props, monitor, component) => props.onDrop && props.onDrop(props.index, monitor.getItem())
+        drop: (props, monitor, component) => props.onDrop?.(props.index, monitor.getItem())
     }, (connect, monitor) => ({
         connectDropTarget: connect.dropTarget(),
         isOver: monitor.isOver()
@@ -102,7 +102,7 @@ export class Camera extends React.Component {
 
         return !isDragging && connectDropTarget(connectDragSource(
             <div style={{ ...styles.camera, ...(isOver && { border:"2px solid black" }) }}>
-                <img src={ camera && camera.online ? `/preview/${camera.mac}/0-2.jpg` : assets.noise } style={{width:'100%', height:'auto'}} />
+                <img src={ camera?.online ? `/preview/${camera.mac}/0-2.jpg` : assets.noise } style={{width:'100%', height:'auto'}} />
                 <p style={styles.port}>{index}</p>
                 { camera && <div style={{ ...styles.led, ...( camera.online ? styles.on : styles.off) }}/> }
             </div>));
@@ -181,7 +181,7 @@ export class CameraList extends React.Component {
 
             console.log(result);
 
-            onConfigChange && onConfigChange({ ...config, scanner: { ...config.scanner, map: result.map, new: result.new } });
+            onConfigChange?.({ ...config, scanner: { ...config.scanner, map: result.map, new: result.new } });
         };
 
         const onDropNew = (index, {mac}) => {
@@ -205,7 +205,7 @@ export class CameraList extends React.Component {
 
             result.new.splice(index, 0, mac);
 
-            onConfigChange && onConfigChange({ ...config, scanner: { ...config.scanner, map: result.map, new: result.new } });
+            onConfigChange?.({ ...config, scanner: { ...config.scanner, map: result.map, new: result.new } });
         };
 
         if(true)                      add("Cameras",       config.scanner.map,                                          0, config.scanner.rows*config.scanner.columns, onDropMap);

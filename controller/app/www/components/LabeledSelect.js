@@ -70,7 +70,7 @@ export default class LabeledSelect extends React.Component {
                 onBlur={this.handleInputBlur}
                 style={{ ...styles.normal.select, ...( isFocused ? styles.active.select : {} ), ...style }}
                 {...props}>
-                { options && options.map( option => <option key={option.value || option} style={{ ...styles.normal.option , ...optionStyle }} value={option.value || option}>{option.name || option}</option>)}
+                { options?.map( option => <option key={option.value || option} style={{ ...styles.normal.option , ...optionStyle }} value={option.value || option}>{option.name || option}</option>)}
                 {children}
             </select>
         </Row>

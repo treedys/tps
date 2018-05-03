@@ -63,7 +63,7 @@ export const ScanList = ({scans, selected, operational, onShoot, children, ...pr
             <Button onClick={ onShoot } disabled={!operational} style={{width:"100%"}} >Scan</Button>
         </Row>
         <Col className="fill scroll">
-            {scans && scans.sort((a,b)=>b.id-a.id).map( (scan) =>
+            {scans?.sort((a,b)=>b.id-a.id).map( (scan) =>
                 <ScanLink key={scan.id} scan={scan} selected={!!selected[scan.id]} {...props} />
             )}
             { children }

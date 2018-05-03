@@ -11,7 +11,7 @@ export const changeState = mixin({
             this.setState(
                 (newState instanceof Function) ? newState : (oldState) => ({...oldState, ...newState}),
                 () => {
-                    this.props.onChange && this.props.onChange(this.state);
+                    this.props.onChange?.(this.state);
                     resolve();
                 }
             )

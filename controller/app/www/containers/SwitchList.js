@@ -62,7 +62,7 @@ export const SwitchList = ({switches, operational, onShoot, children, ...props})
         </Row>
         <Col className="fill scroll">
             <CamerasMapLink/>
-            { switches && switches.map( (switchData) =>
+            { switches?.map( (switchData) =>
                 <SwitchLink key={switchData.id} switchData={switchData} {...props} />
             )}
             { children }

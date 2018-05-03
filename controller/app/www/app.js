@@ -232,7 +232,7 @@ export default class App extends React.Component {
                                 selected={ this.state.scansSelection }
                                 onShoot={ this.shootScan }
                                 onSelectedChange={ this.onScanSelectedChange }
-                                operational={ this.state.status && this.state.status.operational } />
+                                operational={ this.state.status?.operational } />
                         }/>
 
                         <Route path="/calibration" render={ props =>
@@ -240,20 +240,20 @@ export default class App extends React.Component {
                                 selected={ this.state.calibrationsSelection }
                                 onShoot={ this.shootCalibration }
                                 onSelectedChange={ this.onCalibrationSelectedChange }
-                            operational={this.state.status&&this.state.status.operational} />
+                            operational={this.state.status?.operational} />
                         }/>
 
                         <Route path="/cameras" render={ props =>
-                            <SwitchList switches={ this.state.switches } onShoot={this.shootPreview} operational={this.state.status&&this.state.status.operational} />
+                            <SwitchList switches={ this.state.switches } onShoot={this.shootPreview} operational={this.state.status?.operational} />
                         }/>
                     </Switch>
 
                     <Switch>
 
                         <Route path="/scan/:scanId" render={ props =>
-                            <Scan scan={ this.state.scans && this.state.scans.find(scan => scan.id == props.match.params.scanId)}
+                            <Scan scan={ this.state.scans?.find(scan => scan.id == props.match.params.scanId)}
                                 status={ this.state.status }
-                                fields={ this.state.config && this.state.config.scanFields }
+                                fields={ this.state.config?.scanFields }
                                 onAccept={ scan => this.acceptScan( scan.id )}
                                 onReject={ scan => this.rejectScan( scan.id )}
                                 onChange={ scan => services.scans.update( scan.id, scan)}
@@ -262,7 +262,7 @@ export default class App extends React.Component {
                         }/>
 
                         <Route path="/calibration/:calibrationId" render={ props =>
-                            <Calibration calibration={ this.state.calibrations && this.state.calibrations.find(calibration => calibration.id == props.match.params.calibrationId)}
+                            <Calibration calibration={ this.state.calibrations?.find(calibration => calibration.id == props.match.params.calibrationId)}
                                 onChange={ calibration => services.calibrations.update( props.match.params.calibrationId, calibration)}
                                 onDelete={ () => this.deleteCalibration( props.match.params.calibrationId )}
                             />
@@ -273,7 +273,7 @@ export default class App extends React.Component {
                         }/>
 
                         <Route path="/cameras/:switchId" render={ props =>
-                            <SwitchCameraList cameras={this.state.cameras} switchData={ this.state.switches && this.state.switches[props.match.params.switchId] }/>
+                            <SwitchCameraList cameras={this.state.cameras} switchData={ this.state.switches?.[props.match.params.switchId] }/>
                         }/>
 
                         <Route path="/settings" render={ props =>
