@@ -5,6 +5,7 @@ import { Route, NavLink  } from 'react-router-dom'
 const styles = {
     link: {
         normal: {
+            position: "relative",
             textDecoration: "none",
             textAlign: "center",
             padding: "1em 2em",
@@ -29,6 +30,7 @@ const styles = {
     },
     sublink: {
         normal: {
+            position: "relative",
             color: "#5A7287",
             backgroundColor: "#FFFFFF",
             borderBottom: "2px solid #EDEDED",
@@ -63,21 +65,22 @@ const styles = {
 
 const preventDefault = e => e.preventDefault();
 
-export const PageLink = ({to, title, icon, disabled, onClick, ...props}) =>
+export const PageLink = ({to, title, icon, disabled, onClick, children, style, ...props}) =>
     <NavLink to={to} activeClassName="active"
-        style={{ ...styles.link.normal, ...(disabled && styles.link.disabled) }}
+        style={{ ...styles.link.normal, ...(disabled && styles.link.disabled), ...style }}
         activeStyle={ styles.link.active }
         onClick={ disabled ? preventDefault : onClick }
         {...props}>
         <Col>
             { icon && <Icon url={icon} style={ styles.link.icon }/> }
             <span>{title}</span>
+            {children}
         </Col>
     </NavLink>
 
-export const PageSubLink = ({to, spinner, icon, checkbox, selected, onChange, children, ...props}) =>
+export const PageSubLink = ({to, spinner, icon, checkbox, selected, onChange, children, style, ...props}) =>
     <NavLink to={to}
-        style={ styles.sublink.normal }
+        style={{ ...styles.sublink.normal, ...style }}
         activeStyle={ styles.sublink.active }
         {...props}>
         <Row className="fill">

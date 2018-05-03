@@ -1,6 +1,8 @@
 import React from 'react';
 import { createHashHistory as createHistory } from 'history';
 import { Router, Route, Switch } from 'react-router-dom';
+import Badge from 'react-notification-badge';
+import { Effect as BadgeEffect } from 'react-notification-badge';
 
 import dataminrUtils from 'dataminr-react-components/dist/utils/Utils';
 
@@ -214,6 +216,9 @@ export default class App extends React.Component {
         }
     }
 
+    offlineCameras = () => this.state?.config?.scanner?.map?.filter( mac => mac && !(this.state?.cameras?.find( camera => camera.mac==mac && camera.online )))?.length || 0;
+    cameraProblems = () => this.state?.config?.scanner?.new.length+this.offlineCameras();
+
     render = () =>
         <Router history={this.history}>
             <Col style={ styles.container }>
@@ -222,7 +227,9 @@ export default class App extends React.Component {
                     <PageList>
                         <PageLink to="/scan"        title="Scan"        icon={assets.shoot}       />
                         <PageLink to="/calibration" title="Calibration" icon={assets.calibration} />
-                        <PageLink to="/cameras"     title="Cameras"     icon={assets.cameras}     />
+                        <PageLink to="/cameras"     title="Cameras"     icon={assets.cameras}      >
+                            <Badge count={this.cameraProblems()} effect={BadgeEffect.SCALE} containerStyle={{position:"absolute", top:"1em", left:"-1em"}}/>
+                        </PageLink>
                         <PageLink to="/settings"    title="Settings"    icon={assets.settings}    />
                     </PageList>
 
