@@ -218,6 +218,10 @@ export default class App extends React.Component {
 
     offlineCameras = () => this.state?.config?.scanner?.map?.filter( mac => mac && !(this.state?.cameras?.find( camera => camera.mac==mac && camera.online )))?.length || 0;
     cameraProblems = () => this.state?.config?.scanner?.new.length+this.offlineCameras();
+    scannerBusy = () =>
+            !this.state?.status?.operational ||
+            this.state?.status?.shooting     ||
+            this.state?.status?.downloading;
 
     render = () =>
         <Router history={this.history}>
@@ -239,7 +243,7 @@ export default class App extends React.Component {
                                 selected={ this.state.scansSelection }
                                 onShoot={ this.shootScan }
                                 onSelectedChange={ this.onScanSelectedChange }
-                                operational={ this.state.status?.operational } />
+                                operational={!this.scannerBusy()} />
                         }/>
 
                         <Route path="/calibration" render={ props =>
@@ -247,7 +251,7 @@ export default class App extends React.Component {
                                 selected={ this.state.calibrationsSelection }
                                 onShoot={ this.shootCalibration }
                                 onSelectedChange={ this.onCalibrationSelectedChange }
-                            operational={this.state.status?.operational} />
+                                operational={!this.scannerBusy()} />
                         }/>
 
                         <Route path="/cameras" render={ props =>
