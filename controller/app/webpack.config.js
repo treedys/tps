@@ -126,7 +126,8 @@ const release = {
                 removeStyleLinkTypeAttributes: true
             }
         }),
-        new ExtractTextPlugin({ filename: "[name].[contenthash:8].css", allChunks: true })
+        // FIXME: https://github.com/webpack-contrib/extract-text-webpack-plugin/issues/763#issuecomment-377990665
+        new ExtractTextPlugin({ filename: "[name].[md5:contenthash:hex:8].css", allChunks: true })
     ]
 
 };
