@@ -4,6 +4,7 @@ export Icon from './Icon';
 export Circle from './Circle';
 export Centered from './Centered';
 export Button from './Button';
+export Focused from './Focused';
 export LabeledTextInput from './LabeledTextInput';
 export LabeledCheckbox from './LabeledCheckbox';
 export LabeledSelect from './LabeledSelect';

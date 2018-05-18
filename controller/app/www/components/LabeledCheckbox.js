@@ -1,4 +1,5 @@
 import React from 'react';
+import Focused from './Focused';
 import Row from './Row';
 
 /* TODO: Could be merged with LabeledTextInput */
@@ -36,29 +37,17 @@ const styles = {
     }
 };
 
-export default class LabeledCheckbox extends React.Component {
+const LabeledCheckbox = ({id, label, labelStyle, style, isFocused, ...props}) =>
+    <Row style={ styles.normal.container }>
+        <input type="checkbox"
+            id={id}
+            style={{ ...styles.normal.input, ...( isFocused ? styles.active.input : {} ), ...style }}
+            {...props}/>
+        { label && <label
+            htmlFor={id}
+            style={{ ...styles.normal.label, ...( isFocused ? styles.active.label : {} ), ...labelStyle }}>
+            {label}
+        </label> }
+    </Row>
 
-    state = { isFocused: false };
-
-    handleInputFocus = () => this.setState({ isFocused: true });
-    handleInputBlur = () => this.setState({ isFocused: false });
-
-    render() {
-        const { isFocused } = this.state;
-        const {id, label, labelStyle, style,  ...props} = this.props;
-
-        return <Row style={ styles.normal.container }>
-            <input type="checkbox"
-                id={id}
-                onFocus={this.handleInputFocus}
-                onBlur={this.handleInputBlur}
-                style={{ ...styles.normal.input, ...( isFocused ? styles.active.input : {} ), ...style }}
-                {...props}/>
-            <label
-                htmlFor={id}
-                style={{ ...styles.normal.label, ...( isFocused ? styles.active.label : {} ), ...labelStyle }}>
-                {label}
-            </label>
-        </Row>
-    }
-}
+export default props => <Focused><LabeledCheckbox {...props}/></Focused>

@@ -1,4 +1,5 @@
 import React from 'react';
+import Focused from './Focused';
 import Row from './Row';
 
 const styles = {
@@ -47,32 +48,20 @@ const styles = {
     }
 };
 
-export default class LabeledSelect extends React.Component {
+const LabeledSelect = ({ id, label, labelStyle, style, containerStyle, optionStyle, options, children, isFocused, ...props }) =>
+    <Row style={{ ...styles.normal.container, ...containerStyle }}>
+        { label && <label
+            htmlFor={id}
+            style={{ ...styles.normal.label, ...( isFocused ? styles.active.label : {} ), ...labelStyle }}>
+            {label}
+        </label> }
+        <select className="fill"
+            id={id}
+            style={{ ...styles.normal.select, ...( isFocused ? styles.active.select : {} ), ...style }}
+            {...props}>
+            { options?.map( option => <option key={option.value || option} style={{ ...styles.normal.option , ...optionStyle }} value={option.value || option}>{option.name || option}</option>)}
+            {children}
+        </select>
+    </Row>
 
-    state = { isFocused: false };
-
-    handleInputFocus = () => this.setState({ isFocused: true });
-    handleInputBlur = () => this.setState({ isFocused: false });
-
-    render() {
-        const { isFocused } = this.state;
-        const { id, label, labelStyle, style, containerStyle, optionStyle, options, children, ...props } = this.props;
-
-        return <Row style={{ ...styles.normal.container, ...containerStyle }}>
-            { label && <label
-                htmlFor={id}
-                style={{ ...styles.normal.label, ...( isFocused ? styles.active.label : {} ), ...labelStyle }}>
-                {label}
-            </label> }
-            <select className="fill"
-                id={id}
-                onFocus={this.handleInputFocus}
-                onBlur={this.handleInputBlur}
-                style={{ ...styles.normal.select, ...( isFocused ? styles.active.select : {} ), ...style }}
-                {...props}>
-                { options?.map( option => <option key={option.value || option} style={{ ...styles.normal.option , ...optionStyle }} value={option.value || option}>{option.name || option}</option>)}
-                {children}
-            </select>
-        </Row>
-    }
-};
+export default props => <Focused><LabeledSelect {...props}/></Focused>
