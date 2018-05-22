@@ -23,9 +23,9 @@ const styles = {
             borderRadius: '6px',
             padding: '1em',
             fontSize: "1em"
-        },
+        }
     },
-    active: {
+    focused: {
         label: {
             color: "#00B7EC"
         },
@@ -41,19 +41,26 @@ const styles = {
  * https://www.npmjs.com/package/radium
  * https://www.npmjs.com/package/style-it */
 
-const LabeledTextInput = ({ id, label, labelStyle, style, containerStyle, children, isFocused, ...props }) =>
+const LabeledTextInput = ({ id, label, labelStyle, style, containerStyle, children, focused, ...props }) =>
     <Row style={{ ...styles.normal.container, ...containerStyle }}>
         { label && <label
             htmlFor={id}
-            style={{ ...styles.normal.label, ...( isFocused ? styles.active.label : {} ), ...labelStyle }}>
+            style={{
+                ...styles.normal.label,
+                ...( focused && styles.focused.label ),
+                ...labelStyle
+            }}>
             {label}
         </label> }
         <input className="fill"
             id={id}
-            style={{ ...styles.normal.input, ...( isFocused ? styles.active.input : {} ), ...style }}
+            style={{
+                ...styles.normal.input,
+                ...( focused && styles.focused.input ),
+                ...style
+            }}
             {...props}/>
         {children}
     </Row>
 
 export default props => <Focused><LabeledTextInput {...props}/></Focused>
-

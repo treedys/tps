@@ -2,16 +2,16 @@ import React from 'react';
 
 export default class Focused extends React.Component {
 
-    state = { isFocused: false };
+    state = { focused: false };
 
-    handleInputFocus = () => this.setState({ isFocused: true  });
-    handleInputBlur  = () => this.setState({ isFocused: false });
+    handleInputFocus = () => this.setState({ focused: true  });
+    handleInputBlur  = () => this.setState({ focused: false });
 
     render() {
         const child = React.Children.only(this.props.children);
 
         return <child.type {...child.props}
-                    isFocused={ this.state.isFocused }
+                    focused={ this.state.focused }
                     onFocus={ event => { this.handleInputFocus(); child.onFocus?.(event); } }
                     onBlur ={ event => { this.handleInputBlur (); child.onBlur ?.(event); } }>
                     {child.props.children}

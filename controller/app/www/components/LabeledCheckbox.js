@@ -26,7 +26,7 @@ const styles = {
             fontSize: "1em"
         }
     },
-    active: {
+    focused: {
         label: {
             color: "#00B7EC"
         },
@@ -37,15 +37,23 @@ const styles = {
     }
 };
 
-const LabeledCheckbox = ({id, label, labelStyle, style, isFocused, ...props}) =>
+const LabeledCheckbox = ({id, label, labelStyle, style, focused, ...props}) =>
     <Row style={ styles.normal.container }>
         <input type="checkbox"
             id={id}
-            style={{ ...styles.normal.input, ...( isFocused ? styles.active.input : {} ), ...style }}
+            style={{
+                ...styles.normal.input,
+                ...( focused && styles.focused.input ),
+                ...style
+            }}
             {...props}/>
         { label && <label
             htmlFor={id}
-            style={{ ...styles.normal.label, ...( isFocused ? styles.active.label : {} ), ...labelStyle }}>
+            style={{
+                ...styles.normal.label,
+                ...( focused && styles.focused.label ),
+                ...labelStyle
+            }}>
             {label}
         </label> }
     </Row>

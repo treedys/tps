@@ -37,7 +37,7 @@ const styles = {
             fontSize: "1em"
         }
     },
-    active: {
+    focused: {
         label: {
             color: "#00B7EC"
         },
@@ -48,16 +48,24 @@ const styles = {
     }
 };
 
-const LabeledSelect = ({ id, label, labelStyle, style, containerStyle, optionStyle, options, children, isFocused, ...props }) =>
+const LabeledSelect = ({ id, label, labelStyle, style, containerStyle, optionStyle, options, children, focused, ...props }) =>
     <Row style={{ ...styles.normal.container, ...containerStyle }}>
         { label && <label
             htmlFor={id}
-            style={{ ...styles.normal.label, ...( isFocused ? styles.active.label : {} ), ...labelStyle }}>
+            style={{
+                ...styles.normal.label,
+                ...( focused && styles.focused.label ),
+                ...labelStyle
+            }}>
             {label}
         </label> }
         <select className="fill"
             id={id}
-            style={{ ...styles.normal.select, ...( isFocused ? styles.active.select : {} ), ...style }}
+            style={{
+                ...styles.normal.select,
+                ...( focused && styles.focused.select ),
+                ...style
+            }}
             {...props}>
             { options?.map( option => <option key={option.value || option} style={{ ...styles.normal.option , ...optionStyle }} value={option.value || option}>{option.name || option}</option>)}
             {children}
