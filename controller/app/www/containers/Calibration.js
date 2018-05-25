@@ -29,7 +29,7 @@ const styles = {
 @changeState
 export default class Calibration extends React.Component {
 
-    updateState({calibration}) { this.setState( state => ({ ...calibration })); }
+    updateState({calibration}) { this.setState( state => ({ calibration })); }
 
     render() {
         const { calibration, ...props } = this.props;
@@ -56,8 +56,8 @@ export default class Calibration extends React.Component {
                 <h3>Calibration information:</h3>
 
                 <Col style={{ display: "block" }} className="fill scroll">
-                    <LabeledTextInput id="id"     label="ID"      value={this.state.id       } readOnly />
-                    <LabeledTextInput id="date"   label="Date"    value={`${moment(this.state.date).toDate()}`} readOnly />
+                    <LabeledTextInput id="id"     label="ID"      value={ this.state.calibration.id                         } readOnly />
+                    <LabeledTextInput id="date"   label="Date"    value={ `${moment(this.state.calibration.date).toDate()}` } readOnly />
                 </Col>
             </Col>
         </Row>

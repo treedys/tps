@@ -1,4 +1,5 @@
 import React from 'react';
+import produce from 'immer'
 import { Row, Col, LabeledTextInput, LabeledCheckbox, LabeledSelect } from '../components'
 import { updateState, changeState } from '../utils'
 
@@ -42,7 +43,7 @@ const whiteBalanceOptions = [
 @changeState
 export default class CameraSettings extends React.Component {
 
-    updateState({settings}) { this.setState( state => ({ ...settings })); }
+    updateState({settings}) { this.setState( state => ({ settings })); }
 
     render() {
         const {settings, ...props} = this.props;
@@ -59,88 +60,88 @@ export default class CameraSettings extends React.Component {
                 <tbody>
                     <tr>
                         <td style={styles.label}>Quality</td>
-                        <td><LabeledTextInput value={this.state.projection.quality} onChange={ e => this.changeState({ ...this.state, projection: { ...this.state.projection, quality: e.target.value } } ) } /></td>
-                        <td><LabeledTextInput value={this.state.normal    .quality} onChange={ e => this.changeState({ ...this.state, normal:     { ...this.state.normal,     quality: e.target.value } } ) } /></td>
+                        <td><LabeledTextInput value={this.state.settings.projection.quality} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.projection.quality = e.target.value; } )); } } /></td>
+                        <td><LabeledTextInput value={this.state.settings.normal    .quality} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.normal    .quality = e.target.value; } )); } } /></td>
                     </tr>
                     <tr>
                         <td style={styles.label}>Sharpness</td>
-                        <td><LabeledTextInput value={this.state.projection.sharpness} onChange={ e => this.changeState({ ...this.state, projection: { ...this.state.projection, sharpness: e.target.value } } ) } /></td>
-                        <td><LabeledTextInput value={this.state.normal    .sharpness} onChange={ e => this.changeState({ ...this.state, normal:     { ...this.state.normal,     sharpness: e.target.value } } ) } /></td>
+                        <td><LabeledTextInput value={this.state.settings.projection.sharpness} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.projection.sharpness = e.target.value; } )); } } /></td>
+                        <td><LabeledTextInput value={this.state.settings.normal    .sharpness} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.normal    .sharpness = e.target.value; } )); } } /></td>
                     </tr>
                     <tr>
                         <td style={styles.label}>Contrast</td>
-                        <td><LabeledTextInput value={this.state.projection.contrast} onChange={ e => this.changeState({ ...this.state, projection: { ...this.state.projection, contrast: e.target.value } } ) } /></td>
-                        <td><LabeledTextInput value={this.state.normal    .contrast} onChange={ e => this.changeState({ ...this.state, normal:     { ...this.state.normal,     contrast: e.target.value } } ) } /></td>
+                        <td><LabeledTextInput value={this.state.settings.projection.contrast} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.projection.contrast = e.target.value; } )); } } /></td>
+                        <td><LabeledTextInput value={this.state.settings.normal    .contrast} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.normal    .contrast = e.target.value; } )); } } /></td>
                     </tr>
                     <tr>
                         <td style={styles.label}>Brightness</td>
-                        <td><LabeledTextInput value={this.state.projection.brightness} onChange={ e => this.changeState({ ...this.state, projection: { ...this.state.projection, brightness: e.target.value } } ) } /></td>
-                        <td><LabeledTextInput value={this.state.normal    .brightness} onChange={ e => this.changeState({ ...this.state, normal:     { ...this.state.normal,     brightness: e.target.value } } ) } /></td>
+                        <td><LabeledTextInput value={this.state.settings.projection.brightness} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.projection.brightness = e.target.value; } )); } } /></td>
+                        <td><LabeledTextInput value={this.state.settings.normal    .brightness} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.normal    .brightness = e.target.value; } )); } } /></td>
                     </tr>
                     <tr>
                         <td style={styles.label}>Saturation</td>
-                        <td><LabeledTextInput value={this.state.projection.saturation} onChange={ e => this.changeState({ ...this.state, projection: { ...this.state.projection, saturation: e.target.value } } ) } /></td>
-                        <td><LabeledTextInput value={this.state.normal    .saturation} onChange={ e => this.changeState({ ...this.state, normal:     { ...this.state.normal,     saturation: e.target.value } } ) } /></td>
+                        <td><LabeledTextInput value={this.state.settings.projection.saturation} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.projection.saturation = e.target.value; } )); } } /></td>
+                        <td><LabeledTextInput value={this.state.settings.normal    .saturation} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.normal    .saturation = e.target.value; } )); } } /></td>
                     </tr>
                     <tr>
                         <td style={styles.label}>Shutter speed</td>
-                        <td><LabeledTextInput value={this.state.projection.shutterSpeed} onChange={ e => this.changeState({ ...this.state, projection: { ...this.state.projection, shutterSpeed: e.target.value } } ) } /></td>
-                        <td><LabeledTextInput value={this.state.normal    .shutterSpeed} onChange={ e => this.changeState({ ...this.state, normal:     { ...this.state.normal,     shutterSpeed: e.target.value } } ) } /></td>
+                        <td><LabeledTextInput value={this.state.settings.projection.shutterSpeed} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.projection.shutterSpeed = e.target.value; } )); } } /></td>
+                        <td><LabeledTextInput value={this.state.settings.normal    .shutterSpeed} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.normal    .shutterSpeed = e.target.value; } )); } } /></td>
                     </tr>
                     <tr>
                         <td style={styles.label}>ISO</td>
-                        <td><LabeledTextInput value={this.state.projection.iso} onChange={ e => this.changeState({ ...this.state, projection: { ...this.state.projection, iso: e.target.value } } ) } /></td>
-                        <td><LabeledTextInput value={this.state.normal    .iso} onChange={ e => this.changeState({ ...this.state, normal:     { ...this.state.normal,     iso: e.target.value } } ) } /></td>
+                        <td><LabeledTextInput value={this.state.settings.projection.iso} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.projection.iso = e.target.value; } )); } } /></td>
+                        <td><LabeledTextInput value={this.state.settings.normal    .iso} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.normal    .iso = e.target.value; } )); } } /></td>
                     </tr>
                     <tr>
                         <td style={styles.label}>Red gain</td>
-                        <td><LabeledTextInput value={this.state.projection.redGain} onChange={ e => this.changeState({ ...this.state, projection: { ...this.state.projection, redGain: e.target.value } } ) } /></td>
-                        <td><LabeledTextInput value={this.state.normal    .redGain} onChange={ e => this.changeState({ ...this.state, normal:     { ...this.state.normal,     redGain: e.target.value } } ) } /></td>
+                        <td><LabeledTextInput value={this.state.settings.projection.redGain} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.projection.redGain = e.target.value; } )); } } /></td>
+                        <td><LabeledTextInput value={this.state.settings.normal    .redGain} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.normal    .redGain = e.target.value; } )); } } /></td>
                     </tr>
                     <tr>
                         <td style={styles.label}>Blue gain</td>
-                        <td><LabeledTextInput value={this.state.projection.blueGain} onChange={ e => this.changeState({ ...this.state, projection: { ...this.state.projection, blueGain: e.target.value } } ) } /></td>
-                        <td><LabeledTextInput value={this.state.normal    .blueGain} onChange={ e => this.changeState({ ...this.state, normal:     { ...this.state.normal,     blueGain: e.target.value } } ) } /></td>
+                        <td><LabeledTextInput value={this.state.settings.projection.blueGain} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.projection.blueGain = e.target.value; } )); } } /></td>
+                        <td><LabeledTextInput value={this.state.settings.normal    .blueGain} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.normal    .blueGain = e.target.value; } )); } } /></td>
                     </tr>
                     <tr>
                         <td style={styles.label}>Dynamic range expansion</td>
-                        <td><LabeledSelect options={drcOptions} value={this.state.projection.drc} onChange={ e => this.changeState({ ...this.state, projection: { ...this.state.projection, drc: e.target.value } } ) } /></td>
-                        <td><LabeledSelect options={drcOptions} value={this.state.normal    .drc} onChange={ e => this.changeState({ ...this.state, normal:     { ...this.state.normal,     drc: e.target.value } } ) } /></td>
+                        <td><LabeledSelect options={drcOptions} value={this.state.settings.projection.drc} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.projection.drc = e.target.value; } )); } } /></td>
+                        <td><LabeledSelect options={drcOptions} value={this.state.settings.normal    .drc} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.normal    .drc = e.target.value; } )); } } /></td>
                     </tr>
                     <tr>
                         <td style={styles.label}>White balance</td>
-                        <td><LabeledSelect options={whiteBalanceOptions} value={this.state.projection.whiteBalance} onChange={ e => this.changeState({ ...this.state, projection: { ...this.state.projection, whiteBalance: e.target.value } } ) } /></td>
-                        <td><LabeledSelect options={whiteBalanceOptions} value={this.state.normal    .whiteBalance} onChange={ e => this.changeState({ ...this.state, normal:     { ...this.state.normal,     whiteBalance: e.target.value } } ) } /></td>
+                        <td><LabeledSelect options={whiteBalanceOptions} value={this.state.settings.projection.whiteBalance} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.projection.whiteBalance = e.target.value; } )); } } /></td>
+                        <td><LabeledSelect options={whiteBalanceOptions} value={this.state.settings.normal    .whiteBalance} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.normal    .whiteBalance = e.target.value; } )); } } /></td>
                     </tr>
                     <tr>
                         <td style={styles.label}>Open camera interface</td>
-                        <td><LabeledCheckbox checked={this.state.projection.open} onChange={ e => this.changeState({ ...this.state, projection: { ...this.state.projection, open: e.target.checked } } ) } /></td>
-                        <td><LabeledCheckbox checked={this.state.normal    .open} onChange={ e => this.changeState({ ...this.state, normal:     { ...this.state.normal,     open: e.target.checked } } ) } /></td>
+                        <td><LabeledCheckbox checked={this.state.settings.projection.open} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.projection.open = e.target.checked; } )); } } /></td>
+                        <td><LabeledCheckbox checked={this.state.settings.normal    .open} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.normal    .open = e.target.checked; } )); } } /></td>
                     </tr>
                     <tr>
                         <td style={styles.label}>Close camera interface</td>
-                        <td><LabeledCheckbox checked={this.state.projection.close} onChange={ e => this.changeState({ ...this.state, projection: { ...this.state.projection, close: e.target.checked } } ) } /></td>
-                        <td><LabeledCheckbox checked={this.state.normal    .close} onChange={ e => this.changeState({ ...this.state, normal:     { ...this.state.normal,     close: e.target.checked } } ) } /></td>
+                        <td><LabeledCheckbox checked={this.state.settings.projection.close} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.projection.close = e.target.checked; } )); } } /></td>
+                        <td><LabeledCheckbox checked={this.state.settings.normal    .close} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.normal    .close = e.target.checked; } )); } } /></td>
                     </tr>
                     <tr>
                         <td style={styles.label}>GPIO 17 delay</td>
-                        <td><LabeledTextInput value={this.state.projection.gpioDelay17} onChange={ e => this.changeState({ ...this.state, projection: { ...this.state.projection, gpioDelay17: e.target.value } } ) } /></td>
-                        <td><LabeledTextInput value={this.state.normal    .gpioDelay17} onChange={ e => this.changeState({ ...this.state, normal:     { ...this.state.normal,     gpioDelay17: e.target.value } } ) } /></td>
+                        <td><LabeledTextInput value={this.state.settings.projection.gpioDelay17} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.projection.gpioDelay17 = e.target.value; } )); } } /></td>
+                        <td><LabeledTextInput value={this.state.settings.normal    .gpioDelay17} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.normal    .gpioDelay17 = e.target.value; } )); } } /></td>
                     </tr>
                     <tr>
                         <td style={styles.label}>GPIO 18 delay</td>
-                        <td><LabeledTextInput value={this.state.projection.gpioDelay18} onChange={ e => this.changeState({ ...this.state, projection: { ...this.state.projection, gpioDelay18: e.target.value } } ) } /></td>
-                        <td><LabeledTextInput value={this.state.normal    .gpioDelay18} onChange={ e => this.changeState({ ...this.state, normal:     { ...this.state.normal,     gpioDelay18: e.target.value } } ) } /></td>
+                        <td><LabeledTextInput value={this.state.settings.projection.gpioDelay18} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.projection.gpioDelay18 = e.target.value; } )); } } /></td>
+                        <td><LabeledTextInput value={this.state.settings.normal    .gpioDelay18} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.normal    .gpioDelay18 = e.target.value; } )); } } /></td>
                     </tr>
                     <tr>
                         <td style={styles.label}>GPIO 22 delay</td>
-                        <td><LabeledTextInput value={this.state.projection.gpioDelay22} onChange={ e => this.changeState({ ...this.state, projection: { ...this.state.projection, gpioDelay22: e.target.value } } ) } /></td>
-                        <td><LabeledTextInput value={this.state.normal    .gpioDelay22} onChange={ e => this.changeState({ ...this.state, normal:     { ...this.state.normal,     gpioDelay22: e.target.value } } ) } /></td>
+                        <td><LabeledTextInput value={this.state.settings.projection.gpioDelay22} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.projection.gpioDelay22 = e.target.value; } )); } } /></td>
+                        <td><LabeledTextInput value={this.state.settings.normal    .gpioDelay22} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.normal    .gpioDelay22 = e.target.value; } )); } } /></td>
                     </tr>
                     <tr>
                         <td style={styles.label}>GPIO 27 delay</td>
-                        <td><LabeledTextInput value={this.state.projection.gpioDelay27} onChange={ e => this.changeState({ ...this.state, projection: { ...this.state.projection, gpioDelay27: e.target.value } } ) } /></td>
-                        <td><LabeledTextInput value={this.state.normal    .gpioDelay27} onChange={ e => this.changeState({ ...this.state, normal:     { ...this.state.normal,     gpioDelay27: e.target.value } } ) } /></td>
+                        <td><LabeledTextInput value={this.state.settings.projection.gpioDelay27} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.projection.gpioDelay27 = e.target.value; } )); } } /></td>
+                        <td><LabeledTextInput value={this.state.settings.normal    .gpioDelay27} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.normal    .gpioDelay27 = e.target.value; } )); } } /></td>
                     </tr>
                 </tbody>
             </table>

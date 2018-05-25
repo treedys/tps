@@ -48,7 +48,7 @@ const styles = {
     }
 };
 
-const LabeledSelect = ({ id, label, labelStyle, style, containerStyle, optionStyle, options, children, focused, ...props }) =>
+const LabeledSelect = ({ id, label, labelStyle, style, containerStyle, optionStyle, value, options, children, focused, ...props }) =>
     <Row style={{ ...styles.normal.container, ...containerStyle }}>
         { label && <label
             htmlFor={id}
@@ -66,7 +66,9 @@ const LabeledSelect = ({ id, label, labelStyle, style, containerStyle, optionSty
                 ...( focused && styles.focused.select ),
                 ...style
             }}
+            value={value!==undefined?value:''}
             {...props}>
+            <option key={undefined} value='' hidden disabled/>
             { options?.map( option => <option key={option.value || option} style={{ ...styles.normal.option , ...optionStyle }} value={option.value || option}>{option.name || option}</option>)}
             {children}
         </select>

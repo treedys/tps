@@ -41,7 +41,7 @@ const styles = {
  * https://www.npmjs.com/package/radium
  * https://www.npmjs.com/package/style-it */
 
-const LabeledTextInput = ({ id, label, labelStyle, style, containerStyle, children, focused, ...props }) =>
+const LabeledTextInput = ({ id, label, labelStyle, style, containerStyle, value, children, focused, ...props }) =>
     <Row style={{ ...styles.normal.container, ...containerStyle }}>
         { label && <label
             htmlFor={id}
@@ -59,6 +59,7 @@ const LabeledTextInput = ({ id, label, labelStyle, style, containerStyle, childr
                 ...( focused && styles.focused.input ),
                 ...style
             }}
+            value={value!==undefined?value:''}
             {...props}/>
         {children}
     </Row>

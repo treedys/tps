@@ -37,7 +37,7 @@ const styles = {
     }
 };
 
-const LabeledCheckbox = ({id, label, labelStyle, style, focused, ...props}) =>
+const LabeledCheckbox = ({id, label, labelStyle, style, checked, focused, ...props}) =>
     <Row style={ styles.normal.container }>
         <input type="checkbox"
             id={id}
@@ -46,6 +46,7 @@ const LabeledCheckbox = ({id, label, labelStyle, style, focused, ...props}) =>
                 ...( focused && styles.focused.input ),
                 ...style
             }}
+            checked={!!checked}
             {...props}/>
         { label && <label
             htmlFor={id}

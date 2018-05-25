@@ -281,22 +281,22 @@ export default class App extends React.Component {
                             <Scan scan={ this.state.scans?.find(scan => scan.id == props.match.params.scanId)}
                                 status={ this.state.status }
                                 fields={ this.state.config?.scanFields }
-                                onAccept={ scan => this.acceptScan( scan.id )}
-                                onReject={ scan => this.rejectScan( scan.id )}
-                                onChange={ scan => services.scans.update( scan.id, scan)}
-                                onDelete={ scan => this.deleteScan( scan.id )}
+                                onAccept={   scan   => this.acceptScan( scan.id )}
+                                onReject={   scan   => this.rejectScan( scan.id )}
+                                onChange={ ({scan}) => services.scans.update( scan.id, scan)}
+                                onDelete={   scan   => this.deleteScan( scan.id )}
                             />
                         }/>
 
                         <Route path="/calibration/:calibrationId" render={ props =>
                             <Calibration calibration={ this.state.calibrations?.find(calibration => calibration.id == props.match.params.calibrationId)}
-                                onChange={ calibration => services.calibrations.update( props.match.params.calibrationId, calibration)}
+                                onChange={ ({calibration}) => services.calibrations.update( props.match.params.calibrationId, calibration)}
                                 onDelete={ () => this.deleteCalibration( props.match.params.calibrationId )}
                             />
                         }/>
 
                         <Route path="/cameras/map" render={ props =>
-                                <CameraList cameras={this.state.cameras} config={this.state.config} onConfigChange={ config => services.config.update('0', config) }/>
+                                <CameraList cameras={this.state.cameras} config={this.state.config} onConfigChange={ ({settings}) => services.config.update('0', settings) }/>
                         }/>
 
                         <Route path="/cameras/:switchId" render={ props =>
@@ -304,7 +304,7 @@ export default class App extends React.Component {
                         }/>
 
                         <Route path="/settings" render={ props =>
-                            <Settings settings={this.state.config} onChange={ config => services.config.update('0', config) }/>
+                            <Settings settings={this.state.config} onChange={ ({settings}) => services.config.update('0', settings) }/>
                         }/>
 
                     </Switch>
