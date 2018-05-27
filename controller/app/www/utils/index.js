@@ -1,1 +1,1 @@
-export { updateState, changeState } from './decorators'
+export { changeState } from './decorators'

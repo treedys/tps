@@ -3,7 +3,7 @@ import moment from 'moment'
 import produce from 'immer'
 import { Row, Col, Spinner, Button } from '../components'
 import { LabeledTextInput, LabeledCheckbox, LabeledSelect } from '../components'
-import { updateState, changeState } from '../utils'
+import { changeState } from '../utils'
 
 const styles = {
     preview: {
@@ -26,11 +26,12 @@ const styles = {
     }
 };
 
-@updateState
 @changeState
 export default class Scan extends React.Component {
 
-    updateState({scan}) { this.setState( state => ({ scan })); }
+    state = {}
+
+    static getDerivedStateFromProps = ({scan}) => ({scan})
 
     onImageClick = () => this.setState( state => ({normalProjection: !state.normalProjection}) );
 

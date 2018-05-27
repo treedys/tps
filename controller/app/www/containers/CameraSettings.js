@@ -1,7 +1,7 @@
 import React from 'react';
 import produce from 'immer'
 import { Row, Col, LabeledTextInput, LabeledCheckbox, LabeledSelect } from '../components'
-import { updateState, changeState } from '../utils'
+import { changeState } from '../utils'
 
 const styles = {
     container: {
@@ -39,11 +39,12 @@ const whiteBalanceOptions = [
     { value: 9, name: "Horizon"      }
 ];
 
-@updateState
 @changeState
 export default class CameraSettings extends React.Component {
 
-    updateState({settings}) { this.setState( state => ({ settings })); }
+    state = {}
+
+    static getDerivedStateFromProps = ({settings}) => ({settings})
 
     render() {
         const {settings, ...props} = this.props;

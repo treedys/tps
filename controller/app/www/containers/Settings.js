@@ -3,7 +3,7 @@ import produce from 'immer'
 import { Row, Col, Button } from '../components'
 import { LabeledTextInput, LabeledCheckbox, LabeledSelect } from '../components'
 import CameraSettings from './CameraSettings'
-import { updateState, changeState } from '../utils'
+import { changeState } from '../utils'
 
 const styles = {
     container: {
@@ -13,16 +13,17 @@ const styles = {
     }
 };
 
-@updateState
 @changeState
 export default class Settings extends React.Component {
 
-    updateState({settings}) { this.setState( state => ({ settings })); }
+    state = {}
+
+    static getDerivedStateFromProps = ({settings}) => ({settings})
 
     render() {
         const { onSave, ...props} = this.props;
 
-        if(!this.state.settings.camera)
+        if(!this.state?.settings?.camera)
             return <h1>No data</h1>;
 
         return <Col className="scroll fill" style={ styles.container }>
