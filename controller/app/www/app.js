@@ -296,7 +296,7 @@ export default class App extends React.Component {
                         }/>
 
                         <Route path="/cameras/map" render={ props =>
-                                <CameraList cameras={this.state.cameras} config={this.state.config} onConfigChange={ ({settings}) => services.config.update('0', settings) }/>
+                                <CameraList cameras={this.state.cameras} config={this.state.config?.scanner} onConfigChange={ config => services.config.patch('0', { scanner: config }) }/>
                         }/>
 
                         <Route path="/cameras/:switchId" render={ props =>

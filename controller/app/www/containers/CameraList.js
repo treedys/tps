@@ -123,12 +123,12 @@ export class CameraList extends React.Component {
         let rows = [];
 
         const add = (label, source, start, count, onDrop) => {
-            rows.push(<tr key={rows.length}><td colSpan={config.scanner.columns}><h1>{label}</h1></td></tr>);
+            rows.push(<tr key={rows.length}><td colSpan={config.columns}><h1>{label}</h1></td></tr>);
 
             const cellStyle = {
-                width:`${100/config.scanner.columns}%`,
-                minWidth:`${100/config.scanner.columns}%`,
-                maxWidth:`${100/config.scanner.columns}%`,
+                width   :`${100/config.columns}%`,
+                minWidth:`${100/config.columns}%`,
+                maxWidth:`${100/config.columns}%`
             };
 
             let index = 0;
@@ -136,7 +136,7 @@ export class CameraList extends React.Component {
             for(let row=0; index<count; row++) {
                 let columns = [];
 
-                for(let column=0; column<config.scanner.columns; column++) {
+                for(let column=0; column<config.columns; column++) {
                     const mac = index<count && source[start+index];
                     const camera = cameras.find( camera => camera.mac==mac );
 
@@ -155,8 +155,8 @@ export class CameraList extends React.Component {
 
         const onDropMap = (index, { mac }) => {
             let result = {
-                map: config.scanner.map ? config.scanner.map.slice(0) : [],
-                new: config.scanner.new ? config.scanner.new.slice(0) : []
+                map: config.map ? config.map.slice(0) : [],
+                new: config.new ? config.new.slice(0) : []
             };
 
             console.log(result);
@@ -183,13 +183,13 @@ export class CameraList extends React.Component {
 
             console.log(result);
 
-            onConfigChange?.({ ...config, scanner: { ...config.scanner, map: result.map, new: result.new } });
+            onConfigChange?.({ ...config, map: result.map, new: result.new });
         };
 
         const onDropNew = (index, {mac}) => {
             let result = {
-                map: config.scanner.map.slice(0),
-                new: config.scanner.new.slice(0)
+                map: config.map.slice(0),
+                new: config.new.slice(0)
             };
 
             const mapIndex = result.map.indexOf(mac);
@@ -207,12 +207,12 @@ export class CameraList extends React.Component {
 
             result.new.splice(index, 0, mac);
 
-            onConfigChange?.({ ...config, scanner: { ...config.scanner, map: result.map, new: result.new } });
+            onConfigChange?.({ ...config, map: result.map, new: result.new });
         };
 
-        if(true)                      add("Cameras",       config.scanner.map,                                          0, config.scanner.rows*config.scanner.columns, onDropMap);
-        if(config.scanner.extra)      add("Extra cameras", config.scanner.map, config.scanner.rows*config.scanner.columns, config.scanner.extra                      , onDropMap);
-        if(config.scanner.new.length) add("New",           config.scanner.new,                                          0, config.scanner.new.length                 , onDropNew);
+        if(true)              add("Cameras",       config.map,                          0, config.rows*config.columns, onDropMap);
+        if(config.extra)      add("Extra cameras", config.map, config.rows*config.columns, config.extra              , onDropMap);
+        if(config.new.length) add("New",           config.new,                          0, config.new.length         , onDropNew);
 
         return <Col className='fill scroll'>
             <table style={{padding:"10px"}}><tbody>{rows}</tbody></table>
