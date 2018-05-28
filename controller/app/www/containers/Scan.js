@@ -1,9 +1,9 @@
 import React from 'react';
+import { Prompt } from 'react-router'
 import moment from 'moment'
 import produce from 'immer'
-import { Row, Col, Spinner, Button } from '../components'
+import { Row, Col, Spinner, Button, Form } from '../components'
 import { LabeledTextInput, LabeledCheckbox, LabeledSelect } from '../components'
-import { changeState } from '../utils'
 
 const styles = {
     preview: {
@@ -26,14 +26,29 @@ const styles = {
     }
 };
 
-@changeState
 export default class Scan extends React.Component {
 
     state = {}
 
-    static getDerivedStateFromProps = ({scan}) => ({scan})
+    static getDerivedStateFromProps({scan}, oldState) {
+        return (oldState.origScan!==scan) ? { scan, origScan:scan } : null;
+    }
+
+    componentDidUpdate(prevProps) {
+        if(prevProps.scan!==this.props.scan)
+            this.form?.reset();
+    }
 
     onImageClick = () => this.setState( state => ({normalProjection: !state.normalProjection}) );
+
+    FormButtons = ({form, changed}) =>
+        <Row>
+            <Prompt when={changed} message='You have unsaved changed, do you want to continue?'/>
+            <Button className="fill" disabled={!changed} onClick={ () => this.props.onChange(this.state) }>Save </Button>
+            <Button className="fill" disabled={!changed} onClick={ () => form.rollback() }>Reset</Button>
+        </Row>
+
+    getFormRef = form => { this.form = form; }
 
     render() {
         const { scan, status, fields, ...props } = this.props;
@@ -52,35 +67,46 @@ export default class Scan extends React.Component {
                     : <Spinner style={{margin:"20%"}}/>
                 }
             </div>
-            <Col style={ styles.information.container }>
+            <Form ref={this.getFormRef}>
+                <Col style={ styles.information.container }>
 
-                <Row>
-                    { !scan.done && <Button onClick={ () => this.props.onAccept(scan) } disabled={status.shooting||status.downloading} className="fill">Accept  </Button> }
-                    { !scan.done && <Button onClick={ () => this.props.onReject(scan) } disabled={status.shooting||status.downloading} className="fill">Reject  </Button> }
+                    <Row>
+                        { !scan.done && <Button onClick={ () => this.props.onAccept(scan) } disabled={status.shooting||status.downloading} className="fill">Accept  </Button> }
+                        { !scan.done && <Button onClick={ () => this.props.onReject(scan) } disabled={status.shooting||status.downloading} className="fill">Reject  </Button> }
 
-                    {  scan.done && <Button href={`/scan/${scan.id}.zip`}               className="fill">Download</Button> }
-                    {  scan.done && <Button onClick={ () => this.props.onDelete(scan) } className="fill">Delete  </Button> }
-                </Row>
+                        {  scan.done && <Button href={`/scan/${scan.id}.zip`}               className="fill">Download</Button> }
+                        {  scan.done && <Button onClick={ () => this.props.onDelete(scan) } className="fill">Delete  </Button> }
+                    </Row>
 
-                <h3>Scan information:</h3>
+                    <h3>Scan information:</h3>
 
-                <Col style={{ display: "block" }} className="fill scroll">
-                    <LabeledTextInput id="id"     label="ID"      value={this.state.scan.id       } readOnly />
-                    <LabeledTextInput id="date"   label="Date"    value={`${moment(this.state.scan.date).toDate()}`} readOnly />
+                    <Col style={{ display: "block" }} className="fill scroll">
+                        <LabeledTextInput id="id"     label="ID"      value={this.state.scan.id       } readOnly />
+                        <LabeledTextInput id="date"   label="Date"    value={`${moment(this.state.scan.date).toDate()}`} readOnly />
 
-                    {
-                        fields?.split(';').map(field => {
-                            const [id,label,options] = field.split(':');
+                        {
+                            fields?.split(';').map(field => {
+                                const [id,label,options] = field.split(':');
 
-                            if(!options)
-                                return <LabeledTextInput key={id} id={id} label={label} value={this.state.scan[id]} onChange={ e => { e.persist?.(); this.changeState(produce( state => { state.scan[id] = e.target.value; } )); } } />
-                            else
-                                return <LabeledSelect    key={id} id={id} label={label} value={this.state.scan[id]} onChange={ e => { e.persist?.(); this.changeState(produce( state => { state.scan[id] = e.target.value; } )); } } options={options.split(',')} />
-                        })
-                    }
+                                if(!options)
+                                    return <Form.Field key={id}>
+                                        <LabeledTextInput id={id} label={label} value={this.state.scan[id]} onChange={ e => { e.persist?.(); this.setState(produce( state => { state.scan[id] = e.target.value; } )); } } />
+                                    </Form.Field>;
+                                else
+                                    return <Form.Field key={id}>
+                                        <LabeledSelect    id={id} label={label} value={this.state.scan[id]} onChange={ e => { e.persist?.(); this.setState(produce( state => { state.scan[id] = e.target.value; } )); } } options={options.split(',')} />
+                                    </Form.Field>;
+                            })
+                        }
+
+                    </Col>
+
+                    <Form.State>
+                        <this.FormButtons/>
+                    </Form.State>
 
                 </Col>
-            </Col>
+            </Form>
         </Row>
     }
 }

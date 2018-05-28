@@ -45,15 +45,23 @@ const styles = {
             color: '#343B4B',
             border: '2px solid #00B7EC'
         }
+    },
+    changed: {
+        label: {
+        },
+        select: {
+            color: '#343B4B',
+        }
     }
 };
 
-const LabeledSelect = ({ id, label, labelStyle, style, containerStyle, optionStyle, value, options, children, focused, ...props }) =>
+const LabeledSelect = ({ id, label, labelStyle, style, containerStyle, optionStyle, value, options, children, focused, changed, ...props }) =>
     <Row style={{ ...styles.normal.container, ...containerStyle }}>
         { label && <label
             htmlFor={id}
             style={{
                 ...styles.normal.label,
+                ...( changed && styles.changed.label ),
                 ...( focused && styles.focused.label ),
                 ...labelStyle
             }}>
@@ -63,6 +71,7 @@ const LabeledSelect = ({ id, label, labelStyle, style, containerStyle, optionSty
             id={id}
             style={{
                 ...styles.normal.select,
+                ...( changed && styles.changed.select ),
                 ...( focused && styles.focused.select ),
                 ...style
             }}

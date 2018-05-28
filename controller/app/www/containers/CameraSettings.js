@@ -1,6 +1,6 @@
 import React from 'react';
 import produce from 'immer'
-import { Row, Col, LabeledTextInput, LabeledCheckbox, LabeledSelect } from '../components'
+import { Row, Col, LabeledTextInput, LabeledCheckbox, LabeledSelect, Form } from '../components'
 import { changeState } from '../utils'
 
 const styles = {
@@ -61,88 +61,88 @@ export default class CameraSettings extends React.Component {
                 <tbody>
                     <tr>
                         <td style={styles.label}>Quality</td>
-                        <td><LabeledTextInput value={this.state.settings.projection.quality} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.projection.quality = e.target.value; } )); } } /></td>
-                        <td><LabeledTextInput value={this.state.settings.normal    .quality} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.normal    .quality = e.target.value; } )); } } /></td>
+                        <td><Form.Field><LabeledTextInput value={this.state.settings.projection.quality} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.projection.quality = value; } )); } } /></Form.Field></td>
+                        <td><Form.Field><LabeledTextInput value={this.state.settings.normal    .quality} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.normal    .quality = value; } )); } } /></Form.Field></td>
                     </tr>
                     <tr>
                         <td style={styles.label}>Sharpness</td>
-                        <td><LabeledTextInput value={this.state.settings.projection.sharpness} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.projection.sharpness = e.target.value; } )); } } /></td>
-                        <td><LabeledTextInput value={this.state.settings.normal    .sharpness} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.normal    .sharpness = e.target.value; } )); } } /></td>
+                        <td><Form.Field><LabeledTextInput value={this.state.settings.projection.sharpness} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.projection.sharpness = value; } )); } } /></Form.Field></td>
+                        <td><Form.Field><LabeledTextInput value={this.state.settings.normal    .sharpness} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.normal    .sharpness = value; } )); } } /></Form.Field></td>
                     </tr>
                     <tr>
                         <td style={styles.label}>Contrast</td>
-                        <td><LabeledTextInput value={this.state.settings.projection.contrast} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.projection.contrast = e.target.value; } )); } } /></td>
-                        <td><LabeledTextInput value={this.state.settings.normal    .contrast} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.normal    .contrast = e.target.value; } )); } } /></td>
+                        <td><Form.Field><LabeledTextInput value={this.state.settings.projection.contrast} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.projection.contrast = value; } )); } } /></Form.Field></td>
+                        <td><Form.Field><LabeledTextInput value={this.state.settings.normal    .contrast} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.normal    .contrast = value; } )); } } /></Form.Field></td>
                     </tr>
                     <tr>
                         <td style={styles.label}>Brightness</td>
-                        <td><LabeledTextInput value={this.state.settings.projection.brightness} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.projection.brightness = e.target.value; } )); } } /></td>
-                        <td><LabeledTextInput value={this.state.settings.normal    .brightness} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.normal    .brightness = e.target.value; } )); } } /></td>
+                        <td><Form.Field><LabeledTextInput value={this.state.settings.projection.brightness} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.projection.brightness = value; } )); } } /></Form.Field></td>
+                        <td><Form.Field><LabeledTextInput value={this.state.settings.normal    .brightness} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.normal    .brightness = value; } )); } } /></Form.Field></td>
                     </tr>
                     <tr>
                         <td style={styles.label}>Saturation</td>
-                        <td><LabeledTextInput value={this.state.settings.projection.saturation} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.projection.saturation = e.target.value; } )); } } /></td>
-                        <td><LabeledTextInput value={this.state.settings.normal    .saturation} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.normal    .saturation = e.target.value; } )); } } /></td>
+                        <td><Form.Field><LabeledTextInput value={this.state.settings.projection.saturation} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.projection.saturation = value; } )); } } /></Form.Field></td>
+                        <td><Form.Field><LabeledTextInput value={this.state.settings.normal    .saturation} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.normal    .saturation = value; } )); } } /></Form.Field></td>
                     </tr>
                     <tr>
                         <td style={styles.label}>Shutter speed</td>
-                        <td><LabeledTextInput value={this.state.settings.projection.shutterSpeed} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.projection.shutterSpeed = e.target.value; } )); } } /></td>
-                        <td><LabeledTextInput value={this.state.settings.normal    .shutterSpeed} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.normal    .shutterSpeed = e.target.value; } )); } } /></td>
+                        <td><Form.Field><LabeledTextInput value={this.state.settings.projection.shutterSpeed} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.projection.shutterSpeed = value; } )); } } /></Form.Field></td>
+                        <td><Form.Field><LabeledTextInput value={this.state.settings.normal    .shutterSpeed} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.normal    .shutterSpeed = value; } )); } } /></Form.Field></td>
                     </tr>
                     <tr>
                         <td style={styles.label}>ISO</td>
-                        <td><LabeledTextInput value={this.state.settings.projection.iso} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.projection.iso = e.target.value; } )); } } /></td>
-                        <td><LabeledTextInput value={this.state.settings.normal    .iso} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.normal    .iso = e.target.value; } )); } } /></td>
+                        <td><Form.Field><LabeledTextInput value={this.state.settings.projection.iso} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.projection.iso = value; } )); } } /></Form.Field></td>
+                        <td><Form.Field><LabeledTextInput value={this.state.settings.normal    .iso} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.normal    .iso = value; } )); } } /></Form.Field></td>
                     </tr>
                     <tr>
                         <td style={styles.label}>Red gain</td>
-                        <td><LabeledTextInput value={this.state.settings.projection.redGain} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.projection.redGain = e.target.value; } )); } } /></td>
-                        <td><LabeledTextInput value={this.state.settings.normal    .redGain} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.normal    .redGain = e.target.value; } )); } } /></td>
+                        <td><Form.Field><LabeledTextInput value={this.state.settings.projection.redGain} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.projection.redGain = value; } )); } } /></Form.Field></td>
+                        <td><Form.Field><LabeledTextInput value={this.state.settings.normal    .redGain} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.normal    .redGain = value; } )); } } /></Form.Field></td>
                     </tr>
                     <tr>
                         <td style={styles.label}>Blue gain</td>
-                        <td><LabeledTextInput value={this.state.settings.projection.blueGain} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.projection.blueGain = e.target.value; } )); } } /></td>
-                        <td><LabeledTextInput value={this.state.settings.normal    .blueGain} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.normal    .blueGain = e.target.value; } )); } } /></td>
+                        <td><Form.Field><LabeledTextInput value={this.state.settings.projection.blueGain} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.projection.blueGain = value; } )); } } /></Form.Field></td>
+                        <td><Form.Field><LabeledTextInput value={this.state.settings.normal    .blueGain} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.normal    .blueGain = value; } )); } } /></Form.Field></td>
                     </tr>
                     <tr>
                         <td style={styles.label}>Dynamic range expansion</td>
-                        <td><LabeledSelect options={drcOptions} value={this.state.settings.projection.drc} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.projection.drc = e.target.value; } )); } } /></td>
-                        <td><LabeledSelect options={drcOptions} value={this.state.settings.normal    .drc} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.normal    .drc = e.target.value; } )); } } /></td>
+                        <td><Form.Field><LabeledSelect options={drcOptions} value={this.state.settings.projection.drc} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.projection.drc = value; } )); } } /></Form.Field></td>
+                        <td><Form.Field><LabeledSelect options={drcOptions} value={this.state.settings.normal    .drc} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.normal    .drc = value; } )); } } /></Form.Field></td>
                     </tr>
                     <tr>
                         <td style={styles.label}>White balance</td>
-                        <td><LabeledSelect options={whiteBalanceOptions} value={this.state.settings.projection.whiteBalance} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.projection.whiteBalance = e.target.value; } )); } } /></td>
-                        <td><LabeledSelect options={whiteBalanceOptions} value={this.state.settings.normal    .whiteBalance} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.normal    .whiteBalance = e.target.value; } )); } } /></td>
+                        <td><Form.Field><LabeledSelect options={whiteBalanceOptions} value={this.state.settings.projection.whiteBalance} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.projection.whiteBalance = value; } )); } } /></Form.Field></td>
+                        <td><Form.Field><LabeledSelect options={whiteBalanceOptions} value={this.state.settings.normal    .whiteBalance} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.normal    .whiteBalance = value; } )); } } /></Form.Field></td>
                     </tr>
                     <tr>
                         <td style={styles.label}>Open camera interface</td>
-                        <td><LabeledCheckbox checked={this.state.settings.projection.open} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.projection.open = e.target.checked; } )); } } /></td>
-                        <td><LabeledCheckbox checked={this.state.settings.normal    .open} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.normal    .open = e.target.checked; } )); } } /></td>
+                        <td><Form.Field><LabeledCheckbox checked={this.state.settings.projection.open} onChange={ ({target:{checked}}) => { this.changeState(produce( state => { state.settings.projection.open = checked; } )); } } /></Form.Field></td>
+                        <td><Form.Field><LabeledCheckbox checked={this.state.settings.normal    .open} onChange={ ({target:{checked}}) => { this.changeState(produce( state => { state.settings.normal    .open = checked; } )); } } /></Form.Field></td>
                     </tr>
                     <tr>
                         <td style={styles.label}>Close camera interface</td>
-                        <td><LabeledCheckbox checked={this.state.settings.projection.close} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.projection.close = e.target.checked; } )); } } /></td>
-                        <td><LabeledCheckbox checked={this.state.settings.normal    .close} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.normal    .close = e.target.checked; } )); } } /></td>
+                        <td><Form.Field><LabeledCheckbox checked={this.state.settings.projection.close} onChange={ ({target:{checked}}) => { this.changeState(produce( state => { state.settings.projection.close = checked; } )); } } /></Form.Field></td>
+                        <td><Form.Field><LabeledCheckbox checked={this.state.settings.normal    .close} onChange={ ({target:{checked}}) => { this.changeState(produce( state => { state.settings.normal    .close = checked; } )); } } /></Form.Field></td>
                     </tr>
                     <tr>
                         <td style={styles.label}>GPIO 17 delay</td>
-                        <td><LabeledTextInput value={this.state.settings.projection.gpioDelay17} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.projection.gpioDelay17 = e.target.value; } )); } } /></td>
-                        <td><LabeledTextInput value={this.state.settings.normal    .gpioDelay17} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.normal    .gpioDelay17 = e.target.value; } )); } } /></td>
+                        <td><Form.Field><LabeledTextInput value={this.state.settings.projection.gpioDelay17} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.projection.gpioDelay17 = value; } )); } } /></Form.Field></td>
+                        <td><Form.Field><LabeledTextInput value={this.state.settings.normal    .gpioDelay17} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.normal    .gpioDelay17 = value; } )); } } /></Form.Field></td>
                     </tr>
                     <tr>
                         <td style={styles.label}>GPIO 18 delay</td>
-                        <td><LabeledTextInput value={this.state.settings.projection.gpioDelay18} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.projection.gpioDelay18 = e.target.value; } )); } } /></td>
-                        <td><LabeledTextInput value={this.state.settings.normal    .gpioDelay18} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.normal    .gpioDelay18 = e.target.value; } )); } } /></td>
+                        <td><Form.Field><LabeledTextInput value={this.state.settings.projection.gpioDelay18} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.projection.gpioDelay18 = value; } )); } } /></Form.Field></td>
+                        <td><Form.Field><LabeledTextInput value={this.state.settings.normal    .gpioDelay18} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.normal    .gpioDelay18 = value; } )); } } /></Form.Field></td>
                     </tr>
                     <tr>
                         <td style={styles.label}>GPIO 22 delay</td>
-                        <td><LabeledTextInput value={this.state.settings.projection.gpioDelay22} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.projection.gpioDelay22 = e.target.value; } )); } } /></td>
-                        <td><LabeledTextInput value={this.state.settings.normal    .gpioDelay22} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.normal    .gpioDelay22 = e.target.value; } )); } } /></td>
+                        <td><Form.Field><LabeledTextInput value={this.state.settings.projection.gpioDelay22} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.projection.gpioDelay22 = value; } )); } } /></Form.Field></td>
+                        <td><Form.Field><LabeledTextInput value={this.state.settings.normal    .gpioDelay22} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.normal    .gpioDelay22 = value; } )); } } /></Form.Field></td>
                     </tr>
                     <tr>
                         <td style={styles.label}>GPIO 27 delay</td>
-                        <td><LabeledTextInput value={this.state.settings.projection.gpioDelay27} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.projection.gpioDelay27 = e.target.value; } )); } } /></td>
-                        <td><LabeledTextInput value={this.state.settings.normal    .gpioDelay27} onChange={ e => { e.persist(); this.changeState(produce( state => { state.settings.normal    .gpioDelay27 = e.target.value; } )); } } /></td>
+                        <td><Form.Field><LabeledTextInput value={this.state.settings.projection.gpioDelay27} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.projection.gpioDelay27 = value; } )); } } /></Form.Field></td>
+                        <td><Form.Field><LabeledTextInput value={this.state.settings.normal    .gpioDelay27} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.normal    .gpioDelay27 = value; } )); } } /></Form.Field></td>
                     </tr>
                 </tbody>
             </table>

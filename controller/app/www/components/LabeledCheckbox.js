@@ -34,15 +34,23 @@ const styles = {
             color: '#343B4B',
             border: '#00B7EC'
         }
+    },
+    changed: {
+        label: {
+        },
+        input: {
+            color: '#343B4B',
+        }
     }
 };
 
-const LabeledCheckbox = ({id, label, labelStyle, style, checked, focused, ...props}) =>
+const LabeledCheckbox = ({id, label, labelStyle, style, checked, focused, changed, ...props}) =>
     <Row style={ styles.normal.container }>
         <input type="checkbox"
             id={id}
             style={{
                 ...styles.normal.input,
+                ...( changed && styles.changed.input ),
                 ...( focused && styles.focused.input ),
                 ...style
             }}
@@ -52,6 +60,7 @@ const LabeledCheckbox = ({id, label, labelStyle, style, checked, focused, ...pro
             htmlFor={id}
             style={{
                 ...styles.normal.label,
+                ...( changed && styles.changed.label ),
                 ...( focused && styles.focused.label ),
                 ...labelStyle
             }}>
