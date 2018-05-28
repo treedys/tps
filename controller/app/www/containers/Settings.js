@@ -28,8 +28,8 @@ export default class Settings extends React.Component {
     FormButtons = ({form, changed}) =>
         <Row>
             <Prompt when={changed} message='You have unsaved changed, do you want to continue?'/>
-            <Button className="fill" disabled={!changed} onClick={ () => this.props.onChange(this.state) }>Save </Button>
-            <Button className="fill" disabled={!changed} onClick={ () => form.rollback() }>Reset</Button>
+            <Button className="fill" disabled={!changed} onClick={ () => this.props.onChange(this.state) }>Save</Button>
+            <Button className="fill" disabled={!changed} onClick={ () => form.rollback()                 }>Undo</Button>
         </Row>
 
     getFormRef = form => { this.form = form; }
