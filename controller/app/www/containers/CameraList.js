@@ -41,7 +41,7 @@ const styles = {
 
 export const CameraLink = ({ camera, port, ...params }) =>
     <div style={styles.camera}>
-        <img src={ camera.online ? `/preview/${camera.id}/0-2.jpg` : assets.noise } style={{width:'100%', height:'auto'}} {...params} />
+        <img src={ camera.online ? `/preview/${camera.id}/0-2.jpg?${Date.now()}` : assets.noise } style={{width:'100%', height:'auto'}} {...params} />
         <p style={styles.port}>{port} - { camera.index!=undefined ? camera.index : '--'}</p>
         <div style={{ ...styles.led, ...( camera.online ? styles.on : styles.off) }}/>
     </div>
@@ -104,7 +104,7 @@ export class Camera extends React.Component {
 
         return !isDragging && connectDropTarget(connectDragSource(
             <div style={{ ...styles.camera, ...(isOver && { border:"2px solid black" }) }}>
-                <img src={ camera?.online ? `/preview/${camera.mac}/0-2.jpg` : assets.noise } style={{width:'100%', height:'auto'}} />
+                <img src={ camera?.online ? `/preview/${camera.mac}/0-2.jpg?${Date.now()}` : assets.noise } style={{width:'100%', height:'auto'}} />
                 <p style={styles.port}>{index}</p>
                 { camera && <div style={{ ...styles.led, ...( camera.online ? styles.on : styles.off) }}/> }
             </div>));

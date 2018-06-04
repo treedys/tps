@@ -28,7 +28,7 @@ export default ({ calibration, onDelete}) => calibration ?
     <Row className="fill">
         <div className="fill" style={ styles.preview.container }>
             { calibration.done
-                ? <img src={`/calibration/${calibration.id}/preview.jpg`} style={ styles.preview.image }/>
+                ? <img src={`/calibration/${calibration.id}/preview.jpg?${Date.now()}`} style={ styles.preview.image }/>
                 : <Spinner style={{margin:"20%"}}/>
             }
         </div>
