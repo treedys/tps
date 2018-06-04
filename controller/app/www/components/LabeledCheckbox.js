@@ -35,6 +35,14 @@ const styles = {
             border: '#00B7EC'
         }
     },
+    invalid: {
+        label: {
+            color: '#EC4747'
+        },
+        input: {
+            border: '2px solid #EC4747'
+        }
+    },
     changed: {
         label: {
         },
@@ -44,7 +52,7 @@ const styles = {
     }
 };
 
-const LabeledCheckbox = ({id, label, labelStyle, style, checked, focused, changed, ...props}) =>
+const LabeledCheckbox = ({id, label, labelStyle, style, checked, focused, changed, invalid, ...props}) =>
     <Row style={ styles.normal.container }>
         <input type="checkbox"
             id={id}
@@ -52,6 +60,7 @@ const LabeledCheckbox = ({id, label, labelStyle, style, checked, focused, change
                 ...styles.normal.input,
                 ...( changed && styles.changed.input ),
                 ...( focused && styles.focused.input ),
+                ...( invalid && styles.invalid.input ),
                 ...style
             }}
             checked={!!checked}
@@ -62,6 +71,7 @@ const LabeledCheckbox = ({id, label, labelStyle, style, checked, focused, change
                 ...styles.normal.label,
                 ...( changed && styles.changed.label ),
                 ...( focused && styles.focused.label ),
+                ...( invalid && styles.invalid.label ),
                 ...labelStyle
             }}>
             {label}

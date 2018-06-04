@@ -41,11 +41,11 @@ export default class Scan extends React.Component {
 
     onImageClick = () => this.setState( state => ({normalProjection: !state.normalProjection}) );
 
-    FormButtons = ({form, changed}) =>
+    FormButtons = ({form, changed, invalid}) =>
         <Row>
             <Prompt when={changed} message='You have unsaved changed, do you want to continue?'/>
-            <Button className="fill" disabled={!changed} onClick={ () => this.props.onChange(this.state) }>Save</Button>
-            <Button className="fill" disabled={!changed} onClick={ () => form.rollback()                 }>Undo</Button>
+            <Button className="fill" disabled={!changed||invalid} onClick={ () => this.props.onChange(this.state) }>Save</Button>
+            <Button className="fill" disabled={!changed         } onClick={ () => form.rollback()                 }>Undo</Button>
         </Row>
 
     getFormRef = form => { this.form = form; }
@@ -57,6 +57,10 @@ export default class Scan extends React.Component {
             return <Row className="fill">
                 <h1>No data</h1>
             </Row>
+
+        const everyFieldIsPopulated = fields?.split(';')
+            .map( field => field.split(':') )
+            .every( ([id,label,options]) => scan[id] );
 
         return <Row className="fill">
             <div className="fill" style={ styles.preview.container }>
@@ -74,8 +78,8 @@ export default class Scan extends React.Component {
                         { !scan.done && <Button onClick={ () => this.props.onAccept(scan) } disabled={status.shooting||status.downloading} className="fill">Accept  </Button> }
                         { !scan.done && <Button onClick={ () => this.props.onReject(scan) } disabled={status.shooting||status.downloading} className="fill">Reject  </Button> }
 
-                        {  scan.done && <Button href={`/scan/${scan.id}.zip`}               className="fill">Download</Button> }
-                        {  scan.done && <Button onClick={ () => this.props.onDelete(scan) } className="fill">Delete  </Button> }
+                        {  scan.done && <Button href={`/scan/${scan.id}.zip`}               disabled={!everyFieldIsPopulated}              className="fill">Download</Button> }
+                        {  scan.done && <Button onClick={ () => this.props.onDelete(scan) }                                                className="fill">Delete  </Button> }
                     </Row>
 
                     <h3>Scan information:</h3>
@@ -89,11 +93,11 @@ export default class Scan extends React.Component {
                                 const [id,label,options] = field.split(':');
 
                                 if(!options)
-                                    return <Form.Field key={id}>
+                                    return <Form.Field key={id} validators={[Form.Field.Required]}>
                                         <LabeledTextInput id={id} label={label} value={this.state.scan[id]} onChange={ e => { e.persist?.(); this.setState(produce( state => { state.scan[id] = e.target.value; } )); } } />
                                     </Form.Field>;
                                 else
-                                    return <Form.Field key={id}>
+                                    return <Form.Field key={id} validators={[Form.Field.Required]}>
                                         <LabeledSelect    id={id} label={label} value={this.state.scan[id]} onChange={ e => { e.persist?.(); this.setState(produce( state => { state.scan[id] = e.target.value; } )); } } options={options.split(',')} />
                                     </Form.Field>;
                             })

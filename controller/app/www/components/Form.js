@@ -19,8 +19,12 @@ export default class Form extends React.Component {
 
     static Field = class Field extends React.Component {
 
+        static Required = value => value!==undefined && value!==null && value!=='';
+
         getValue = ()    => React.Children.only(this.props.children).props.value;
         setValue = value => React.Children.only(this.props.children).props.onChange({ target: { value } });
+
+        isInvalid = value => this.props.validators?.some(validator => !validator(value));
 
         render() {
             const child = React.Children.only(this.props.children);
@@ -30,6 +34,7 @@ export default class Form extends React.Component {
                         <child.type
                             {...child.props}
                             form={form}
+                            invalid={form.isInvalid(this)}
                             changed={form.isChanged(this)}>
                             {child.props.children}
                         </child.type>
@@ -45,7 +50,8 @@ export default class Form extends React.Component {
                         <child.type
                             {...child.props}
                             form={form}
-                            changed={form.hasChangedField()}>
+                            invalid={form.someFieldsInvalid()}
+                            changed={form.someFieldsChanged()}>
                             {child.props.children}
                         </child.type>
                     )}</Context.Consumer>;
@@ -57,9 +63,11 @@ export default class Form extends React.Component {
     register  (field) { this.setState( ({fields}) => ({ fields: fields.set(field, { changed: false, value: field.props.children.props.value }  ) }) ); }
     unregister(field) { this.setState( ({fields}) => ({ fields: fields.delete(field) }) ); }
 
-    isChanged (field) { return this.state.fields.get(field)?.changed || undefined; }
+    isChanged (field) { return this.state.fields.get(field)?.changed; }
+    isInvalid (field) { return this.state.fields.get(field)?.invalid; }
 
-    hasChangedField() { return this.state.fields.some( fieldState => fieldState.changed ); }
+    someFieldsChanged() { return this.state.fields.some( fieldState => fieldState.changed ); }
+    someFieldsInvalid() { return this.state.fields.some( fieldState => fieldState.invalid ); }
 
     rollback() {
         this.state.fields.forEach( (fieldState, field) => {
@@ -74,7 +82,8 @@ export default class Form extends React.Component {
         this.setState( ({fields}) => ({
             fields: fields.map( (oldFieldState, field) => ({
                 value: field.getValue(),
-                changed:false
+                invalid: field.isInvalid(field.getValue()),
+                changed: false
             }))
         }));
     }
@@ -87,6 +96,7 @@ export default class Form extends React.Component {
             this.setState( ({fields}) => ({
                 fields: fields.update(field, oldFieldState => ({
                     ...oldFieldState,
+                    invalid: field.isInvalid(newValue),
                     changed: true
                 }))
             }));
@@ -94,7 +104,15 @@ export default class Form extends React.Component {
             this.setState( ({fields}) => ({
                 fields: fields.update(field, oldFieldState => ({
                     ...oldFieldState,
+                    invalid: field.isInvalid(newValue),
                     changed: false
+                }))
+            }));
+        } else if(fieldState.invalid != field.isInvalid(newValue)) {
+            this.setState( ({fields}) => ({
+                fields: fields.update(field, oldFieldState => ({
+                    ...oldFieldState,
+                    invalid: field.isInvalid(newValue)
                 }))
             }));
         }

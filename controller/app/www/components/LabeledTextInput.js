@@ -34,6 +34,14 @@ const styles = {
             border: '2px solid #00B7EC'
         }
     },
+    invalid: {
+        label: {
+            color: '#EC4747'
+        },
+        input: {
+            border: '2px solid #EC4747'
+        }
+    },
     changed: {
         label: {
         },
@@ -48,7 +56,7 @@ const styles = {
  * https://www.npmjs.com/package/radium
  * https://www.npmjs.com/package/style-it */
 
-const LabeledTextInput = ({ id, label, labelStyle, style, containerStyle, value, children, focused, changed, ...props }) =>
+const LabeledTextInput = ({ id, label, labelStyle, style, containerStyle, value, children, focused, changed, invalid, ...props }) =>
     <Row style={{ ...styles.normal.container, ...containerStyle }}>
         { label && <label
             htmlFor={id}
@@ -56,6 +64,7 @@ const LabeledTextInput = ({ id, label, labelStyle, style, containerStyle, value,
                 ...styles.normal.label,
                 ...( changed && styles.changed.label ),
                 ...( focused && styles.focused.label ),
+                ...( invalid && styles.invalid.label ),
                 ...labelStyle
             }}>
             {label}
@@ -66,6 +75,7 @@ const LabeledTextInput = ({ id, label, labelStyle, style, containerStyle, value,
                 ...styles.normal.input,
                 ...( changed && styles.changed.input ),
                 ...( focused && styles.focused.input ),
+                ...( invalid && styles.invalid.input ),
                 ...style
             }}
             value={value!==undefined?value:''}
