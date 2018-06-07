@@ -26,9 +26,5 @@ const styles = {
 };
 
 export default ({ disabled, children, style, href, ...props}) => href
-    ? <a href={href} disabled={disabled} style={{ ...styles.button, ...(disabled?styles.disabled:styles.enabled), ...style }} { ...props }>
-        {children}
-    </a>
-    : <button disabled={disabled} style={{ ...styles.button, ...(disabled?styles.disabled:styles.enabled), ...style }} { ...props }>
-        {children}
-    </button>
+    ? <a href={disabled?null:href} disabled={disabled} style={{ ...styles.button, ...(disabled?styles.disabled:styles.enabled), ...style }} { ...props }>{children}</a>
+    : <button                      disabled={disabled} style={{ ...styles.button, ...(disabled?styles.disabled:styles.enabled), ...style }} { ...props }>{children}</button>

@@ -63,3 +63,7 @@ body {
 svg {
     fill: currentColor;
 }
+
+a[disabled], button[disabled] {
+    pointer-events: none;
+}
