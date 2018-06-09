@@ -3,12 +3,12 @@ const memory = require('feathers-memory');
 
 app.use('/api/status', memory() );
 
-const status = app.service('/api/status');
+const service = app.service('/api/status');
 
-status.create({
+service.create({
     id:0,
     shooting: false,
     restarting: false
 });
 
-module.exports = status;
+module.exports = { service };

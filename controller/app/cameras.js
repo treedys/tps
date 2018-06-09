@@ -51,4 +51,4 @@ app.get('/preview/:camera*', async (browser_request, browser_response) => {
     }
 });
 
-module.exports = service;
+module.exports = { service };

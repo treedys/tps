@@ -25,6 +25,8 @@ app.use('/api/switches', {
     })
 });
 
+const service = app.service('/api/switches');
+
 app.param('switch', (request, response, next, id) => {
 
     request.switchData = switches[id];
@@ -37,4 +39,4 @@ app.param('switch', (request, response, next, id) => {
     next();
 });
 
-module.exports = app.service('/api/switches');
+module.exports = { service }

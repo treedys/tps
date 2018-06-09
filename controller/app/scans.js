@@ -18,7 +18,7 @@ const calibrations = require('./calibrations');
 
 const defaultScan = async () => ({
     date   : Date.now(),
-    calibrationId: Math.max(...(await calibrations.find()).map(calibration => calibration[calibrations.id])),
+    calibrationId: Math.max(...(await calibrations.service.find()).map(calibration => calibration[calibrations.service.id])),
 });
 
 app.param('scan', async (browser_request, browser_response, next, id) => {
@@ -214,4 +214,4 @@ service.hooks({
 
 populate();
 
-module.exports = service;
+module.exports = { service };

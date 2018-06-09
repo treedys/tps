@@ -197,4 +197,4 @@ service.hooks({
 
 populate();
 
-module.exports = service;
+module.exports = { service };

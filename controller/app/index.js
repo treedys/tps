@@ -11,11 +11,11 @@ const delay = ms => new Promise(res => setTimeout(res, ms))
 const app = require("./app.js");
 const status = require('./status.js');
 const switches = require('./switches.js');
-const cameraService = require('./cameras.js');
+const cameras = require('./cameras.js');
 const scans = require('./scans.js');
 const calibrations = require('./calibrations.js');
 
-const cameras = {};
+const liveCameras = {};
 
 const sendCmd = async (args) => {
 
@@ -70,10 +70,10 @@ const cameraIndex = mac => {
 
 app.post("/api/shoot/preview", async (browser_request, browser_response) => {
     try {
-        await status.patch(0, { shooting: true });
+        await status.service.patch(0, { shooting: true });
         await send.shootAll(0);
         await delay(5*1000);
-        await status.patch(0, { shooting: false });
+        await status.service.patch(0, { shooting: false });
         browser_response.status(204).end();
     } catch(error) {
         browser_response.status(500).send(error);
@@ -85,8 +85,8 @@ app.post("/api/shoot/scan", async (browser_request, browser_response) => {
     let scanId;
 
     try {
-        const scan = await scans.create({});
-        scanId = scan[scans.id];
+        const scan = await scans.service.create({});
+        scanId = scan[scans.service.id];
         browser_response.send({ id: scanId });
         debug(`Start scan ${scanId}`);
     } catch(error) {
@@ -95,10 +95,10 @@ app.post("/api/shoot/scan", async (browser_request, browser_response) => {
     }
 
     try {
-        await status.patch(0, { shooting: true });
+        await status.service.patch(0, { shooting: true });
         await send.shootAll(scanId);
         await delay(2*1000);
-        await status.patch(0, { shooting: false });
+        await status.service.patch(0, { shooting: false });
     } catch(error) {
         debug(`Error Scan:${scanId}`, error);
     }
@@ -106,20 +106,20 @@ app.post("/api/shoot/scan", async (browser_request, browser_response) => {
 
 app.post("/scan/:scan/download", async (browser_request, browser_response) => {
 
-    const scanId = browser_request.scan[scans.id];
+    const scanId = browser_request.scan[scans.service.id];
 
     debug(`Downloading scan ${scanId}`);
 
     try {
         browser_response.status(204).end();
 
-        await status.patch(0, { downloading: true });
+        await status.service.patch(0, { downloading: true });
 
         await Promise.all(shotsConfig.map( ({ name }) =>
             fs.ensureDir(path.join(config.PATH,`db/${scanId}/${name}/`))
         ));
 
-        await Promise.all(Object.entries(cameras).map( async ([mac, camera]) => {
+        await Promise.all(Object.entries(liveCameras).map( async ([mac, camera]) => {
             const index = cameraIndex(mac);
 
             try {
@@ -154,8 +154,8 @@ app.post("/scan/:scan/download", async (browser_request, browser_response) => {
 
         debug(`Done scan ${scanId}`);
 
-        await status.patch(0, { downloading: false });
-        await scans.patch(scanId, { done: Date.now() });
+        await status.service.patch(0, { downloading: false });
+        await scans.service.patch(scanId, { done: Date.now() });
 
     } catch(error) {
         debug(`Error Scan:${scanId}`, error);
@@ -167,8 +167,8 @@ app.post("/api/shoot/calibration", async (browser_request, browser_response) => 
     let calibrationId;
 
     try {
-        const calibration = await calibrations.create({});
-        calibrationId = calibration[calibrations.id];
+        const calibration = await calibrations.service.create({});
+        calibrationId = calibration[calibrations.service.id];
         browser_response.send({ id: calibrationId });
         debug(`Start calibration ${calibrationId}`);
     } catch(error) {
@@ -177,14 +177,14 @@ app.post("/api/shoot/calibration", async (browser_request, browser_response) => 
     }
 
     try {
-        await status.patch(0, { shooting: true });
+        await status.service.patch(0, { shooting: true });
         await send.shootAll(calibrationId);
         await delay(5*1000);
-        await status.patch(0, { shooting: false });
+        await status.service.patch(0, { shooting: false });
 
         await fs.ensureDir(path.join(config.PATH,`db/${calibrationId}/calibration/`));
 
-        await Promise.all(Object.entries(cameras).map( async ([mac, camera]) => {
+        await Promise.all(Object.entries(liveCameras).map( async ([mac, camera]) => {
             const index = cameraIndex(mac);
 
             try {
@@ -215,7 +215,7 @@ app.post("/api/shoot/calibration", async (browser_request, browser_response) => 
 
         debug(`Done calibration ${calibrationId}`);
 
-        await calibrations.patch(calibrationId, { done: Date.now() });
+        await calibrations.service.patch(calibrationId, { done: Date.now() });
 
     } catch(error) {
         debug(`Error Calibration:${calibrationId}`, error);
@@ -243,7 +243,7 @@ app.post("/api/cameras/restart", async (browser_request, browser_response) => {
     try {
         let tasks = [];
 
-        await status.patch(0, { restarting: true });
+        await status.service.patch(0, { restarting: true });
 
         for(let switch0 of config.SWITCHES) {
 
@@ -258,12 +258,12 @@ app.post("/api/cameras/restart", async (browser_request, browser_response) => {
 
         lastReboot = Date.now();
 
-        await status.patch(0, { restarting: false });
+        await status.service.patch(0, { restarting: false });
 
         browser_response.status(204).end();
 
     } catch(error) {
-        await status.patch(0, { restarting: false });
+        await status.service.patch(0, { restarting: false });
         browser_response.status(500).send(error);
     }
 });
@@ -278,11 +278,11 @@ const onMessage = async (message, rinfo) => {
         const address = rinfo.address;
         const mac = message.toString("ascii", 0, 17);
 
-        if(!cameras[mac]) {
+        if(!liveCameras[mac]) {
             try {
                 debug(`Found new ${mac} ${address}`);
-                await cameraService.create({ id: mac, address, mac, online:true });
-                cameras[mac] = { address, online:true, lastSeen: Date.now() };
+                await cameras.service.create({ id: mac, address, mac, online:true });
+                liveCameras[mac] = { address, online:true, lastSeen: Date.now() };
 
                 let unlock = await newCameraMutex.lock();
 
@@ -305,19 +305,19 @@ const onMessage = async (message, rinfo) => {
             } catch(error) {
                 debug("onMessage new:", error);
             }
-        } else if(cameras[mac].address != address || !cameras[mac].online) {
+        } else if(liveCameras[mac].address != address || !liveCameras[mac].online) {
             try {
-                debug(`Recovering ${cameras[mac].switchAddress}:${cameras[mac].port} ${address}`);
-                await cameraService.patch(mac, { address, online: true });
-                cameras[mac] = { ...cameras[mac], address, online: true };
+                debug(`Recovering ${liveCameras[mac].switchAddress}:${liveCameras[mac].port} ${address}`);
+                await cameras.service.patch(mac, { address, online: true });
+                liveCameras[mac] = { ...liveCameras[mac], address, online: true };
             } catch(error) {
                 debug("onMessage update:", error);
             }
         }
 
-        cameras[mac].lastSeen = Date.now();
+        liveCameras[mac].lastSeen = Date.now();
     } else if(message.length==500) {
-        const camera = Object.values(cameras).find( c => c.address==rinfo.address );
+        const camera = Object.values(liveCameras).find( c => c.address==rinfo.address );
         // TODO: Log message to external file on the SSD
         debug(`CAMERA ${camera&&camera.switchAddress}:${camera&&camera.port} ERROR:`, message.toString("ascii", 0, 500));
     } else {
@@ -332,25 +332,25 @@ const linkSwitch = async switchConfig =>
             const table = await device.portMacTable();
 
             for(let { port, mac } of table) {
-                if(cameras[mac] && port<switchConfig.ports && port!=switchConfig.uplinkPort) {
-                    if( cameras[mac].switchAddress != switchConfig.address ||
-                        cameras[mac].port          != port                 ||
-                        cameras[mac].index         != cameraIndex(mac)) {
+                if(liveCameras[mac] && port<switchConfig.ports && port!=switchConfig.uplinkPort) {
+                    if( liveCameras[mac].switchAddress != switchConfig.address ||
+                        liveCameras[mac].port          != port                 ||
+                        liveCameras[mac].index         != cameraIndex(mac)) {
 
-                        cameras[mac] = {
-                            ...cameras[mac],
+                        liveCameras[mac] = {
+                            ...liveCameras[mac],
                             switchAddress:switchConfig.address,
                             port,
                             index:cameraIndex(mac)
                         };
 
-                        await cameraService.patch(mac, {
+                        await cameras.service.patch(mac, {
                             switchAddress:switchConfig.address,
                             port,
-                            index: cameras[mac].index
+                            index: liveCameras[mac].index
                         });
 
-                        debug(`Linking ${switchConfig.address}:${port} to ${cameras[mac].address}`);
+                        debug(`Linking ${switchConfig.address}:${port} to ${liveCameras[mac].address}`);
                     }
                 }
             }
@@ -519,7 +519,7 @@ const powerCycleSwitch = async switchConfig => {
         var tasks = [];
 
         for(let port=0; port < switchConfig.ports; port++) {
-            if(!Object.values(cameras).find(camera => camera.switchAddress==switchConfig.address && camera.port==port) &&
+            if(!Object.values(liveCameras).find(camera => camera.switchAddress==switchConfig.address && camera.port==port) &&
                 port!=switchConfig.uplinkPort) {
                 tasks.push(bootLimiter.schedule(async () => await powerCycle( switchConfig.address, port )));
             }
@@ -535,9 +535,9 @@ let loop = async () => {
 
     let tasks = [];
 
-    for(let mac in cameras) {
+    for(let mac in liveCameras) {
 
-        let camera = cameras[mac];
+        let camera = liveCameras[mac];
 
         let notSeen     = !camera.lastSeen   || time.since(camera.lastSeen  ).secs()>10;
         let notRebooted = !camera.lastReboot || time.since(camera.lastReboot).secs()>60;
@@ -548,7 +548,7 @@ let loop = async () => {
 
             camera.online = false;
 
-            tasks.push(await cameraService.patch(mac, { online: false }) );
+            tasks.push(await cameras.service.patch(mac, { online: false }) );
         }
 
         if(notSeen && notRebooted) {
@@ -565,7 +565,7 @@ let loop = async () => {
 
     if(!lastReboot || time.since(lastReboot).secs()>60) {
 
-        await status.patch(0, { restarting: true });
+        await status.service.patch(0, { restarting: true });
 
         let tasks = [];
 
@@ -582,7 +582,7 @@ let loop = async () => {
 
         lastReboot = Date.now();
 
-        await status.patch(0, { restarting: false });
+        await status.service.patch(0, { restarting: false });
     } else if(!tasks.length) {
         await delay(1000);
     }
@@ -725,7 +725,7 @@ let run = async () => {
 
         debug("Starting main loop");
 
-        await status.patch(0, { operational: true });
+        await status.service.patch(0, { operational: true });
 
         while(true)
             await loop();
