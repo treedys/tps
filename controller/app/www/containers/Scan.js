@@ -82,12 +82,13 @@ export default class Scan extends React.Component {
                         {  scan.done && <Button onClick={ () => this.props.onDelete(scan) }                                                className="fill">Delete  </Button> }
                     </Row>
 
-                    <h3>Scan information:</h3>
-
                     <Col style={{ display: "block" }} className="fill scroll">
-                        <LabeledTextInput id="id"     label="ID"      value={this.state.scan.id       } readOnly />
-                        <LabeledTextInput id="date"   label="Date"    value={`${moment(this.state.scan.date).toDate()}`} readOnly />
+                        <h3>Scan information:</h3>
+                        <LabeledTextInput id="id"   label="ID"   value={       scan.id            } readOnly />
+                        <LabeledTextInput id="date" label="Date" value={moment(scan.date).toDate()} readOnly />
+                        { scan.failed?.length && <LabeledTextInput id="failed" label="Failed" value={ scan.failed.join(' ')} readOnly /> }
 
+                        { fields && <h3>Custom fields:</h3> }
                         {
                             fields?.split(';').map(field => {
                                 const [id,label,options] = field.split(':');

@@ -4,6 +4,7 @@ const memory = require('feathers-memory');
 const Path = require('path');
 const fs = require('fs-extra');
 const archiver = require('archiver');
+const mutex = require("await-mutex").default;
 
 const debug = require('debug')('scans');
 
@@ -137,6 +138,24 @@ const populate = async () => {
     }
 }
 
+const updateMutex = new mutex();
+
+const fail = async (id, value) => {
+
+    const unlock = await updateMutex.lock();
+
+    try {
+        const scan = await service.get(id);
+        await service.patch(id, {
+            failed: [...(new Set(scan.failed)).add(value)].sort((a,b)=>a-b)
+        });
+    } catch(error) {
+        debug("Error updating failed cameras", error);
+    }
+
+    unlock();
+}
+
 service.hooks({
     before: {
         create: async context => {
@@ -214,4 +233,4 @@ service.hooks({
 
 populate();
 
-module.exports = { service };
+module.exports = { service, fail };

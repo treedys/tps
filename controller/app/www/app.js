@@ -246,7 +246,7 @@ export default class App extends React.Component {
                         <PageLink to="/scan"        title="Scan"        icon={assets.shoot}       />
                         <PageLink to="/calibration" title="Calibration" icon={assets.calibration} />
                         <PageLink to="/cameras"     title="Cameras"     icon={assets.cameras}      >
-                            <Badge count={this.cameraProblems()} effect={BadgeEffect.SCALE} containerStyle={{position:"absolute", top:"1em", left:"-1em"}}/>
+                            <Badge count={this.cameraProblems()} effect={BadgeEffect.SCALE} containerStyle={{position:"absolute", top:"1em", right:"1em"}}/>
                         </PageLink>
                         <PageLink to="/settings"    title="Settings"    icon={assets.settings}    />
                     </PageList>

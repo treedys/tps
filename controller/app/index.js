@@ -119,12 +119,15 @@ app.post("/scan/:scan/download", async (browser_request, browser_response) => {
             fs.ensureDir(path.join(config.PATH,`db/${scanId}/${name}/`))
         ));
 
-        await Promise.all(Object.entries(liveCameras).map( async ([mac, camera]) => {
-            const index = cameraIndex(mac);
-
+        await Promise.all( configRecord.scanner.map.map( async (mac, index) => {
             try {
-                if(isNaN(index)) {
-                    debug("NaN:",mac, camera);
+                if(!mac)
+                    return;
+
+                const camera = liveCameras[mac];
+
+                if(!camera || !camera.online) {
+                    await scans.fail(scanId, index);
                     return;
                 }
 
@@ -137,13 +140,38 @@ app.post("/scan/:scan/download", async (browser_request, browser_response) => {
                     const file_stream = fs.createWriteStream(path.join(config.PATH, fileName));
                     const camera_request = request.get(`http://${camera.address}/${scanId}-${cameraFileIndex}.jpg`);
 
-                    camera_request.pipe(file_stream);
+                    camera_request.pause();
 
-                    await pTimeout(Promise.all([
-                        eventToPromise.multi(camera_request, ["finish", "close", "end", "complete"], ["error", "abort"] ),
-                        eventToPromise.multi(file_stream,    ["finish", "close"], ["error", "unpipe"] )
-                    ]), 120*1000, `Timeout downloading ${fileName}`);
+                    try {
 
+                        const [response] = await eventToPromise.multi(camera_request, ["response"], ["error", "abort"] );
+
+                        if(response.statusCode!=200) {
+                            debug(`Response ${response.statusCode} from ${response.url}`);
+
+                            camera_request.destroy();
+                            file_stream.destroy();
+
+                            await scans.fail(scanId, index);
+
+                            return;
+                        }
+
+                        camera_request.pipe(file_stream);
+                        camera_request.resume();
+
+                        await pTimeout(Promise.all([
+                            eventToPromise.multi(camera_request, ["finish", "close", "end", "complete"], ["error", "abort"] ),
+                            eventToPromise.multi(file_stream,    ["finish", "close"], ["error", "unpipe"] )
+                        ]), 120*1000, `Timeout downloading ${fileName}`);
+
+                    } catch(error) {
+                        debug(`Error Scan:${scanId} Camera:${index}`, error);
+                        camera_request.destroy();
+                        file_stream.destroy();
+
+                        await scans.fail(scanId, index);
+                    }
                 }));
 
                 await send.erase(mac, scanId);
@@ -182,14 +210,19 @@ app.post("/api/shoot/calibration", async (browser_request, browser_response) => 
         await delay(5*1000);
         await status.service.patch(0, { shooting: false });
 
+        await status.service.patch(0, { downloading: true });
+
         await fs.ensureDir(path.join(config.PATH,`db/${calibrationId}/calibration/`));
 
-        await Promise.all(Object.entries(liveCameras).map( async ([mac, camera]) => {
-            const index = cameraIndex(mac);
-
+        await Promise.all( configRecord.scanner.map.map( async (mac, index) => {
             try {
-                if(isNaN(index)) {
-                    debug("NaN:",mac, camera);
+                if(!mac)
+                    return;
+
+                const camera = liveCameras[mac];
+
+                if(!camera || !camera.online) {
+                    await calibrations.fail(calibrationId, index);
                     return;
                 }
 
@@ -200,12 +233,37 @@ app.post("/api/shoot/calibration", async (browser_request, browser_response) => 
                 const file_stream = fs.createWriteStream(path.join(config.PATH, fileName));
                 const camera_request = request.get(`http://${camera.address}/${calibrationId}-2.jpg`);
 
-                camera_request.pipe(file_stream);
+                camera_request.pause();
 
-                await pTimeout(Promise.all([
-                    eventToPromise.multi(camera_request, ["finish", "close", "end", "complete"], ["error", "abort"] ),
-                    eventToPromise.multi(file_stream,    ["finish", "close"], ["error", "unpipe"] )
-                ]), 120*1000, `Timeout downloading ${fileName}`);
+                try {
+                    const [response] = await eventToPromise.multi(camera_request, ["response"], ["error", "abort"] );
+
+                    if(response.statusCode!=200) {
+                        debug(`Response ${response.statusCode} from ${response.url}`);
+
+                        camera_request.destroy();
+                        file_stream.destroy();
+
+                        await calibrations.fail(calibrationId, index);
+
+                        return;
+                    }
+
+                    camera_request.pipe(file_stream);
+                    camera_request.resume();
+
+                    await pTimeout(Promise.all([
+                        eventToPromise.multi(camera_request, ["finish", "close", "end", "complete"], ["error", "abort"] ),
+                        eventToPromise.multi(file_stream,    ["finish", "close"], ["error", "unpipe"] )
+                    ]), 120*1000, `Timeout downloading ${fileName}`);
+
+                } catch(error) {
+                    debug(`Error Calibration:${calibrationId} Camera:${index}`, error);
+                    camera_request.destroy();
+                    file_stream.destroy();
+
+                    await calibrations.fail(calibrationId, index);
+                }
 
                 await send.erase(mac, calibrationId);
             } catch(error) {
@@ -215,6 +273,7 @@ app.post("/api/shoot/calibration", async (browser_request, browser_response) => 
 
         debug(`Done calibration ${calibrationId}`);
 
+        await status.service.patch(0, { downloading: false });
         await calibrations.service.patch(calibrationId, { done: Date.now() });
 
     } catch(error) {

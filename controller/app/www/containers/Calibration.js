@@ -42,8 +42,9 @@ export default ({ calibration, onDelete}) => calibration ?
             <h3>Calibration information:</h3>
 
             <Col style={{ display: "block" }} className="fill scroll">
-                <LabeledTextInput id="id"     label="ID"      value={ calibration.id                         } readOnly />
-                <LabeledTextInput id="date"   label="Date"    value={ `${moment(calibration.date).toDate()}` } readOnly />
+                <LabeledTextInput id="id"   label="ID"   value={        calibration.id             } readOnly />
+                <LabeledTextInput id="date" label="Date" value={ moment(calibration.date).toDate() } readOnly />
+                { calibration.failed?.length && <LabeledTextInput id="failed" label="Failed" value={ calibration.failed.join(' ')} readOnly /> }
             </Col>
         </Col>
     </Row>

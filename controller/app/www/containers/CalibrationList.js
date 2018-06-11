@@ -1,5 +1,7 @@
 import React from 'react';
 import moment from 'moment'
+import Badge from 'react-notification-badge';
+import { Effect as BadgeEffect } from 'react-notification-badge';
 import { Row, Col, Button } from '../components'
 import { PageSubLink } from './PageList.js'
 
@@ -44,6 +46,7 @@ export const CalibrationLink = ({calibration, selected, onSelectedChange, ...pro
         spinner={!calibration.done} icon={`/calibration/${calibration.id}/preview.jpg`}
         style={{ backgroundColor: calibration.zipDownloaded ? "#EEEEEE":"#FFFFFF" }}
         {...props}>
+        <Badge count={calibration.failed?.length} effect={BadgeEffect.SCALE} containerStyle={{width: undefined, height: undefined, position:"relative", top:"1em", right:"1em"}}/>
         <Col style={{ margin: "1em" }} className="fill align-center">
             <Row style={ styles.link.description.primary }>
                 <span style={{ maxWidth: "6em" }}>{calibration.id}</span>
