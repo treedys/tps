@@ -7,6 +7,8 @@ const multicast = require("./multicast");
 
 const pTimeout = require('p-timeout');
 const delay = ms => new Promise(res => setTimeout(res, ms))
+const sstream = require('./sstream.js');
+const eol = require('eol');
 
 const app = require("./app.js");
 const status = require('./status.js');
@@ -327,6 +329,42 @@ app.post("/api/cameras/restart", async (browser_request, browser_response) => {
     }
 });
 
+const checkNetboot = async (mac, address) => {
+    await send.exec(mac, "vcgencmd otp_dump > /var/www/otp_dump");
+    await delay(100);
+
+    const camera_request = request.get(`http://${address}/otp_dump`);
+    camera_request.pause();
+
+    try {
+        const [response] = await eventToPromise.multi(camera_request, ["response"], ["error", "abort"] );
+
+        if(response.statusCode!=200) {
+            debug(`Response ${response.statusCode} from ${response.url}`);
+
+            camera_request.destroy();
+        } else {
+            let promise = sstream(camera_request);
+            camera_request.resume();
+
+            const otp_dump = await pTimeout(promise, 10*1000, `Timeout downloading ${mac} otp_dump`);
+
+            const otp_lines = eol.split(otp_dump);
+            const otp = otp_lines.map(line => line.split(':')).reduce( (otp, [addr, value]) => Object.assign(otp, typeof(value)!="undefined" && { [parseInt(addr)]:parseInt(value,16) }), []);
+
+            if(otp[17]!=0x3020000a) {
+                debug(`Configuring netboot on ${mac} ${address} - ${otp[17].toString(16)}`);
+                await send.exec(mac, `mkdir /var/fat;mount /dev/mmcblk0p1 /var/fat;echo "program_usb_boot_mode=1" >> /var/fat/config.txt;sync;sync;sync;reboot;`);
+            }
+        }
+    } catch(error) {
+        debug(`Error Scan:${scanId} Camera:${index}`, error);
+        camera_request.destroy();
+
+        await scans.fail(scanId, index);
+    }
+}
+
 let linking = false;
 
 const mutex = require("await-mutex").default;
@@ -361,6 +399,9 @@ const onMessage = async (message, rinfo) => {
                     unlock();
                     throw error;
                 }
+
+                await checkNetboot(mac, address);
+
             } catch(error) {
                 debug("onMessage new:", error);
             }
