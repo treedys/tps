@@ -1,1 +1,4 @@
 www/
+*.js
+!treedys-controller.js
+!build/*.js

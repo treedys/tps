@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 const config = require("./config");
 
 const debug = require("debug")("APP");
@@ -562,12 +560,12 @@ let probeSwitch1 = async (switch0, switch1, address) => {
     }
 }
 
-let configure = async (interface, switchConfig, defaultAddress) => {
+let configure = async (netInterface, switchConfig, defaultAddress) => {
 
     debug(`Starting session to configure switch at ${switchConfig.address}`);
 
     await retry(5, async () => {
-        await interfaces.upOnly(interface, addressEnd( defaultAddress, 200 ));
+        await interfaces.upOnly(netInterface, addressEnd( defaultAddress, 200 ));
         await tplinks[switchConfig.address].session(defaultAddress, async device => {
             debug(`Configuring switch ${switchConfig.address}`);
 
@@ -601,7 +599,7 @@ let configure = async (interface, switchConfig, defaultAddress) => {
         await tplinks[switchConfig.address].changeIpAddress(defaultAddress, 0, switchConfig.address, "255.255.255.0");
         debug("IP address changed");
 
-        await interfaces.upOnly(interface, addressEnd( switchConfig.address, 200 ));
+        await interfaces.upOnly(netInterface, addressEnd( switchConfig.address, 200 ));
         await tplinks[switchConfig.address].session(switchConfig.address, async device => {
             debug("Updating startup config");
             await device.privileged("copy running-config startup-config");
@@ -770,9 +768,9 @@ let run = async () => {
         debug("Configure all network interfaces");
         // Prepare network interfaces
         await Promise.all(config.SWITCHES.map(
-            async ({ interface, address }) => {
-                await interfaces.add(interface, addressEnd( address, 200));
-                await interfaces.up(interface);
+            async ({ interface:netInterface, address }) => {
+                await interfaces.add(netInterface, addressEnd( address, 200));
+                await interfaces.up(netInterface);
             }
         ));
 
