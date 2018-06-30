@@ -64,7 +64,7 @@ let configRecord;
 config.service.watch().get('0').subscribe(config => { configRecordDefer.resolve(config); configRecord = config; });
 
 const cameraIndex = mac => {
-    const index = configRecord && configRecord.scanner && configRecord.scanner.map && configRecord.scanner.map.indexOf(mac);
+    const index = configRecord?.scanner?.map?.indexOf(mac);
 
     return index!=undefined && index>=0 ? index : undefined;
 }
@@ -418,7 +418,7 @@ const onMessage = async (message, rinfo) => {
     } else if(message.length==500) {
         const camera = Object.values(liveCameras).find( c => c.address==rinfo.address );
         // TODO: Log message to external file on the SSD
-        debug(`CAMERA ${camera&&camera.switchAddress}:${camera&&camera.port} ERROR:`, message.toString("ascii", 0, 500));
+        debug(`CAMERA ${camera?.switchAddress}:${camera?.port} ERROR:`, message.toString("ascii", 0, 500));
     } else {
         debug("Received:", message.length, message);
     }
