@@ -60,6 +60,7 @@ const defer = () => { let resolve, reject, promise = new Promise((_resolve, _rej
 const configRecordDefer = defer();
 
 let configRecord;
+//FIXME: await for default config record on new scanner
 config.service.watch().get('0').subscribe(config => { configRecordDefer.resolve(config); configRecord = config; });
 
 const cameraIndex = mac => {
