@@ -34,10 +34,12 @@ define CAMERA_FIRMWARE_INSTALL_TARGET_CMDS
 	$(INSTALL) -D -m 0644 -t $(TARGET_DIR)$(CAMERA_FIRMWARE_OUTPUT_DIR) $(@D)/images/rpi-firmware/start.elf
 	$(INSTALL) -D -m 0644 -t $(TARGET_DIR)$(CAMERA_FIRMWARE_OUTPUT_DIR) $(@D)/images/*.dtb
 	$(INSTALL) -D -m 0644 -t $(TARGET_DIR)$(CAMERA_FIRMWARE_OUTPUT_DIR) $(@D)/images/zImage
+	$(INSTALL) -D -m 0644 -t $(TARGET_DIR)$(CAMERA_FIRMWARE_OUTPUT_DIR) $(@D)/images/sdcard.img
 
 	$(INSTALL) -D -m 0644 -t $(TARGET_DIR)$(CAMERA_FIRMWARE_OUTPUT_DIR)/overlays/ $(@D)/images/rpi-firmware/overlays/*.dtbo
 
 	grep -qF "::respawn:/usr/bin/treedys-controller" $(TARGET_DIR)/etc/inittab || echo "::respawn:/usr/bin/treedys-controller" >> $(TARGET_DIR)/etc/inittab
+	$(SED) "s:root=/dev/mmcblk0p2::g" -i $(TARGET_DIR)$(CAMERA_FIRMWARE_OUTPUT_DIR)/cmdline.txt
 endef
 
 $(eval $(kconfig-package))

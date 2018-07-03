@@ -1,9 +1,11 @@
 const path = require("path");
 const webpack = require("webpack");
 const merge = require("webpack-merge");
+const GitRevisionPlugin = require("git-revision-webpack-plugin");
 const MinifyPlugin = require("babel-minify-webpack-plugin");
 const nodeExternals = require('webpack-node-externals');
 
+const gitRevisionPlugin = new GitRevisionPlugin()
 
 const common = {
     resolve: {
@@ -35,6 +37,7 @@ const common = {
         ]
     },
     plugins: [
+        new webpack.DefinePlugin({ 'GITSHA1': JSON.stringify(gitRevisionPlugin.commithash()) }),
         // https://stackoverflow.com/questions/40755149/how-to-keep-my-shebang-in-place-using-webpack
         new webpack.BannerPlugin({ banner: "#!/usr/bin/env node", entryOnly: true, raw: true }),
         new webpack.LoaderOptionsPlugin({ minimize: true })

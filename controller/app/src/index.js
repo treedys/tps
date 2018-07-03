@@ -352,10 +352,54 @@ const checkNetboot = async (mac, address) => {
     }
 }
 
+const upgradeCameraFirmmware = async (mac, address) => {
+
+    const unlock = await upgradeMutex.lock();
+
+    try {
+        await send.exec(mac, "cp /etc/camera-version /var/www/");
+        await delay(100);
+        const version = await download(`http://${address}/camera-version`);
+        const needsUpgrade = version.trim()!==GITSHA1.trim();
+
+        await send.exec(mac, "ls /dev/ > /var/www/dev");
+        await delay(100);
+        const dev = await download(`http://${address}/dev`);
+        const hasSDcard = dev.includes("mmcblk0");
+
+        await send.exec(mac, "cp /proc/cmdline /var/www/");
+        await delay(100);
+        const cmdline = await download(`http://${address}/cmdline`);
+        const bootFromSDcard = cmdline.includes("root=/dev/mmcblk0");
+
+        debug(`Camera ${mac} needsUpgrade=${needsUpgrade} hasSDcard=${hasSDcard} bootFromSDcard=${bootFromSDcard}`);
+
+        if(!hasSDcard && needsUpgrade) {
+            await send.exec(mac, "reboot");
+            unlock();
+            return;
+        }
+
+        if(hasSDcard && (!bootFromSDcard || needsUpgrade)) {
+            debug(`Upgrading camera ${mac} from version ${version||"unknown"} to ${GITSHA1}`);
+            await send.exec(mac, "tftp -g -l /tmp/sdcard.img -r sdcard.img 192.168.201.200 && dd if=/tmp/sdcard.img of=/dev/mmcblk0 && sync; reboot;");
+            await delay(5*60*1000);
+            unlock();
+            return;
+        }
+
+        unlock();
+    } catch(error) {
+        unlock();
+        throw error;
+    }
+}
+
 let linking = false;
 
 const mutex = require("await-mutex").default;
 const newCameraMutex = new mutex();
+const upgradeMutex = new mutex();
 
 const onMessage = async (message, rinfo) => {
     if(message.length==18) {
@@ -388,6 +432,7 @@ const onMessage = async (message, rinfo) => {
                 }
 
                 await checkNetboot(mac, address);
+                await upgradeCameraFirmmware(mac, address);
 
             } catch(error) {
                 debug("onMessage new:", error);
@@ -626,7 +671,8 @@ let loop = async () => {
 
         let camera = liveCameras[mac];
 
-        let notSeen     = !camera.lastSeen   || time.since(camera.lastSeen  ).secs()>10;
+        // FIXME: Rewrite the camera discovery process
+        let notSeen     = !camera.lastSeen   || time.since(camera.lastSeen  ).secs()>10*60;
         let notRebooted = !camera.lastReboot || time.since(camera.lastReboot).secs()>60;
 
         if(camera.online && notSeen) {
