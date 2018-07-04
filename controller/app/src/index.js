@@ -345,51 +345,74 @@ const checkNetboot = async (mac, address) => {
     const otp = eol.split(otp_dump).map(line => line.split(':')).reduce( (otp, [addr, value]) => Object.assign(otp, typeof(value)!="undefined" && { [parseInt(addr)]:parseInt(value,16) }), []);
 
     if(otp[17]!=0x3020000a) {
-        debug(`Configuring netboot on ${mac} ${address} - ${otp[17].toString(16)}`);
+        debug(`Configuring netboot on ${mac} ${address} - ${otp[17]?.toString(16)}`);
         await send.exec(mac, `mkdir /var/fat;mount /dev/mmcblk0p1 /var/fat;echo "program_usb_boot_mode=1" >> /var/fat/config.txt;sync;sync;sync;reboot;`);
     }
 }
 
+const cameraState= async (mac, address) => {
+    await send.exec(mac, "cp /etc/camera-version /var/www/");
+    await delay(100);
+    const version = await download(`http://${address}/camera-version`);
+    const needsUpgrade = version?.trim()!==GITSHA1.trim();
+
+    await send.exec(mac, "ls /dev/ > /var/www/dev");
+    await delay(100);
+    const dev = await download(`http://${address}/dev`);
+    const hasSDcard = dev.includes("mmcblk0");
+
+    await send.exec(mac, "cp /proc/cmdline /var/www/");
+    await delay(100);
+    const cmdline = await download(`http://${address}/cmdline`);
+    const bootFromSDcard = cmdline.includes("root=/dev/mmcblk0");
+
+    return { version, dev, cmdline, needsUpgrade, hasSDcard, bootFromSDcard };
+}
+
 const upgradeCameraFirmmware = async (mac, address) => {
 
-    const unlock = await upgradeMutex.lock();
+    const camera = await cameraState(mac, address);
 
-    try {
-        await send.exec(mac, "cp /etc/camera-version /var/www/");
-        await delay(100);
-        const version = await download(`http://${address}/camera-version`);
-        const needsUpgrade = version.trim()!==GITSHA1.trim();
+    if(camera.needsUpgrade || (camera.hasSDcard && !camera.bootFromSDcard)) {
 
-        await send.exec(mac, "ls /dev/ > /var/www/dev");
-        await delay(100);
-        const dev = await download(`http://${address}/dev`);
-        const hasSDcard = dev.includes("mmcblk0");
+        // TODO: add the camera to the upgrade list
 
-        await send.exec(mac, "cp /proc/cmdline /var/www/");
-        await delay(100);
-        const cmdline = await download(`http://${address}/cmdline`);
-        const bootFromSDcard = cmdline.includes("root=/dev/mmcblk0");
+        const unlock = await upgradeMutex.lock();
 
-        debug(`Camera ${mac} needsUpgrade=${needsUpgrade} hasSDcard=${hasSDcard} bootFromSDcard=${bootFromSDcard}`);
+        try {
+            if(!camera.hasSDcard && camera.needsUpgrade) {
+                await send.exec(mac, "reboot");
+            } else if(camera.hasSDcard && (!camera.bootFromSDcard || camera.needsUpgrade)) {
+                debug(`Upgrading camera ${mac} from version ${camera.version||"unknown"} to ${GITSHA1}`);
+                const cmd =  `"tftp -g -l /tmp/sdcard.img -r sdcard.img ${addressEnd(address,200)} && dd if=/tmp/sdcard.img of=/dev/mmcblk0 && sync; reboot;"`;
+                await send.exec(mac, `echo ${cmd} > /var/www/upgrade.sh`);
+                await send.exec(mac, "chmod +x /var/www/upgrade.sh");
+                await send.exec(mac, "/var/www/upgrade.sh");
+            } else {
+                debug(`Camera ${mac} needsUpgrade=${camera.needsUpgrade} hasSDcard=${camera.hasSDcard} bootFromSDcard=${camera.bootFromSDcard}`);
+                unlock();
+                return;
+            }
 
-        if(!hasSDcard && needsUpgrade) {
-            await send.exec(mac, "reboot");
+            let afterReboot;
+            do {
+                await delay(5*1000);
+                // TODO: Timout the loop
+                try {
+                    afterReboot = await cameraState(mac, address);
+                    debug(`Camera ${mac} needsUpgrade=${afterReboot.needsUpgrade} hasSDcard=${afterReboot.hasSDcard} bootFromSDcard=${afterReboot.bootFromSDcard}`);
+                } catch(error) {
+                    debug("Upgrade polling error", error);
+                }
+            } while(afterReboot.needsUpgrade || (afterReboot.hasSDcard && !afterReboot.bootFromSDcard));
+
+            // TODO: remove the camera from the upgrade list
             unlock();
-            return;
-        }
 
-        if(hasSDcard && (!bootFromSDcard || needsUpgrade)) {
-            debug(`Upgrading camera ${mac} from version ${version||"unknown"} to ${GITSHA1}`);
-            await send.exec(mac, "tftp -g -l /tmp/sdcard.img -r sdcard.img 192.168.201.200 && dd if=/tmp/sdcard.img of=/dev/mmcblk0 && sync; reboot;");
-            await delay(5*60*1000);
+        } catch(error) {
             unlock();
-            return;
+            throw error;
         }
-
-        unlock();
-    } catch(error) {
-        unlock();
-        throw error;
     }
 }
 
