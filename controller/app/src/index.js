@@ -330,12 +330,10 @@ app.post("/api/cameras/restart", async (browser_request, browser_response) => {
 
 const download = async url =>
     pTimeout(retry(5, async () => new Promise( (resolve,reject) => {
-        request(url, (error, response, body) => {
-            if(error)
-                reject(error);
-            if(response.statusCode!=200)
-                resolve(undefined);
-            resolve(body);
+        const req = request(url, (error, response, body) => {
+            if(error) { req.abort(); reject(error); }
+            if(response.statusCode!=200) { req.abort(); resolve(undefined); }
+            resolve(body); req.end();
         });
     })), 10*1000, `Timeout downloading ${url}`);
 
