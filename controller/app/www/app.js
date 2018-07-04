@@ -250,8 +250,7 @@ export default class App extends React.Component {
     cameraProblems = () => this.state?.config?.scanner?.new.length+this.offlineCameras();
     scannerBusy = () =>
            !this.state?.status?.operational ||
-            this.state?.status?.shooting    ||
-            this.state?.status?.downloading;
+            this.state?.status?.shooting;
 
     render = () =>
         <Router history={this.history}>
