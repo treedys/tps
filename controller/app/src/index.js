@@ -328,91 +328,94 @@ app.post("/api/cameras/restart", async (browser_request, browser_response) => {
     }
 });
 
-const download = async url =>
+const download = async (mac, file) =>
     pTimeout(retry(5, async () => new Promise( (resolve,reject) => {
-        const req = request(url, (error, response, body) => {
+        const req = request(`http://${liveCameras[mac].address}/${file}`, (error, response, body) => {
             if(error) { req.abort(); reject(error); }
-            if(response.statusCode!=200) { req.abort(); resolve(undefined); }
+            if(response?.statusCode!=200) { req.abort(); resolve(undefined); }
             resolve(body); req.end();
         });
-    })), 10*1000, `Timeout downloading ${url}`);
+    })), 10*1000, `Timeout downloading ${mac} ${file}`);
 
-const checkNetboot = async (mac, address) => {
+const checkNetboot = async (mac) => {
     await send.exec(mac, "vcgencmd otp_dump > /var/www/otp_dump");
     await delay(100);
 
-    const otp_dump = await download(`http://${address}/otp_dump`);
+    const otp_dump = await download(mac, "otp_dump");
     const otp = eol.split(otp_dump).map(line => line.split(':')).reduce( (otp, [addr, value]) => Object.assign(otp, typeof(value)!="undefined" && { [parseInt(addr)]:parseInt(value,16) }), []);
 
     if(otp[17]!=0x3020000a) {
-        debug(`Configuring netboot on ${mac} ${address} - ${otp[17]?.toString(16)}`);
+        debug(`Configuring netboot on ${mac} - ${otp[17]?.toString(16)}`);
         await send.exec(mac, `mkdir /var/fat;mount /dev/mmcblk0p1 /var/fat;echo "program_usb_boot_mode=1" >> /var/fat/config.txt;sync;sync;sync;reboot;`);
     }
 }
 
-const cameraState= async (mac, address) => {
+const cameraState= async (mac) => {
     await send.exec(mac, "cp /etc/camera-version /var/www/");
     await delay(100);
-    const version = await download(`http://${address}/camera-version`);
+    const version = await download(mac, "camera-version");
     const needsUpgrade = version?.trim()!==GITSHA1.trim();
 
     await send.exec(mac, "ls /dev/ > /var/www/dev");
     await delay(100);
-    const dev = await download(`http://${address}/dev`);
+    const dev = await download(mac, "dev");
     const hasSDcard = dev.includes("mmcblk0");
 
     await send.exec(mac, "cp /proc/cmdline /var/www/");
     await delay(100);
-    const cmdline = await download(`http://${address}/cmdline`);
+    const cmdline = await download(mac, "cmdline");
     const bootFromSDcard = cmdline.includes("root=/dev/mmcblk0");
 
     return { version, dev, cmdline, needsUpgrade, hasSDcard, bootFromSDcard };
 }
 
-const upgradeCameraFirmmware = async (mac, address) => {
+const upgradeCameraFirmmware = async (mac) => {
 
-    const camera = await cameraState(mac, address);
+    const unlock = await upgradeMutex.lock();
 
-    if(camera.needsUpgrade || (camera.hasSDcard && !camera.bootFromSDcard)) {
+    try {
+        const camera = await cameraState(mac);
+
+        if(!camera.needsUpgrade && (!camera.hasSDcard || camera.bootFromSDcard)) {
+            debug(`Camera ${mac} is uptodate`);
+            unlock();
+            return;
+        }
 
         // TODO: add the camera to the upgrade list
 
-        const unlock = await upgradeMutex.lock();
-
-        try {
-            if(!camera.hasSDcard && camera.needsUpgrade) {
-                await send.exec(mac, "reboot");
-            } else if(camera.hasSDcard && (!camera.bootFromSDcard || camera.needsUpgrade)) {
-                debug(`Upgrading camera ${mac} from version ${camera.version||"unknown"} to ${GITSHA1}`);
-                const cmd =  `"tftp -g -l /tmp/sdcard.img -r sdcard.img ${addressEnd(address,200)} && dd if=/tmp/sdcard.img of=/dev/mmcblk0 && sync; reboot;"`;
-                await send.exec(mac, `echo ${cmd} > /var/www/upgrade.sh`);
-                await send.exec(mac, "chmod +x /var/www/upgrade.sh");
-                await send.exec(mac, "/var/www/upgrade.sh");
-            } else {
-                debug(`Camera ${mac} needsUpgrade=${camera.needsUpgrade} hasSDcard=${camera.hasSDcard} bootFromSDcard=${camera.bootFromSDcard}`);
-                unlock();
-                return;
-            }
-
-            let afterReboot;
-            do {
-                await delay(5*1000);
-                // TODO: Timout the loop
-                try {
-                    afterReboot = await cameraState(mac, address);
-                    debug(`Camera ${mac} needsUpgrade=${afterReboot.needsUpgrade} hasSDcard=${afterReboot.hasSDcard} bootFromSDcard=${afterReboot.bootFromSDcard}`);
-                } catch(error) {
-                    debug("Upgrade polling error", error);
-                }
-            } while(afterReboot.needsUpgrade || (afterReboot.hasSDcard && !afterReboot.bootFromSDcard));
-
-            // TODO: remove the camera from the upgrade list
+        if(!camera.hasSDcard && camera.needsUpgrade) {
+            await send.exec(mac, "reboot");
+        } else if(camera.hasSDcard && (!camera.bootFromSDcard || camera.needsUpgrade)) {
+            debug(`Upgrading camera ${mac} from version ${camera.version||"unknown"} to ${GITSHA1}`);
+            const cmd =  `"tftp -g -l /tmp/sdcard.img -r sdcard.img ${addressEnd(liveCameras[mac].address,200)} && dd if=/tmp/sdcard.img of=/dev/mmcblk0 && sync; reboot;"`;
+            await send.exec(mac, `echo ${cmd} > /var/www/upgrade.sh`);
+            await send.exec(mac, "chmod +x /var/www/upgrade.sh");
+            await send.exec(mac, "/var/www/upgrade.sh");
+        } else {
+            debug(`Camera ${mac} needsUpgrade=${camera.needsUpgrade} hasSDcard=${camera.hasSDcard} bootFromSDcard=${camera.bootFromSDcard}`);
             unlock();
-
-        } catch(error) {
-            unlock();
-            throw error;
+            return;
         }
+
+        let afterReboot;
+        do {
+            await delay(5*1000);
+            // TODO: Timout the loop
+            try {
+                afterReboot = await cameraState(mac);
+                debug(`Camera ${mac} needsUpgrade=${afterReboot.needsUpgrade} hasSDcard=${afterReboot.hasSDcard} bootFromSDcard=${afterReboot.bootFromSDcard}`);
+            } catch(error) {
+                debug("Upgrade polling error", error);
+            }
+        } while(afterReboot.needsUpgrade || (afterReboot.hasSDcard && !afterReboot.bootFromSDcard));
+
+        // TODO: remove the camera from the upgrade list
+        unlock();
+
+    } catch(error) {
+        debug("Camera upgrade error", error);
+        unlock();
     }
 }
 
@@ -452,8 +455,8 @@ const onMessage = async (message, rinfo) => {
                     throw error;
                 }
 
-                await checkNetboot(mac, address);
-                await upgradeCameraFirmmware(mac, address);
+                await checkNetboot(mac);
+                await upgradeCameraFirmmware(mac);
 
             } catch(error) {
                 debug("onMessage new:", error);
@@ -463,6 +466,10 @@ const onMessage = async (message, rinfo) => {
                 debug(`Recovering ${liveCameras[mac].switchAddress}:${liveCameras[mac].port} ${address}`);
                 await cameras.service.patch(mac, { address, online: true });
                 liveCameras[mac] = { ...liveCameras[mac], address, online: true };
+
+                await checkNetboot(mac);
+                await upgradeCameraFirmmware(mac);
+
             } catch(error) {
                 debug("onMessage update:", error);
             }
