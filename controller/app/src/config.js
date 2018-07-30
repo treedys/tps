@@ -26,6 +26,7 @@ const settings = {
             address: "192.168.201.199",
             ports: 48,
             uplinkPort: 47,
+            speed: 100,
             switches: [
             ]
         }, {
@@ -33,6 +34,7 @@ const settings = {
             address: "192.168.202.199",
             ports: 48,
             uplinkPort: 47,
+            speed: 100,
             switches: [
             ]
         }, {
@@ -40,6 +42,7 @@ const settings = {
             address: "192.168.203.199",
             ports: 48,
             uplinkPort: 47,
+            speed: 100,
             switches: [
             ]
         }

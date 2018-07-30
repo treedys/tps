@@ -655,6 +655,14 @@ let configure = async (netInterface, switchConfig, defaultAddress) => {
 
                 debug("PoE configured");
             }
+
+            debug("Configure port speed");
+
+            for(let port=0; port<switchConfig.ports; port++)
+                await device.port(port, `speed ${(port==switchConfig.uplinkPort&&"1000")||switchConfig.speed||"auto"}`);
+
+            debug("Port speed configured");
+
         }, config.SWITCH_CONFIG_TIMEOUTS);
 
         debug(`Changing IP address to ${switchConfig.address}`);
