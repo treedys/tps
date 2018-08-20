@@ -7,6 +7,8 @@
 #include "logerr.h"
 #include "mac.h"
 
+#define LOG_UV_ERROR(uv_err, fmt, ...) LOG_ERROR("LIBUV: UV_(%d) %s, " fmt, uv_err, uv_err_name(uv_err), ##__VA_ARGS__)
+
 static struct sockaddr_in udp_broadcast_addr;
 static struct sockaddr_in udp_server_addr;
 static struct sockaddr_in udp_client_addr;
@@ -53,7 +55,7 @@ static void udp_client_on_send_ping_cb(uv_udp_send_t *req, int status)
 
 static WARN_UNUSED enum error_code ping(void)
 {
-    int result;
+    uv_errno_t result_uv;
 
     LOG_MESSAGE("PING");
 
@@ -65,10 +67,10 @@ static WARN_UNUSED enum error_code ping(void)
 
     ping_buffer = uv_buf_init(mac_address, sizeof(mac_address));
 
-    result = uv_udp_send(udp_send_request, &udp_client, &ping_buffer, 1, (const struct sockaddr *)&udp_client_addr, &udp_client_on_send_ping_cb);
+    result_uv = uv_udp_send(udp_send_request, &udp_client, &ping_buffer, 1, (const struct sockaddr *)&udp_client_addr, &udp_client_on_send_ping_cb);
 
-    if(result!=0) {
-        LOG_ERROR("PING UDP send (%8X)", result);
+    if(result_uv!=0) {
+        LOG_UV_ERROR(result_uv, "PING UDP send");
         free(udp_send_request);
         return ERROR;
     }
@@ -87,7 +89,7 @@ static void udp_client_on_send_error_cb(uv_udp_send_t *req, int status)
 /* TODO: call that from the error handler */
 void report_error(const char * const message)
 {
-    int result;
+    uv_errno_t result_uv;
 
     struct {
         uv_udp_send_t udp_send_request;
@@ -101,9 +103,9 @@ void report_error(const char * const message)
     strncpy(mem->message, message, sizeof(mem->message));
     error_buffer = uv_buf_init(mem->message, sizeof(mem->message));
 
-    result = uv_udp_send(&mem->udp_send_request, &udp_client, &error_buffer, 1, (const struct sockaddr *)&udp_client_addr, &udp_client_on_send_error_cb);
+    result_uv = uv_udp_send(&mem->udp_send_request, &udp_client, &error_buffer, 1, (const struct sockaddr *)&udp_client_addr, &udp_client_on_send_error_cb);
 
-    if(result!=0)
+    if(result_uv!=0)
         free(mem);
 }
 
@@ -161,26 +163,26 @@ exit:
 
 enum error_code net_session(void) {
     enum error_code result;
-    int result_uv;
+    uv_errno_t result_uv;
 
     uv_loop_t *loop = uv_default_loop();
 
     result = get_mac_address("eth0", &mac_address); if(result!=OK) return result;
 
-    result_uv = uv_udp_init(loop, &udp_server);                                                        if(result_uv!=0) { LOG_ERROR("Initialising UDP server (%d)",  result_uv); return ERROR; }
-    result_uv = uv_udp_init(loop, &udp_client);                                                        if(result_uv!=0) { LOG_ERROR("Initialising UDP client (%d)",  result_uv); return ERROR; }
+    result_uv = uv_udp_init(loop, &udp_server);                                                        if(result_uv!=0) { LOG_UV_ERROR(result_uv, "Initialising UDP server" ); return ERROR; }
+    result_uv = uv_udp_init(loop, &udp_client);                                                        if(result_uv!=0) { LOG_UV_ERROR(result_uv, "Initialising UDP client" ); return ERROR; }
 
-    result_uv = uv_ip4_addr("0.0.0.0",   6502, &udp_server_addr);                                      if(result_uv!=0) { LOG_ERROR("IP4 address (%d)",              result_uv); return ERROR; }
-    result_uv = uv_ip4_addr("0.0.0.0",      0, &udp_broadcast_addr);                                   if(result_uv!=0) { LOG_ERROR("IP4 address (%d)",              result_uv); return ERROR; }
-    result_uv = uv_ip4_addr("224.1.1.1", 6501, &udp_client_addr);                                      if(result_uv!=0) { LOG_ERROR("IP4 address (%d)",              result_uv); return ERROR; }
+    result_uv = uv_ip4_addr("0.0.0.0",   6502, &udp_server_addr);                                      if(result_uv!=0) { LOG_UV_ERROR(result_uv, "IP4 address"             ); return ERROR; }
+    result_uv = uv_ip4_addr("0.0.0.0",      0, &udp_broadcast_addr);                                   if(result_uv!=0) { LOG_UV_ERROR(result_uv, "IP4 address"             ); return ERROR; }
+    result_uv = uv_ip4_addr("224.1.1.1", 6501, &udp_client_addr);                                      if(result_uv!=0) { LOG_UV_ERROR(result_uv, "IP4 address"             ); return ERROR; }
 
-    result_uv = uv_udp_bind(&udp_server, (const struct sockaddr *)&udp_server_addr, UV_UDP_REUSEADDR); if(result_uv!=0) { LOG_ERROR("Server UDP bind (%d)",          result_uv); return ERROR; }
-    result_uv = uv_udp_bind(&udp_client, (const struct sockaddr *)&udp_broadcast_addr,             0); if(result_uv!=0) { LOG_ERROR("Client UDP bind (%d)",          result_uv); return ERROR; }
+    result_uv = uv_udp_bind(&udp_server, (const struct sockaddr *)&udp_server_addr, UV_UDP_REUSEADDR); if(result_uv!=0) { LOG_UV_ERROR(result_uv, "Server UDP bind"         ); return ERROR; }
+    result_uv = uv_udp_bind(&udp_client, (const struct sockaddr *)&udp_broadcast_addr,             0); if(result_uv!=0) { LOG_UV_ERROR(result_uv, "Client UDP bind"         ); return ERROR; }
 
-    result_uv = uv_udp_set_membership(&udp_server, "224.1.1.1", NULL, UV_JOIN_GROUP);                  if(result_uv!=0) { LOG_ERROR("Server UDP membership (%d)",    result_uv); return ERROR; }
-    result_uv = uv_udp_recv_start    (&udp_server, alloc_cb, udb_server_recv_cb    );                  if(result_uv!=0) { LOG_ERROR("Server UDP receive start (%d)", result_uv); return ERROR; }
+    result_uv = uv_udp_set_membership(&udp_server, "224.1.1.1", NULL, UV_JOIN_GROUP);                  if(result_uv!=0) { LOG_UV_ERROR(result_uv, "Server UDP membership"   ); return ERROR; }
+    result_uv = uv_udp_recv_start    (&udp_server, alloc_cb, udb_server_recv_cb    );                  if(result_uv!=0) { LOG_UV_ERROR(result_uv, "Server UDP receive start"); return ERROR; }
 
-    result_uv = uv_udp_set_broadcast(&udp_client, 1);                                                  if(result_uv!=0) { LOG_ERROR("Client UDP broadcast (%d)",     result_uv); return ERROR; }
+    result_uv = uv_udp_set_broadcast(&udp_client, 1);                                                  if(result_uv!=0) { LOG_UV_ERROR(result_uv, "Client UDP broadcast"    ); return ERROR; }
 
     logerr = report_error;
 
