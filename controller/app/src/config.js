@@ -86,7 +86,10 @@ const defaultConfig = {
     }
 };
 
-const initDefault = async () => {
+const initDefault = async error => {
+
+    if(error)
+        debug("Configuration autoload error:", error);
 
     try {
         const configs = await service.find();
