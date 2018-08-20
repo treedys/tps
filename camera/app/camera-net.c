@@ -3,6 +3,7 @@
 
 #include <uv.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "logerr.h"
 #include "mac.h"
@@ -165,6 +166,17 @@ exit:
 enum error_code net_session(void) {
     enum error_code result;
     uv_errno_t result_uv;
+
+    int exit_code;
+
+    /* Check that network is initialised */
+    exit_code = system("ip route | grep default"); if(exit_code<0) { LOG_ERROR("System failed %d", exit_code); return ERROR; }
+
+    if(exit_code>0) {
+        LOG_MESSAGE("Network is not initialised");
+        sleep(1);
+        return OK;
+    }
 
     uv_loop_t *loop = uv_default_loop();
 
