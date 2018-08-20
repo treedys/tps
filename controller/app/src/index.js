@@ -425,6 +425,25 @@ const mutex = require("await-mutex").default;
 const newCameraMutex = new mutex();
 const upgradeMutex = new mutex();
 
+const eraseNewCameras = async () => {
+
+    let unlock = await newCameraMutex.lock();
+
+    try {
+        let { scanner } = configRecord;
+
+        scanner = scanner || {};
+        scanner.new = [];
+
+        await config.service.patch('0', { scanner } );
+
+        unlock();
+    } catch(error) {
+        unlock();
+        throw error;
+    }
+}
+
 const onMessage = async (message, rinfo) => {
     if(message.length==18) {
         const address = rinfo.address;
@@ -884,6 +903,10 @@ let run = async () => {
         debug("UDP client binded");
 
         multicast.on("message", onMessage);
+
+        debug("Rediscover existing non-alocated cameras");
+
+        await eraseNewCameras();
 
         debug("Starting camera heartbeat");
 
