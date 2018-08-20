@@ -220,7 +220,7 @@ enum error_code omx_still_open(struct camera_shot_configuration config)
     result = init_component(&encoder);   if(result!=OK) { return result; }
 
     //Initialize camera drivers
-    result = load_camera_drivers(&camera);
+    result = load_camera_drivers(&camera); if(result!=OK) { return result; }
 
     //Configure camera sensor
     LOG_MESSAGE_COMPONENT(&camera, "configuring sensor");

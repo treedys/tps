@@ -78,6 +78,7 @@ static WARN_UNUSED enum error_code ping(void)
     return OK;
 }
 
+/* TODO: Try to report better error information */
 static void udp_client_on_send_error_cb(uv_udp_send_t *req, int status)
 {
     if(status==-1)
@@ -189,6 +190,9 @@ enum error_code net_session(void) {
     uv_run(loop, UV_RUN_DEFAULT);
 
     logerr = NULL;
+
+    result_uv = uv_udp_recv_stop     (&udp_server                                   );                 if(result_uv!=0) { LOG_UV_ERROR(result_uv, "Server UDP receive stop" ); return ERROR; }
+    result_uv = uv_udp_set_membership(&udp_server, "224.1.1.1", NULL, UV_LEAVE_GROUP);                 if(result_uv!=0) { LOG_UV_ERROR(result_uv, "Server leave membership" ); return ERROR; }
 
     return OK;
 }
