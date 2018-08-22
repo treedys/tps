@@ -5,7 +5,9 @@ const GitRevisionPlugin = require("git-revision-webpack-plugin");
 const MinifyPlugin = require("babel-minify-webpack-plugin");
 const nodeExternals = require('webpack-node-externals');
 
-const gitRevisionPlugin = new GitRevisionPlugin()
+const            gitRevisionPlugin = new GitRevisionPlugin();
+const cameraFirmwareRevisionPlugin = new GitRevisionPlugin({ commithashCommand: 'ls-tree --full-tree HEAD camera'    });
+const      buildrootRevisionPlugin = new GitRevisionPlugin({ commithashCommand: 'ls-tree --full-tree HEAD buildroot' });
 
 const common = {
     resolve: {
@@ -37,7 +39,9 @@ const common = {
         ]
     },
     plugins: [
-        new webpack.DefinePlugin({ 'GITSHA1': JSON.stringify(gitRevisionPlugin.commithash()) }),
+        new webpack.DefinePlugin({            'GITSHA1': JSON.stringify(           gitRevisionPlugin.commithash()) }),
+        new webpack.DefinePlugin({ 'CAMERAFIRMWARESHA1': JSON.stringify(cameraFirmwareRevisionPlugin.commithash().split(/\s+/)[2]) }),
+        new webpack.DefinePlugin({      'BUILDROOTSHA1': JSON.stringify(     buildrootRevisionPlugin.commithash().split(/\s+/)[2]) }),
         // https://stackoverflow.com/questions/40755149/how-to-keep-my-shebang-in-place-using-webpack
         new webpack.BannerPlugin({ banner: "#!/usr/bin/env node", entryOnly: true, raw: true }),
         new webpack.LoaderOptionsPlugin({ minimize: true })

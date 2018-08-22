@@ -351,10 +351,13 @@ const checkNetboot = async (mac) => {
 }
 
 const cameraState= async (mac) => {
-    await send.exec(mac, "cp /etc/camera-version /var/www/");
+    await send.exec(mac, "cp /etc/*-version /var/www/");
     await delay(100);
-    const version = await download(mac, "camera-version");
-    const needsUpgrade = version?.trim()!==GITSHA1.trim();
+
+    const    cameraVersion = await download(mac,    "camera-version");
+    const buildrootVersion = await download(mac, "buildroot-version");
+
+    const needsUpgrade = cameraVersion?.trim()!=CAMERAFIRMWARESHA1 || buildrootVersion?.trim()!=BUILDROOTSHA1;
 
     await send.exec(mac, "ls /dev/ > /var/www/dev");
     await delay(100);
@@ -366,7 +369,7 @@ const cameraState= async (mac) => {
     const cmdline = await download(mac, "cmdline");
     const bootFromSDcard = cmdline.includes("root=/dev/mmcblk0");
 
-    return { version, dev, cmdline, needsUpgrade, hasSDcard, bootFromSDcard };
+    return { cameraVersion, buildrootVersion, dev, cmdline, needsUpgrade, hasSDcard, bootFromSDcard };
 }
 
 const upgradeCameraFirmmware = async (mac) => {
@@ -387,7 +390,7 @@ const upgradeCameraFirmmware = async (mac) => {
         if(!camera.hasSDcard && camera.needsUpgrade) {
             await send.exec(mac, "reboot");
         } else if(camera.hasSDcard && (!camera.bootFromSDcard || camera.needsUpgrade)) {
-            debug(`Upgrading camera ${mac} from version ${camera.version||"unknown"} to ${GITSHA1}`);
+            debug(`Upgrading camera ${mac} from version ${camera.cameraVersion||"unknown"} to ${CAMERAFIRMWARESHA1}`);
             const cmd =  `"tftp -g -l /tmp/sdcard.img -r sdcard.img ${addressEnd(liveCameras[mac].address,200)} && dd if=/tmp/sdcard.img of=/dev/mmcblk0 && sync; reboot;"`;
             await send.exec(mac, `echo ${cmd} > /var/www/upgrade.sh`);
             await send.exec(mac, "chmod +x /var/www/upgrade.sh");
