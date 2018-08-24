@@ -173,4 +173,12 @@ omx_config_metadata_item(
 
 /*****************************************************************************/
 
+WARN_UNUSED enum error_code
+omx_config_singlestep(
+        OMX_IN OMX_HANDLETYPE hComponent,
+        OMX_IN OMX_U32        nPortIndex,
+        OMX_IN OMX_U32        nSteps);
+
+/*****************************************************************************/
+
 #endif

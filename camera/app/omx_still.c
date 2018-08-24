@@ -308,11 +308,11 @@ enum error_code init_camera(struct camera_shot_configuration config)
     return OK;
 }
 
-WARN_UNUSED enum error_code init_encoder(struct camera_shot_configuration config)
+static WARN_UNUSED
+enum error_code init_encoder(struct camera_shot_configuration config)
 {
     enum error_code result;
 
-    //Configure encoder port definition
     LOG_MESSAGE_COMPONENT(&encoder, "configuring encoder port definition");
 
     OMX_PARAM_PORTDEFINITIONTYPE port_def; OMX_INIT_STRUCTURE (port_def);
@@ -337,9 +337,10 @@ WARN_UNUSED enum error_code init_encoder(struct camera_shot_configuration config
 WARN_UNUSED enum error_code omx_still_open(struct camera_shot_configuration config)
 {
     enum error_code result;
-    camera.name = "OMX.broadcom.camera";
+
+       camera.name = "OMX.broadcom.camera";
     null_sink.name = "OMX.broadcom.null_sink";
-    encoder.name = "OMX.broadcom.image_encode";
+      encoder.name = "OMX.broadcom.image_encode";
 
     //Initialize Broadcom's VideoCore APIs
     bcm_host_init();
@@ -358,8 +359,8 @@ WARN_UNUSED enum error_code omx_still_open(struct camera_shot_configuration conf
     //Setup tunnels: camera (still) -> image_encode, camera (preview) -> null_sink
     LOG_MESSAGE("configuring tunnels");
 
-    result = omx_setup_tunnel(camera.handle, 72, encoder.handle,   340); if(result!=OK) { return result; }
-    result = omx_setup_tunnel(camera.handle, 70, null_sink.handle, 240); if(result!=OK) { return result; }
+    result = omx_setup_tunnel(  camera.handle,  72,   encoder.handle, 340); if(result!=OK) { return result; }
+    result = omx_setup_tunnel(  camera.handle,  70, null_sink.handle, 240); if(result!=OK) { return result; }
 
     //Change state to IDLE
     result = change_state(&camera,    OMX_StateIdle); if(result!=OK) { return result; } result = wait(&camera,    EVENT_STATE_SET, 0); if(result!=OK) { return result; }
@@ -373,7 +374,6 @@ WARN_UNUSED enum error_code omx_still_open(struct camera_shot_configuration conf
     result = enable_port(&encoder,   340); if(result!=OK) { return result; } result = wait(&encoder,   EVENT_PORT_ENABLE, 0); if(result!=OK) { return result; }
 
     return port_enable_allocate_buffer(&encoder, &output_buffer, 341);
-
 }
 
 WARN_UNUSED enum error_code omx_still_shoot(const buffer_output_handler handler)

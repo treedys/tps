@@ -350,3 +350,19 @@ omx_config_metadata_item(
 
 /*****************************************************************************/
 
+enum error_code
+omx_config_singlestep(
+        OMX_IN OMX_HANDLETYPE hComponent,
+        OMX_IN OMX_U32        nPortIndex,
+        OMX_IN OMX_U32        nSteps)
+{
+    OMX_PARAM_U32TYPE param; OMX_INIT_STRUCTURE(param);
+
+    param.nPortIndex = nPortIndex;
+    param.nU32       = nSteps;
+
+    return omx_set_config(hComponent, OMX_IndexConfigSingleStep, &param);
+}
+
+/*****************************************************************************/
+
