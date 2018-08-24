@@ -48,4 +48,21 @@ omx_parameter_brcm_thumbnail(
 
 /*****************************************************************************/
 
+WARN_UNUSED enum error_code
+omx_parameter_brcm_disable_proprietary_tunnels(
+        OMX_IN OMX_HANDLETYPE hComponent,
+        OMX_IN OMX_U32        nPortIndex,
+        OMX_IN OMX_U32        bUseBuffers);
+
+/*****************************************************************************/
+
+WARN_UNUSED enum error_code
+omx_parameter_port_max_frame_size(
+    OMX_IN OMX_HANDLETYPE hComponent,
+    OMX_IN OMX_INDEXTYPE  nPortIndex,
+    OMX_IN OMX_U32        nWidth,
+    OMX_IN OMX_U32        nHeight);
+
+/*****************************************************************************/
+
 #endif

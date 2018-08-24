@@ -86,3 +86,40 @@ omx_parameter_brcm_thumbnail(
 
 /*****************************************************************************/
 
+enum error_code
+omx_parameter_brcm_disable_proprietary_tunnels(
+        OMX_IN OMX_HANDLETYPE hComponent,
+        OMX_IN OMX_U32        nPortIndex,
+        OMX_IN OMX_U32        bUseBuffers)
+{
+    OMX_PARAM_BRCMDISABLEPROPRIETARYTUNNELSTYPE tunels_type; OMX_INIT_STRUCTURE (tunels_type);
+
+    tunels_type.nPortIndex  = nPortIndex;
+
+    tunels_type.bUseBuffers = bUseBuffers;
+
+    return omx_set_parameter(hComponent, OMX_IndexParamBrcmDisableProprietaryTunnels, &tunels_type);
+}
+
+/*****************************************************************************/
+
+enum error_code
+omx_parameter_port_max_frame_size(
+    OMX_IN OMX_HANDLETYPE hComponent,
+    OMX_IN OMX_INDEXTYPE  nPortIndex,
+    OMX_IN OMX_U32        nWidth,
+    OMX_IN OMX_U32        nHeight)
+{
+    OMX_FRAMESIZETYPE frame_size; OMX_INIT_STRUCTURE (frame_size);
+
+    frame_size.nPortIndex = nPortIndex;
+
+    frame_size.nWidth  = nWidth;
+    frame_size.nHeight = nHeight;
+
+    return omx_set_parameter(hComponent, OMX_IndexParamPortMaxFrameSize, &frame_size);
+}
+
+
+/*****************************************************************************/
+

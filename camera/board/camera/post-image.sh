@@ -51,6 +51,11 @@ done
 
 rm -rf "${GENIMAGE_TMP}"
 
+# FIXME: copy bugfixed start_x.elf
+# see: https://www.raspberrypi.org/forums/viewtopic.php?f=70&t=221410#p1365228
+cp "${BOARD_DIR}/start_x.elf" "${BINARIES_DIR}/rpi-firmware/start.elf"
+cp "${BOARD_DIR}/fixup_x.dat" "${BINARIES_DIR}/rpi-firmware/fixup.dat"
+
 genimage                           \
 	--rootpath "${TARGET_DIR}"     \
 	--tmppath "${GENIMAGE_TMP}"    \

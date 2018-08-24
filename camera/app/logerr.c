@@ -40,7 +40,7 @@ void log_error(int caller_errno, const void * const addr, const char * const for
     t = time(NULL);
     int result;
 
-    char message[500];
+    char message[1024];
 
 #ifdef LOGERR_THREAD_SAFE
     /* Try to lock. In case of error report it and continue,
