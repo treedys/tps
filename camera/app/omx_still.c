@@ -126,7 +126,104 @@ component_t encoder;
 
 OMX_BUFFERHEADERTYPE* output_buffer;
 
-WARN_UNUSED enum error_code set_camera_settings(struct camera_shot_configuration config)
+static WARN_UNUSED
+int round_up(int value, int divisor)
+{
+    return (divisor + value - 1) & ~(divisor - 1);
+}
+
+static WARN_UNUSED
+enum error_code set_camera_sensor_framesize(void)
+{
+    enum error_code result;
+
+    //Configure camera sensor
+    LOG_MESSAGE_COMPONENT(&camera, "configuring sensor");
+
+    OMX_PARAM_SENSORMODETYPE sensor; OMX_INIT_STRUCTURE (sensor);
+
+    sensor.nPortIndex = OMX_ALL;
+
+    OMX_INIT_STRUCTURE (sensor.sFrameSize);
+
+    sensor.sFrameSize.nPortIndex = OMX_ALL;
+
+    result = omx_get_parameter(camera.handle, OMX_IndexParamCommonSensorMode, &sensor); if(result!=OK) { return result; }
+
+    sensor.bOneShot = OMX_TRUE;
+    sensor.sFrameSize.nWidth = CAM_WIDTH;
+    sensor.sFrameSize.nHeight = CAM_HEIGHT;
+
+    result = omx_set_parameter(camera.handle, OMX_IndexParamCommonSensorMode, &sensor); if(result!=OK) { return result; }
+
+    return OK;
+}
+
+static WARN_UNUSED
+enum error_code set_camera_stillport(void)
+{
+    enum error_code result;
+
+    //Configure camera port definition
+    LOG_MESSAGE_COMPONENT(&camera, "configuring still port definition");
+
+    OMX_PARAM_PORTDEFINITIONTYPE port_def; OMX_INIT_STRUCTURE (port_def);
+
+    port_def.nPortIndex = 72;
+
+    result = omx_get_parameter(camera.handle, OMX_IndexParamPortDefinition, &port_def); if(result!=OK) { return result; }
+
+    port_def.format.image.nFrameWidth        = CAM_WIDTH;
+    port_def.format.image.nFrameHeight       = CAM_HEIGHT;
+    port_def.format.image.eCompressionFormat = OMX_IMAGE_CodingUnused;
+    port_def.format.image.eColorFormat       = OMX_COLOR_FormatYUV420PackedPlanar;
+    //Stride is byte-per-pixel*width, YUV has 1 byte per pixel, so the stride is
+    //the width (rounded up to the nearest multiple of 16).
+    //See mmal/util/mmal_util.c, mmal_encoding_width_to_stride()
+    port_def.format.image.nStride            = round_up(CAM_WIDTH, 32);
+
+    result = omx_set_parameter(camera.handle, OMX_IndexParamPortDefinition, &port_def); if(result!=OK) { return result; }
+
+    return OK;
+}
+
+static WARN_UNUSED
+enum error_code set_camera_previewport(void)
+{
+    enum error_code result;
+
+    LOG_MESSAGE_COMPONENT(&camera, "configuring preview port definition");
+
+    //Configure preview port
+    //In theory the fastest resolution and framerate are 1920x1080 @30fps because
+    //these are the default settings for the preview port, so the frames don't
+    //need to be resized. In practice, this is not true. The fastest way to
+    //produce stills is setting the lowest resolution, that is, 640x480 @30fps.
+    //The difference between 1920x1080 @30fps and 640x480 @30fps is a speed boost
+    //of ~4%, from ~1083ms to ~1039ms
+
+    OMX_PARAM_PORTDEFINITIONTYPE port_def; OMX_INIT_STRUCTURE (port_def);
+
+    port_def.nPortIndex = 70;
+
+    result = omx_get_parameter(camera.handle, OMX_IndexParamPortDefinition, &port_def); if(result!=OK) { return result; }
+
+    port_def.format.video.nFrameWidth = 640;
+    port_def.format.video.nFrameHeight = 480;
+    port_def.format.video.eCompressionFormat = OMX_IMAGE_CodingUnused;
+    port_def.format.video.eColorFormat = OMX_COLOR_FormatYUV420PackedPlanar;
+    //Setting the framerate to 0 unblocks the shutter speed from 66ms to 772ms
+    //The higher the speed, the higher the capture time
+    port_def.format.video.xFramerate = 0;
+    port_def.format.video.nStride = 640;
+
+    result = omx_set_parameter(camera.handle, OMX_IndexParamPortDefinition, &port_def); if(result!=OK) { return result; }
+
+    return OK;
+}
+
+static WARN_UNUSED
+enum error_code set_camera_settings(struct camera_shot_configuration config)
 {
     LOG_MESSAGE_COMPONENT(&camera, "configuring settings");
 
@@ -174,7 +271,8 @@ WARN_UNUSED enum error_code set_camera_settings(struct camera_shot_configuration
     return OK;
 }
 
-WARN_UNUSED enum error_code set_jpeg_settings(struct camera_shot_configuration config)
+static WARN_UNUSED
+enum error_code set_jpeg_settings(struct camera_shot_configuration config)
 {
     LOG_MESSAGE_COMPONENT(&encoder, "configuring settings");
 
@@ -196,12 +294,47 @@ WARN_UNUSED enum error_code set_jpeg_settings(struct camera_shot_configuration c
     return OK;
 }
 
-int round_up(int value, int divisor)
+static WARN_UNUSED
+enum error_code init_camera(struct camera_shot_configuration config)
 {
-    return (divisor + value - 1) & ~(divisor - 1);
+    enum error_code result;
+
+    result = load_camera_drivers(&camera);  if(result!=OK) { return result; }
+    result = set_camera_sensor_framesize(); if(result!=OK) { return result; }
+    result = set_camera_stillport();        if(result!=OK) { return result; }
+    result = set_camera_previewport();      if(result!=OK) { return result; }
+    result = set_camera_settings(config);   if(result!=OK) { return result; }
+
+    return OK;
 }
 
-enum error_code omx_still_open(struct camera_shot_configuration config)
+WARN_UNUSED enum error_code init_encoder(struct camera_shot_configuration config)
+{
+    enum error_code result;
+
+    //Configure encoder port definition
+    LOG_MESSAGE_COMPONENT(&encoder, "configuring encoder port definition");
+
+    OMX_PARAM_PORTDEFINITIONTYPE port_def; OMX_INIT_STRUCTURE (port_def);
+
+    port_def.nPortIndex = 341;
+
+    result = omx_get_parameter(encoder.handle, OMX_IndexParamPortDefinition, &port_def); if(result!=OK) { return result; }
+
+    port_def.format.image.nFrameWidth        = CAM_WIDTH;
+    port_def.format.image.nFrameHeight       = CAM_HEIGHT;
+    port_def.format.image.eCompressionFormat = OMX_IMAGE_CodingJPEG;
+    port_def.format.image.eColorFormat       = OMX_COLOR_FormatUnused;
+
+    result = omx_set_parameter(encoder.handle, OMX_IndexParamPortDefinition, &port_def); if(result!=OK) { return result; }
+
+    //Configure JPEG settings
+    result = set_jpeg_settings(config); if(result!=OK) { return result; }
+
+    return OK;
+}
+
+WARN_UNUSED enum error_code omx_still_open(struct camera_shot_configuration config)
 {
     enum error_code result;
     camera.name = "OMX.broadcom.camera";
@@ -219,93 +352,8 @@ enum error_code omx_still_open(struct camera_shot_configuration config)
     result = init_component(&null_sink); if(result!=OK) { return result; }
     result = init_component(&encoder);   if(result!=OK) { return result; }
 
-    //Initialize camera drivers
-    result = load_camera_drivers(&camera); if(result!=OK) { return result; }
-
-    //Configure camera sensor
-    LOG_MESSAGE_COMPONENT(&camera, "configuring sensor");
-
-    OMX_PARAM_SENSORMODETYPE sensor; OMX_INIT_STRUCTURE (sensor);
-
-    sensor.nPortIndex = OMX_ALL;
-
-    OMX_INIT_STRUCTURE (sensor.sFrameSize);
-
-    sensor.sFrameSize.nPortIndex = OMX_ALL;
-
-    result = omx_get_parameter(camera.handle, OMX_IndexParamCommonSensorMode, &sensor); if(result!=OK) { return result; }
-
-    sensor.bOneShot = OMX_TRUE;
-    sensor.sFrameSize.nWidth = CAM_WIDTH;
-    sensor.sFrameSize.nHeight = CAM_HEIGHT;
-
-    result = omx_set_parameter(camera.handle, OMX_IndexParamCommonSensorMode, &sensor); if(result!=OK) { return result; }
-
-    //Configure camera port definition
-    LOG_MESSAGE_COMPONENT(&camera, "configuring still port definition");
-
-    OMX_PARAM_PORTDEFINITIONTYPE port_def; OMX_INIT_STRUCTURE (port_def);
-
-    port_def.nPortIndex = 72;
-
-    result = omx_get_parameter(camera.handle, OMX_IndexParamPortDefinition, &port_def); if(result!=OK) { return result; }
-
-    port_def.format.image.nFrameWidth        = CAM_WIDTH;
-    port_def.format.image.nFrameHeight       = CAM_HEIGHT;
-    port_def.format.image.eCompressionFormat = OMX_IMAGE_CodingUnused;
-    port_def.format.image.eColorFormat       = OMX_COLOR_FormatYUV420PackedPlanar;
-    //Stride is byte-per-pixel*width, YUV has 1 byte per pixel, so the stride is
-    //the width (rounded up to the nearest multiple of 16).
-    //See mmal/util/mmal_util.c, mmal_encoding_width_to_stride()
-    port_def.format.image.nStride            = round_up(CAM_WIDTH, 32);
-
-    result = omx_set_parameter(camera.handle, OMX_IndexParamPortDefinition, &port_def); if(result) { return result; }
-
-    LOG_MESSAGE_COMPONENT(&camera, "configuring preview port definition");
-
-    //Configure preview port
-    //In theory the fastest resolution and framerate are 1920x1080 @30fps because
-    //these are the default settings for the preview port, so the frames don't
-    //need to be resized. In practice, this is not true. The fastest way to
-    //produce stills is setting the lowest resolution, that is, 640x480 @30fps.
-    //The difference between 1920x1080 @30fps and 640x480 @30fps is a speed boost
-    //of ~4%, from ~1083ms to ~1039ms
-    port_def.nPortIndex = 70;
-
-    result = omx_get_parameter(camera.handle, OMX_IndexParamPortDefinition, &port_def); if(result!=OK) { return result; }
-
-    port_def.format.video.nFrameWidth = 640;
-    port_def.format.video.nFrameHeight = 480;
-    port_def.format.video.eCompressionFormat = OMX_IMAGE_CodingUnused;
-    port_def.format.video.eColorFormat = OMX_COLOR_FormatYUV420PackedPlanar;
-    //Setting the framerate to 0 unblocks the shutter speed from 66ms to 772ms
-    //The higher the speed, the higher the capture time
-    port_def.format.video.xFramerate = 0;
-    port_def.format.video.nStride = 640;
-
-    result = omx_set_parameter(camera.handle, OMX_IndexParamPortDefinition, &port_def); if(result!=OK) { return result; }
-
-    //Configure camera settings
-    result = set_camera_settings(config); if(result!=OK) { return result; }
-
-    //Configure encoder port definition
-    LOG_MESSAGE_COMPONENT(&encoder, "configuring encoder port definition");
-
-    OMX_INIT_STRUCTURE (port_def);
-
-    port_def.nPortIndex = 341;
-
-    result = omx_get_parameter(encoder.handle, OMX_IndexParamPortDefinition, &port_def); if(result!=OK) { return result; }
-
-    port_def.format.image.nFrameWidth        = CAM_WIDTH;
-    port_def.format.image.nFrameHeight       = CAM_HEIGHT;
-    port_def.format.image.eCompressionFormat = OMX_IMAGE_CodingJPEG;
-    port_def.format.image.eColorFormat       = OMX_COLOR_FormatUnused;
-
-    result = omx_set_parameter(encoder.handle, OMX_IndexParamPortDefinition, &port_def); if(result!=OK) { return result; }
-
-    //Configure JPEG settings
-    result = set_jpeg_settings(config); if(result!=OK) { return result; }
+    result = init_camera(config);    if(result!=OK) { return result; }
+    result = init_encoder(config);   if(result!=OK) { return result; }
 
     //Setup tunnels: camera (still) -> image_encode, camera (preview) -> null_sink
     LOG_MESSAGE("configuring tunnels");
@@ -328,38 +376,7 @@ enum error_code omx_still_open(struct camera_shot_configuration config)
 
 }
 
-enum error_code omx_still_close(void)
-{
-    enum error_code result;
-
-    //Disable the tunnel ports
-    result = port_disable_free_buffer(&encoder, output_buffer, 341); if(result!=OK) { return result; }
-
-    result = disable_port(&camera,     72); if(result!=OK) { return result; }
-    result = disable_port(&camera,     70); if(result!=OK) { return result; }
-    result = disable_port(&null_sink, 240); if(result!=OK) { return result; }
-    result = disable_port(&encoder,   340); if(result!=OK) { return result; }
-
-    //Change state to LOADED
-    result = change_state(&camera,    OMX_StateLoaded); if(result!=OK) { return result; } result = wait(&camera,    EVENT_STATE_SET, 0); if(result!=OK) { return result; }
-    result = change_state(&null_sink, OMX_StateLoaded); if(result!=OK) { return result; } result = wait(&null_sink, EVENT_STATE_SET, 0); if(result!=OK) { return result; }
-    result = change_state(&encoder,   OMX_StateLoaded); if(result!=OK) { return result; } result = wait(&encoder,   EVENT_STATE_SET, 0); if(result!=OK) { return result; }
-
-    //Deinitialize components
-    result = deinit_component(&camera   ); if(result!=OK) { return result; }
-    result = deinit_component(&null_sink); if(result!=OK) { return result; }
-    result = deinit_component(&encoder  ); if(result!=OK) { return result; }
-
-    //Deinitialize OpenMAX IL
-    result = omx_deinit(); if(result!=OK) { return result; }
-
-    //Deinitialize Broadcom's VideoCore APIs
-    bcm_host_deinit();
-
-    return OK;
-}
-
-enum error_code omx_still_shoot(const buffer_output_handler handler)
+WARN_UNUSED enum error_code omx_still_shoot(const buffer_output_handler handler)
 {
     enum error_code result;
 
@@ -410,6 +427,37 @@ enum error_code omx_still_shoot(const buffer_output_handler handler)
     result = change_state(&camera,    OMX_StateIdle); if(result!=OK) { return result; } result = wait(&camera,    EVENT_STATE_SET, 0); if(result!=OK) { return result; }
     result = change_state(&null_sink, OMX_StateIdle); if(result!=OK) { return result; } result = wait(&null_sink, EVENT_STATE_SET, 0); if(result!=OK) { return result; }
     result = change_state(&encoder,   OMX_StateIdle); if(result!=OK) { return result; } result = wait(&encoder,   EVENT_STATE_SET, 0); if(result!=OK) { return result; }
+
+    return OK;
+}
+
+WARN_UNUSED enum error_code omx_still_close(void)
+{
+    enum error_code result;
+
+    //Disable the tunnel ports
+    result = port_disable_free_buffer(&encoder, output_buffer, 341); if(result!=OK) { return result; }
+
+    result = disable_port(&camera,     72); if(result!=OK) { return result; }
+    result = disable_port(&camera,     70); if(result!=OK) { return result; }
+    result = disable_port(&null_sink, 240); if(result!=OK) { return result; }
+    result = disable_port(&encoder,   340); if(result!=OK) { return result; }
+
+    //Change state to LOADED
+    result = change_state(&camera,    OMX_StateLoaded); if(result!=OK) { return result; } result = wait(&camera,    EVENT_STATE_SET, 0); if(result!=OK) { return result; }
+    result = change_state(&null_sink, OMX_StateLoaded); if(result!=OK) { return result; } result = wait(&null_sink, EVENT_STATE_SET, 0); if(result!=OK) { return result; }
+    result = change_state(&encoder,   OMX_StateLoaded); if(result!=OK) { return result; } result = wait(&encoder,   EVENT_STATE_SET, 0); if(result!=OK) { return result; }
+
+    //Deinitialize components
+    result = deinit_component(&camera   ); if(result!=OK) { return result; }
+    result = deinit_component(&null_sink); if(result!=OK) { return result; }
+    result = deinit_component(&encoder  ); if(result!=OK) { return result; }
+
+    //Deinitialize OpenMAX IL
+    result = omx_deinit(); if(result!=OK) { return result; }
+
+    //Deinitialize Broadcom's VideoCore APIs
+    bcm_host_deinit();
 
     return OK;
 }
