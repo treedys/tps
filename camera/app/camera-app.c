@@ -156,21 +156,21 @@ enum error_code shoot(struct camera_configuration config)
 
     LOG_MESSAGE("SHOOT");
 
-    LOG_MESSAGE("config.shutterSpeed %d %d", config.shot[0].shutterSpeed, config.shot[1].shutterSpeed );
-    LOG_MESSAGE("config.iso          %d %d", config.shot[0].iso,          config.shot[1].iso          );
-    LOG_MESSAGE("config.redGain      %d %d", config.shot[0].redGain,      config.shot[1].redGain      );
-    LOG_MESSAGE("config.blueGain     %d %d", config.shot[0].blueGain,     config.shot[1].blueGain     );
-    LOG_MESSAGE("config.quality      %d %d", config.shot[0].quality,      config.shot[1].quality      );
-    LOG_MESSAGE("config.sharpness    %d %d", config.shot[0].sharpness,    config.shot[1].sharpness    );
-    LOG_MESSAGE("config.contrast     %d %d", config.shot[0].contrast,     config.shot[1].contrast     );
-    LOG_MESSAGE("config.brightness   %d %d", config.shot[0].brightness,   config.shot[1].brightness   );
-    LOG_MESSAGE("config.saturation   %d %d", config.shot[0].saturation,   config.shot[1].saturation   );
-    LOG_MESSAGE("config.drc          %d %d", config.shot[0].drc,          config.shot[1].drc          );
-    LOG_MESSAGE("config.whiteBalance %d %d", config.shot[0].whiteBalance, config.shot[1].whiteBalance );
-    LOG_MESSAGE("config.gpio17       %d %d", config.shot[0].gpio17,       config.shot[1].gpio17       );
-    LOG_MESSAGE("config.gpio18       %d %d", config.shot[0].gpio18,       config.shot[1].gpio18       );
-    LOG_MESSAGE("config.gpio22       %d %d", config.shot[0].gpio22,       config.shot[1].gpio22       );
-    LOG_MESSAGE("config.gpio27       %d %d", config.shot[0].gpio27,       config.shot[1].gpio27       );
+    LOG_MESSAGE("config.shutterSpeed  %d %d", config.shot[0].shutterSpeed,  config.shot[1].shutterSpeed );
+    LOG_MESSAGE("config.iso           %d %d", config.shot[0].iso,           config.shot[1].iso          );
+    LOG_MESSAGE("config.redGain       %d %d", config.shot[0].redGain,       config.shot[1].redGain      );
+    LOG_MESSAGE("config.blueGain      %d %d", config.shot[0].blueGain,      config.shot[1].blueGain     );
+    LOG_MESSAGE("config.quality       %d %d", config.shot[0].quality,       config.shot[1].quality      );
+    LOG_MESSAGE("config.sharpness     %d %d", config.shot[0].sharpness,     config.shot[1].sharpness    );
+    LOG_MESSAGE("config.contrast      %d %d", config.shot[0].contrast,      config.shot[1].contrast     );
+    LOG_MESSAGE("config.brightness    %d %d", config.shot[0].brightness,    config.shot[1].brightness   );
+    LOG_MESSAGE("config.saturation    %d %d", config.shot[0].saturation,    config.shot[1].saturation   );
+    LOG_MESSAGE("config.drc           %d %d", config.shot[0].drc,           config.shot[1].drc          );
+    LOG_MESSAGE("config.whiteBalance  %d %d", config.shot[0].whiteBalance,  config.shot[1].whiteBalance );
+    LOG_MESSAGE("config.gpio_delay_17 %d %d", config.shot[0].gpio_delay_17, config.shot[1].gpio_delay_17);
+    LOG_MESSAGE("config.gpio_delay_18 %d %d", config.shot[0].gpio_delay_18, config.shot[1].gpio_delay_18);
+    LOG_MESSAGE("config.gpio_delay_22 %d %d", config.shot[0].gpio_delay_22, config.shot[1].gpio_delay_22);
+    LOG_MESSAGE("config.gpio_delay_27 %d %d", config.shot[0].gpio_delay_27, config.shot[1].gpio_delay_27);
 
 
     position1 = 0;
@@ -240,9 +240,13 @@ WARN_UNUSED enum error_code session(void)
 
 int main()
 {
+    LOG_MESSAGE("Starting app");
+
     for(;;)
-        if(session()!=OK)
+        if(session()!=OK) {
+            LOG_ERROR("Exiting app");
             exit(1);
+        }
 
     return 0;
 }
