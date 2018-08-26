@@ -373,17 +373,19 @@ WARN_UNUSED enum error_code omx_still_open(struct camera_shot_configuration conf
     result = enable_port(&null_sink, 240); if(result!=OK) { return result; } result = wait(&null_sink, EVENT_PORT_ENABLE, 0); if(result!=OK) { return result; }
     result = enable_port(&encoder,   340); if(result!=OK) { return result; } result = wait(&encoder,   EVENT_PORT_ENABLE, 0); if(result!=OK) { return result; }
 
-    return port_enable_allocate_buffer(&encoder, &output_buffer, 341);
-}
-
-WARN_UNUSED enum error_code omx_still_shoot(const buffer_output_handler handler)
-{
-    enum error_code result;
+    result = port_enable_allocate_buffer(&encoder, &output_buffer, 341); if(result!=OK) { return result; }
 
     //Change state to EXECUTING
     result = change_state(&camera,    OMX_StateExecuting); if(result!=OK) { return result; } result = wait(&camera,    EVENT_STATE_SET, 0); if(result!=OK) { return result; }
     result = change_state(&null_sink, OMX_StateExecuting); if(result!=OK) { return result; } result = wait(&null_sink, EVENT_STATE_SET, 0); if(result!=OK) { return result; }
     result = change_state(&encoder,   OMX_StateExecuting); if(result!=OK) { return result; } result = wait(&encoder,   EVENT_STATE_SET, 0); if(result!=OK) { return result; }
+
+    return OK;
+}
+
+WARN_UNUSED enum error_code omx_still_shoot(const buffer_output_handler handler)
+{
+    enum error_code result;
 
     //Enable camera capture port. This basically says that the port 72 will be
     //used to get data from the camera. If you're capturing video, the port 71
@@ -423,17 +425,17 @@ WARN_UNUSED enum error_code omx_still_shoot(const buffer_output_handler handler)
     LOG_MESSAGE_COMPONENT(&camera, "disabling capture port");
     result = omx_config_port_capturing(camera.handle, 72, OMX_FALSE); if(result!=OK) { return result; }
 
-    //Change state to IDLE
-    result = change_state(&camera,    OMX_StateIdle); if(result!=OK) { return result; } result = wait(&camera,    EVENT_STATE_SET, 0); if(result!=OK) { return result; }
-    result = change_state(&null_sink, OMX_StateIdle); if(result!=OK) { return result; } result = wait(&null_sink, EVENT_STATE_SET, 0); if(result!=OK) { return result; }
-    result = change_state(&encoder,   OMX_StateIdle); if(result!=OK) { return result; } result = wait(&encoder,   EVENT_STATE_SET, 0); if(result!=OK) { return result; }
-
     return OK;
 }
 
 WARN_UNUSED enum error_code omx_still_close(void)
 {
     enum error_code result;
+
+    //Change state to IDLE
+    result = change_state(&camera,    OMX_StateIdle); if(result!=OK) { return result; } result = wait(&camera,    EVENT_STATE_SET, 0); if(result!=OK) { return result; }
+    result = change_state(&null_sink, OMX_StateIdle); if(result!=OK) { return result; } result = wait(&null_sink, EVENT_STATE_SET, 0); if(result!=OK) { return result; }
+    result = change_state(&encoder,   OMX_StateIdle); if(result!=OK) { return result; } result = wait(&encoder,   EVENT_STATE_SET, 0); if(result!=OK) { return result; }
 
     //Disable the tunnel ports
     result = port_disable_free_buffer(&encoder, output_buffer, 341); if(result!=OK) { return result; }
