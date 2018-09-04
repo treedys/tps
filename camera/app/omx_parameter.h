@@ -7,7 +7,7 @@
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_parameter_camera_device_number(
         OMX_IN OMX_HANDLETYPE hComponent,
         OMX_IN OMX_U32        nPortIndex,
@@ -15,7 +15,7 @@ omx_parameter_camera_device_number(
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_parameter_qfactor(
         OMX_IN OMX_HANDLETYPE hComponent,
         OMX_IN OMX_U32        nPortIndex,
@@ -23,14 +23,14 @@ omx_parameter_qfactor(
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_parameter_brcm_exif(
         OMX_IN OMX_HANDLETYPE hComponent,
         OMX_IN OMX_BOOL       bEnabled);
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_parameter_brcm_ijg_scaling(
         OMX_IN OMX_HANDLETYPE hComponent,
         OMX_IN OMX_U32        nPortIndex,
@@ -38,7 +38,7 @@ omx_parameter_brcm_ijg_scaling(
 
 /*****************************************************************************/
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY
+WARN_UNUSED enum error_code
 omx_parameter_brcm_thumbnail(
         OMX_IN OMX_HANDLETYPE hComponent,
         OMX_IN OMX_U32        bEnable,
