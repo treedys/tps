@@ -60,8 +60,6 @@ const defer = () => { let resolve, reject, promise = new Promise((_resolve, _rej
 const configRecordDefer = defer();
 
 let configRecord;
-//FIXME: await for default config record on new scanner
-config.service.watch().get('0').subscribe(config => { configRecordDefer.resolve(config); configRecord = config; });
 
 const cameraIndex = mac => {
     const index = configRecord?.scanner?.map?.indexOf(mac);
@@ -854,6 +852,10 @@ let configureAllSwitches = async () => {
 let run = async () => {
 
     let discoverInterval;
+
+    await config.initialised.promise;
+
+    config.service.watch().get('0').subscribe(config => { configRecordDefer.resolve(config); configRecord = config; });
 
     await configRecordDefer.promise;
 

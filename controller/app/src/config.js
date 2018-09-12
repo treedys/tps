@@ -86,6 +86,10 @@ const defaultConfig = {
     }
 };
 
+const defer = () => { let resolve, reject, promise = new Promise((_resolve, _reject) => { resolve=_resolve; reject=_reject; }); return { resolve, reject, promise }; };
+
+const initialisedDefer = defer();
+
 const initDefault = async error => {
 
     if(error)
@@ -100,6 +104,8 @@ const initDefault = async error => {
         debug("initDefault:", error);
         await service.create(defaultConfig);
     }
+
+    initialisedDefer.resolve();
 };
 
 const db = new nedb({
@@ -171,5 +177,5 @@ service.hooks({
     }
 });
 
-module.exports = { ...settings, service, pack };
+module.exports = { ...settings, service, pack, initialised: initialisedDefer };
 
