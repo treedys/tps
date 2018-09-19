@@ -23,9 +23,15 @@ app.param('camera', async (browser_request, browser_response, next, id) => {
 
 app.get('/preview/:camera*', async (browser_request, browser_response) => {
     try {
+
+        if(!browser_request.camera) {
+            browser_response.redirect('/noise.jpg');
+            return;
+        }
+
         const path = browser_request.params[0];
 
-        const camera_request = request.get(`http://${browser_request.camera.address}/${path}`);
+        const camera_request = request.get(`http://${browser_request.camera.address}/${path}`, {timeout: 2*1000} );
 
         camera_request.pause();
 
@@ -35,14 +41,14 @@ app.get('/preview/:camera*', async (browser_request, browser_response) => {
                 camera_request.resume();
             } else {
                 browser_response.redirect('/noise.jpg');
-                camera_request.abort();
+                camera_request.destroy();
             }
         });
 
         camera_request.on('error', error => {
             if(!browser_response.headersSent && !browser_response.finished)
                 browser_response.redirect('/noise.jpg');
-            camera_request.abort();
+            camera_request.destroy();
             debug('Camera preview Error:', error);
         });
 

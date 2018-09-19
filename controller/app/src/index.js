@@ -68,6 +68,7 @@ const cameraIndex = mac => {
 }
 
 app.post("/api/shoot/preview", async (browser_request, browser_response) => {
+    debug("Camera preview");
     try {
         await status.service.patch(0, { shooting: true });
         await send.shootAll(0);
@@ -137,7 +138,7 @@ app.post("/scan/:scan/download", async (browser_request, browser_response) => {
                     const fileName = `/db/${scanId}/${name}/${index}.jpg`;
 
                     const file_stream = fs.createWriteStream(path.join(config.PATH, fileName));
-                    const camera_request = request.get(`http://${camera.address}/${scanId}-${cameraFileIndex}.jpg`);
+                    const camera_request = request.get(`http://${camera.address}/${scanId}-${cameraFileIndex}.jpg`, {timeout:2*1000});
 
                     camera_request.pause();
 
@@ -206,7 +207,7 @@ app.post("/api/shoot/calibration", async (browser_request, browser_response) => 
     try {
         await status.service.patch(0, { shooting: true });
         await send.shootAll(calibrationId);
-        await delay(5*1000);
+        await delay(2*1000);
         await status.service.patch(0, { shooting: false });
 
         await status.service.patch(0, { downloading: true });
@@ -230,7 +231,7 @@ app.post("/api/shoot/calibration", async (browser_request, browser_response) => 
                 const fileName = `/db/${calibrationId}/calibration/${index}.jpg`;
 
                 const file_stream = fs.createWriteStream(path.join(config.PATH, fileName));
-                const camera_request = request.get(`http://${camera.address}/${calibrationId}-2.jpg`);
+                const camera_request = request.get(`http://${camera.address}/${calibrationId}-2.jpg`, {timeout:2*1000});
 
                 camera_request.pause();
 
@@ -328,7 +329,7 @@ app.post("/api/cameras/restart", async (browser_request, browser_response) => {
 
 const download = async (mac, file) =>
     pTimeout(retry(5, async () => new Promise( (resolve,reject) => {
-        const req = request(`http://${liveCameras[mac].address}/${file}`, (error, response, body) => {
+        const req = request(`http://${liveCameras[mac].address}/${file}`, {timeout:2*1000}, (error, response, body) => {
             if(error) { req.abort(); reject(error); }
             if(response?.statusCode!=200) { req.abort(); resolve(undefined); }
             resolve(body); req.end();
