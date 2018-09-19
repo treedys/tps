@@ -120,13 +120,13 @@ const service = app.service('/api/config');
 
 const _pack = config => {
 
-    const message = Buffer.alloc(25);
+    const message = Buffer.alloc(27);
 
     let offset = 0;
 
     // Keep in sync with 'struct camera_configuration'
 
-    offset = message.writeInt16LE(config.shutterSpeed, offset);
+    offset = message.writeInt32LE(config.shutterSpeed, offset);
     offset = message.writeInt16LE(config.iso,          offset);
     offset = message.writeInt16LE(config.redGain,      offset);
     offset = message.writeInt16LE(config.blueGain,     offset);

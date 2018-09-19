@@ -6,14 +6,14 @@
 /*****************************************************************************/
 
 struct __attribute__((__packed__)) camera_shot_configuration {
-    int16_t shutterSpeed;
+    int32_t shutterSpeed;
     int16_t iso;
     int16_t redGain;
     int16_t blueGain;
-    int16_t  gpio_delay_17;
-    int16_t  gpio_delay_18;
-    int16_t  gpio_delay_22;
-    int16_t  gpio_delay_27;
+    int16_t gpio_delay_17;
+    int16_t gpio_delay_18;
+    int16_t gpio_delay_22;
+    int16_t gpio_delay_27;
     int8_t  open;
     int8_t  close;
     int8_t  quality;
