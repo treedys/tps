@@ -46,6 +46,9 @@ app.get('/preview/:camera*', async (browser_request, browser_response) => {
             debug('Camera preview Error:', error);
         });
 
+        camera_request.on('end', chunk => debug(`End ${path}`, chunk));
+        camera_request.on('close', () => { debug(`Close ${path}`); camera_request.destroy(); } );
+
     } catch(error) {
         browser_response.status(500).send(error);
     }

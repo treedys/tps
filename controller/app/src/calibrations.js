@@ -51,6 +51,9 @@ app.get('/calibration/:calibration/preview.jpg', async (browser_request, browser
             file_stream.destroy();
         });
 
+        browser_response.on('close', () => file_stream.destroy() );
+        browser_response.on('end',   () => file_stream.destroy() );
+
     } catch(error) {
         browser_response.status(500).send(error);
     }

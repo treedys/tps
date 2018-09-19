@@ -160,7 +160,7 @@ module.exports = function() {
                 result += res;
             }
             unlock();
-            return result;
+            return result.replace('\0','');
         } catch(error) {
             unlock();
             throw error;
@@ -208,7 +208,7 @@ module.exports = function() {
     }
 
     let portMacTable = async (options) => {
-        let lines = (await privileged("show mac address-table", options)).split(/\r?\n/);
+        let lines = (await privileged("show mac address-table", options)).split(/[\r\n]+/);
 
         let table = [];
 
