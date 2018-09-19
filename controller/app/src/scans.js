@@ -53,6 +53,7 @@ app.get('/scan/:scan/preview-:index.jpg', async (browser_request, browser_respon
             } else {
                 browser_response.redirect('/noise.jpg');
             }
+
             return;
         }
 
@@ -68,7 +69,11 @@ app.get('/scan/:scan/preview-:index.jpg', async (browser_request, browser_respon
             file_stream.destroy();
         });
 
+        browser_response.on('close', () => file_stream.destroy() );
+        browser_response.on('end',   () => file_stream.destroy() );
+
     } catch(error) {
+        debug('Error:', error);
         browser_response.status(500).send(error);
     }
 });

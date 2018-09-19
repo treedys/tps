@@ -35,9 +35,24 @@ app.param('calibration', async (browser_request, browser_response, next, id) => 
 
 app.get('/calibration/:calibration/preview.jpg', async (browser_request, browser_response) => {
     try {
-        const { calibrationPath } = paths(calibrationsPath, browser_request.calibration[service.id]);
-        const { preview } = await config.service.get('0');
-        const fileName = Path.join(calibrationPath, 'calibration', `${preview}.jpg`);
+        const calibrationId = browser_request.calibration[service.id];
+        const { calibrationPath } = paths(calibrationsPath, calibrationId);
+        const { preview, scanner } = await config.service.get('0');
+        const folder = 'calibration';
+        const fileName = Path.join(calibrationPath, folder, `${preview}.jpg`);
+
+        if(!browser_request.calibration.done) {
+
+            const mac = scanner.map[preview];
+
+            if(mac) {
+                browser_response.redirect(`/preview/${mac}/${calibrationId}-1.jpg`);
+            } else {
+                browser_response.redirect('/noise.jpg');
+            }
+
+            return;
+        }
 
         const file_stream = fs.createReadStream(fileName);
 
@@ -55,16 +70,17 @@ app.get('/calibration/:calibration/preview.jpg', async (browser_request, browser
         browser_response.on('end',   () => file_stream.destroy() );
 
     } catch(error) {
+        debug('Error:', error);
         browser_response.status(500).send(error);
     }
 });
 
 app.get('/calibration/:calibration.zip', async (browser_request, browser_response) => {
     try {
-        var archive = archiver('zip', { store: true });
+        const archive = archiver('zip', { store: true });
+        const calibrationId = browser_request.calibration[service.id];
 
         archive.pipe(browser_response);
-        const calibrationId = browser_request.calibration[service.id];
 
         const { calibrationPath } = paths(calibrationsPath, calibrationId);
 
@@ -154,7 +170,7 @@ service.hooks({
 
                 await fs.ensureDir(calibrationPath);
 
-                context.data = Object.assign( defaultCalibration(), { [service.id]: nextId.toString(), }, context.data);
+                context.data = Object.assign( await defaultCalibration(), { [service.id]: nextId.toString(), }, context.data);
             }
         }
     },
