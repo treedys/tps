@@ -15,8 +15,6 @@ struct __attribute__((__packed__)) camera_shot_configuration {
     int16_t gpio_delay_18;
     int16_t gpio_delay_22;
     int16_t gpio_delay_27;
-    int8_t  open;
-    int8_t  close;
     int8_t  quality;
     int8_t  sharpness;
     int8_t  contrast;
@@ -30,6 +28,10 @@ struct __attribute__((__packed__)) camera_shot_configuration {
 
 struct __attribute__((__packed__)) camera_configuration {
     int32_t id;
+    int8_t shots;
+    int8_t frames;
+    int8_t projection;
+    int8_t normal;
     struct camera_shot_configuration shot[2];
 };
 

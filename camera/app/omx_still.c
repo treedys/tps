@@ -1,5 +1,6 @@
 #include "omx_still.h"
 
+#include <stdbool.h>
 #include <bcm_host.h>
 
 #include "logerr.h"
@@ -455,13 +456,13 @@ WARN_UNUSED enum error_code omx_still_open(struct camera_shot_configuration conf
     return OK;
 }
 
-WARN_UNUSED enum error_code omx_still_shoot(const buffer_output_handler handler)
+WARN_UNUSED enum error_code omx_still_shoot(const uint32_t frames, const buffer_output_handler handler)
 {
     enum error_code result;
 
     LOG_MESSAGE_COMPONENT(&splitter, "single step mode");
 
-    result = omx_config_singlestep(splitter.handle, 251, 1); if(result!=OK) { return result; }
+    result = omx_config_singlestep(splitter.handle, 251, frames); if(result!=OK) { return result; }
 
     //Enable camera capture port. This basically says that the port 72 will be
     //used to get data from the camera. If you're capturing video, the port 71
@@ -473,6 +474,10 @@ WARN_UNUSED enum error_code omx_still_shoot(const buffer_output_handler handler)
     VCOS_UNSIGNED end_flags = EVENT_BUFFER_FLAG | EVENT_FILL_BUFFER_DONE;
     VCOS_UNSIGNED retrieves_events;
 
+    uint32_t frame = 0;
+    bool last_buffer_ends_jpeg = false;
+    bool this_buffer_stars_jpeg = false;
+
     while(1)
     {
         //Get the buffer data (a slice of the image)
@@ -481,7 +486,26 @@ WARN_UNUSED enum error_code omx_still_shoot(const buffer_output_handler handler)
         //Wait until it's filled
         result = wait(&encoder, EVENT_FILL_BUFFER_DONE, &retrieves_events); if(result!=OK) { return result; }
 
-        handler(&output_buffer->pBuffer[output_buffer->nOffset], output_buffer->nFilledLen);
+        this_buffer_stars_jpeg =
+            output_buffer->nFilledLen>=10 &&
+            output_buffer->pBuffer[output_buffer->nOffset+0] == 0xFF &&
+            output_buffer->pBuffer[output_buffer->nOffset+1] == 0xD8 &&
+            output_buffer->pBuffer[output_buffer->nOffset+2] == 0xFF &&
+            output_buffer->pBuffer[output_buffer->nOffset+3] == 0xE1 &&
+            output_buffer->pBuffer[output_buffer->nOffset+6] == 'E' &&
+            output_buffer->pBuffer[output_buffer->nOffset+7] == 'x' &&
+            output_buffer->pBuffer[output_buffer->nOffset+8] == 'i' &&
+            output_buffer->pBuffer[output_buffer->nOffset+9] == 'f';
+
+        if(last_buffer_ends_jpeg && this_buffer_stars_jpeg)
+            frame++;
+
+        handler(frame, &output_buffer->pBuffer[output_buffer->nOffset], output_buffer->nFilledLen);
+
+        last_buffer_ends_jpeg =
+            output_buffer->nFilledLen>=2 &&
+            output_buffer->pBuffer[output_buffer->nOffset+output_buffer->nFilledLen-2] == 0xFF &&
+            output_buffer->pBuffer[output_buffer->nOffset+output_buffer->nFilledLen-1] == 0xD9;
 
         //When it's the end of the stream, an OMX_EventBufferFlag is emitted in the
         //camera and image_encode components. Then the FillBufferDone function is

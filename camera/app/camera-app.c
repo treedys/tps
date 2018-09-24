@@ -19,6 +19,9 @@ uint8_t jpeg2[10000000];
 size_t position1 = 0;
 size_t position2 = 0;
 
+int8_t shots, shot, frames;
+int8_t projection, normal;
+
 void buffering1(const uint8_t * const buffer, size_t length)
 {
     if(length > sizeof(jpeg1)-position1)
@@ -43,6 +46,15 @@ void buffering2(const uint8_t * const buffer, size_t length)
     memcpy(&jpeg2[position2], buffer, length);
 
     position2 += length;
+}
+
+void buffering(const uint32_t frame, const uint8_t * const buffer, size_t length)
+{
+    if(frame+shot*frames == projection) buffering1(buffer, length);
+    if(frame+shot*frames == normal    ) buffering2(buffer, length);
+
+    if(frame>=frames)
+        LOG_ERROR("Unexpected frame %d", frame);
 }
 
 WARN_UNUSED enum error_code write_file(const char * const filename, const uint8_t * const buffer, const size_t length)
@@ -113,10 +125,7 @@ WARN_UNUSED enum error_code single_shoot(struct camera_shot_configuration config
 {
     enum error_code result;
 
-    if(config.open)
-    {
-        result = omx_still_open(config); if(result!=OK) { return result; }
-    }
+    result = omx_still_open(config); if(result!=OK) { return result; }
 
     timer_t timer_17;
     timer_t timer_18;
@@ -128,17 +137,14 @@ WARN_UNUSED enum error_code single_shoot(struct camera_shot_configuration config
     if(config.gpio_delay_22) { result = gpio_pulse(&timer_22, config.gpio_delay_22, gpio_write_22); if(result!=OK) return result; }
     if(config.gpio_delay_27) { result = gpio_pulse(&timer_27, config.gpio_delay_27, gpio_write_27); if(result!=OK) return result; }
 
-    result = omx_still_shoot(handler); if(result!=OK) { return result; }
+    result = omx_still_shoot(frames, handler); if(result!=OK) { return result; }
 
     digitalWrite( 17, LOW );
     digitalWrite( 18, LOW );
     digitalWrite( 22, LOW );
     digitalWrite( 27, LOW );
 
-    if(config.close)
-    {
-        result = omx_still_close(); if(result!=OK) { return result; }
-    }
+    result = omx_still_close(); if(result!=OK) { return result; }
 
     int result_int;
 
@@ -176,21 +182,25 @@ enum error_code shoot(struct camera_configuration config)
     position1 = 0;
     position2 = 0;
 
-    result = single_shoot(config.shot[0], buffering1); if(result!=OK) { return result; }
-    result = single_shoot(config.shot[1], buffering2); if(result!=OK) { return result; }
+
+    shots      = config.shots;
+    frames     = config.frames;
+    projection = config.projection;
+    normal     = config.normal;
+
+    for(shot=0;shot<shots;shot++)
+    {
+        result = single_shoot(config.shot[shot], buffering); if(result!=OK) { return result; }
+    }
 
     char filename[100];
 
     snprintf(filename, sizeof(filename), "/var/www/%d-1.jpg", (int)config.id);
-
     result = write_file(filename, jpeg1, position1); if(result!=OK) { return result; }
-
     LOG_MESSAGE("Written %s", filename);
 
     snprintf(filename, sizeof(filename), "/var/www/%d-2.jpg", (int)config.id);
-
     result = write_file(filename, jpeg2, position2); if(result!=OK) { return result; }
-
     LOG_MESSAGE("Written %s", filename);
 
     return OK;

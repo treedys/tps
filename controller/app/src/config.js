@@ -36,12 +36,11 @@ const settings = {
         blueGain:      1000, //    0 ..
         drc:              0, //    0 ..   3 OFF, LOW, MEDIUM, HIGH
         whiteBalance:     1, //    0 ..   8 OFF, AUTO ... HORIZON
+        stripLight:  'full', // full, high, medium, low
         gpioDelay17:      0,
         gpioDelay18:      0,
         gpioDelay22:      0,
         gpioDelay27:      0,
-        open:          true,
-        close:         true,
         rotation:        90, // 0, 90, 180, 270
     }
 };
@@ -53,6 +52,7 @@ const defaultConfig = {
     nextId: 1,
     scanFields: 'First Name;Last Name;Email;Gender:Male,Female,Other',
     camera: {
+        shotInterval: 'normal',
         normal: settings.CAMERA,
         projection: settings.CAMERA
     },
@@ -125,7 +125,7 @@ const _pack = config => {
             break;
     }
 
-    const message = Buffer.alloc(29);
+    const message = Buffer.alloc(27);
 
     let offset = 0;
 
@@ -140,8 +140,6 @@ const _pack = config => {
     offset = message.writeInt16LE(config.gpioDelay18,  offset);
     offset = message.writeInt16LE(config.gpioDelay22,  offset);
     offset = message.writeInt16LE(config.gpioDelay27,  offset);
-    offset = message.writeInt8   (config.open,         offset);
-    offset = message.writeInt8   (config.close,        offset);
     offset = message.writeInt8   (config.quality,      offset);
     offset = message.writeInt8   (config.sharpness,    offset);
     offset = message.writeInt8   (config.contrast,     offset);
@@ -157,25 +155,31 @@ const pack = async () => {
 
     const { camera: { shotInterval, normal, projection }  } = await service.get('0');
 
+    let shots, frames, projectionFrame, normalFrame;
+
     switch(shotInterval) {
         case "normal":
-            projection.open  = true;
-            projection.close = true;
-            normal    .open  = true;
-            normal    .close = true;
+            shots = 2;
+            frames = 1;
+            projectionFrame = 1;
+            normalFrame = 0;
             break;
         case "short":
-            projection.open  = false;
-            projection.close = true;
-            normal    .open  = true;
-            normal    .close = false;
+            shots = 1;
+            frames = 4;
+            projectionFrame = 3;
+            normalFrame = 2;
             break;
     }
 
         normal.gpioDelay22 =     normal.projectionDelay ||     normal.gpioDelay22;
     projection.gpioDelay22 = projection.projectionDelay || projection.gpioDelay22;
 
-    return Buffer.concat([_pack(normal), _pack(projection)]);
+    return Buffer.concat([
+        Buffer.from([shots, frames, projectionFrame, normalFrame]),
+        _pack(normal),
+        _pack(projection)
+    ]);
 };
 
 const updateHostName =  async hostname => {
