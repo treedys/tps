@@ -140,6 +140,10 @@ app.post("/scan/:scan/download", async (browser_request, browser_response) => {
                     const file_stream = fs.createWriteStream(path.join(config.PATH, fileName));
                     const camera_request = request.get(`http://${camera.address}/${scanId}-${cameraFileIndex}.jpg`, {timeout:2*1000});
 
+                    camera_request.on('error', error => {
+                        debug(`Scan:${scanId} camera:${index} ${name} HTTP request timeout`);
+                    });
+
                     camera_request.pause();
 
                     try {
@@ -232,6 +236,10 @@ app.post("/api/shoot/calibration", async (browser_request, browser_response) => 
 
                 const file_stream = fs.createWriteStream(path.join(config.PATH, fileName));
                 const camera_request = request.get(`http://${camera.address}/${calibrationId}-2.jpg`, {timeout:2*1000});
+
+                camera_request.on('error', error => {
+                    debug(`Calibration:${calibrationId} camera:${index} HTTP request timeout`);
+                });
 
                 camera_request.pause();
 
