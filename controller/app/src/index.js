@@ -104,6 +104,54 @@ app.post("/api/shoot/scan", async (browser_request, browser_response) => {
     }
 });
 
+const downloadToFile = (url, filePath) => new Promise( async (resolve, reject) => {
+
+    // Use HEAD request to check if the target file exists
+    const fileStream = fs.createWriteStream(filePath);
+    const httpRequest = request.get(url, {timeout:2*1000});
+
+    httpRequest.on('error', error => {
+        fileStream.destroy();
+        httpRequest.destroy();
+        reject(error);
+    });
+
+    fileStream.on('error', error => {
+        fileStream.destroy();
+        httpRequest.destroy();
+        reject(error);
+    });
+
+    httpRequest.pause();
+
+    try {
+
+        const [response] = await eventToPromise.multi(httpRequest, ["response"], ["error", "abort"] );
+
+        if(response.statusCode!=200) {
+            httpRequest.destroy();
+            fileStream.destroy();
+            reject(new Error(`Response ${response.statusCode} from ${url}`));
+            return;
+        }
+
+        httpRequest.pipe(fileStream);
+        httpRequest.resume();
+
+        await pTimeout(Promise.all([
+            eventToPromise.multi(httpRequest, ["finish", "close", "end", "complete"], ["error", "abort"] ),
+            eventToPromise.multi(fileStream,  ["finish", "close"], ["error", "unpipe"] )
+        ]), 120*1000, `Timeout downloading ${url}`);
+
+        resolve();
+
+    } catch(error) {
+        httpRequest.destroy();
+        fileStream.destroy();
+        reject(error);
+    }
+});
+
 app.post("/scan/:scan/download", async (browser_request, browser_response) => {
 
     const scanId = browser_request.scan[scans.service.id];
@@ -133,46 +181,13 @@ app.post("/scan/:scan/download", async (browser_request, browser_response) => {
 
                 await Promise.all(shotsConfig.map( async ({ name, index: cameraFileIndex }) => {
 
-                    // Use HEAD request to check if the target jpg file exists
-
-                    const fileName = `/db/${scanId}/${name}/${index}.jpg`;
-
-                    const file_stream = fs.createWriteStream(path.join(config.PATH, fileName));
-                    const camera_request = request.get(`http://${camera.address}/${scanId}-${cameraFileIndex}.jpg`, {timeout:2*1000});
-
-                    camera_request.on('error', error => {
-                        debug(`Scan:${scanId} camera:${index} ${name} HTTP request timeout`);
-                    });
-
-                    camera_request.pause();
-
                     try {
+                        const fileName = path.join(config.PATH, `/db/${scanId}/${name}/${index}.jpg`);
+                        const cameraUrl = `http://${camera.address}/${scanId}-${cameraFileIndex}.jpg`;
 
-                        const [response] = await eventToPromise.multi(camera_request, ["response"], ["error", "abort"] );
-
-                        if(response.statusCode!=200) {
-                            debug(`Response ${response.statusCode} from ${response.url}`);
-
-                            camera_request.destroy();
-                            file_stream.destroy();
-
-                            await scans.fail(scanId, index);
-
-                            return;
-                        }
-
-                        camera_request.pipe(file_stream);
-                        camera_request.resume();
-
-                        await pTimeout(Promise.all([
-                            eventToPromise.multi(camera_request, ["finish", "close", "end", "complete"], ["error", "abort"] ),
-                            eventToPromise.multi(file_stream,    ["finish", "close"], ["error", "unpipe"] )
-                        ]), 120*1000, `Timeout downloading ${fileName}`);
-
+                        await downloadToFile(cameraUrl, fileName);
                     } catch(error) {
-                        debug(`Error Scan:${scanId} Camera:${index}`, error);
-                        camera_request.destroy();
-                        file_stream.destroy();
+                        debug(`Scan:${scanId} Camera:${index} error:`, error);
 
                         await scans.fail(scanId, index);
                     }
@@ -180,17 +195,17 @@ app.post("/scan/:scan/download", async (browser_request, browser_response) => {
 
                 await send.erase(mac, scanId);
             } catch(error) {
-                debug(`Error Scan:${scanId} Camera:${index}`, error);
+                debug(`Scan:${scanId} Camera:${index} error:`, error);
             }
         }));
 
-        debug(`Done scan ${scanId}`);
+        debug(`Scan:${scanId} done!`);
 
         await status.service.patch(0, { downloading: false });
         await scans.service.patch(scanId, { done: Date.now() });
 
     } catch(error) {
-        debug(`Error Scan:${scanId}`, error);
+        debug(`Scan:${scanId} error:`, error);
     }
 });
 
@@ -230,62 +245,30 @@ app.post("/api/shoot/calibration", async (browser_request, browser_response) => 
                     return;
                 }
 
-                // Use HEAD request to check if the target jpg file exists
-
-                const fileName = `/db/${calibrationId}/calibration/${index}.jpg`;
-
-                const file_stream = fs.createWriteStream(path.join(config.PATH, fileName));
-                const camera_request = request.get(`http://${camera.address}/${calibrationId}-2.jpg`, {timeout:2*1000});
-
-                camera_request.on('error', error => {
-                    debug(`Calibration:${calibrationId} camera:${index} HTTP request timeout`);
-                });
-
-                camera_request.pause();
-
                 try {
-                    const [response] = await eventToPromise.multi(camera_request, ["response"], ["error", "abort"] );
+                    const fileName = path.join(config.PATH, `/db/${calibrationId}/calibration/${index}.jpg`);
+                    const cameraUrl = `http://${camera.address}/${calibrationId}-2.jpg`;
 
-                    if(response.statusCode!=200) {
-                        debug(`Response ${response.statusCode} from ${response.url}`);
-
-                        camera_request.destroy();
-                        file_stream.destroy();
-
-                        await calibrations.fail(calibrationId, index);
-
-                        return;
-                    }
-
-                    camera_request.pipe(file_stream);
-                    camera_request.resume();
-
-                    await pTimeout(Promise.all([
-                        eventToPromise.multi(camera_request, ["finish", "close", "end", "complete"], ["error", "abort"] ),
-                        eventToPromise.multi(file_stream,    ["finish", "close"], ["error", "unpipe"] )
-                    ]), 120*1000, `Timeout downloading ${fileName}`);
-
+                    await downloadToFile(cameraUrl, fileName);
                 } catch(error) {
-                    debug(`Error Calibration:${calibrationId} Camera:${index}`, error);
-                    camera_request.destroy();
-                    file_stream.destroy();
+                    debug(`Calibration:${calibrationId} camera:${index} error:`, error);
 
                     await calibrations.fail(calibrationId, index);
                 }
 
                 await send.erase(mac, calibrationId);
             } catch(error) {
-                debug(`Error Calibration:${calibrationId} Camera:${index}`, error);
+                debug(`Calibration:${calibrationId} camera:${index} error:`, error);
             }
         }));
 
-        debug(`Done calibration ${calibrationId}`);
+        debug(`Calibration:${calibrationId} done!`);
 
         await status.service.patch(0, { downloading: false });
         await calibrations.service.patch(calibrationId, { done: Date.now() });
 
     } catch(error) {
-        debug(`Error Calibration:${calibrationId}`, error);
+        debug(`Calibration:${calibrationId} error:`, error);
     }
 });
 
@@ -335,7 +318,7 @@ app.post("/api/cameras/restart", async (browser_request, browser_response) => {
     }
 });
 
-const download = async (mac, file) =>
+const downloadContent = async (mac, file) =>
     pTimeout(retry(5, async () => new Promise( (resolve,reject) => {
         const req = request(`http://${liveCameras[mac].address}/${file}`, {timeout:2*1000}, (error, response, body) => {
             if(error) { req.abort(); reject(error); }
@@ -348,7 +331,7 @@ const checkNetboot = async (mac) => {
     await send.exec(mac, "vcgencmd otp_dump > /var/www/otp_dump");
     await delay(100);
 
-    const otp_dump = await download(mac, "otp_dump");
+    const otp_dump = await downloadContent(mac, "otp_dump");
     const otp = eol.split(otp_dump).map(line => line.split(':')).reduce( (otp, [addr, value]) => Object.assign(otp, typeof(value)!="undefined" && { [parseInt(addr)]:parseInt(value,16) }), []);
 
     if(otp[17]!=0x3020000a) {
@@ -361,19 +344,19 @@ const cameraState= async (mac) => {
     await send.exec(mac, "cp /etc/*-version /var/www/");
     await delay(100);
 
-    const    cameraVersion = await download(mac,    "camera-version");
-    const buildrootVersion = await download(mac, "buildroot-version");
+    const    cameraVersion = await downloadContent(mac,    "camera-version");
+    const buildrootVersion = await downloadContent(mac, "buildroot-version");
 
     const needsUpgrade = cameraVersion?.trim()!=CAMERAFIRMWARESHA1 || buildrootVersion?.trim()!=BUILDROOTSHA1;
 
     await send.exec(mac, "ls /dev/ > /var/www/dev");
     await delay(100);
-    const dev = await download(mac, "dev");
+    const dev = await downloadContent(mac, "dev");
     const hasSDcard = dev.includes("mmcblk0");
 
     await send.exec(mac, "cp /proc/cmdline /var/www/");
     await delay(100);
-    const cmdline = await download(mac, "cmdline");
+    const cmdline = await downloadContent(mac, "cmdline");
     const bootFromSDcard = cmdline.includes("root=/dev/mmcblk0");
 
     return { cameraVersion, buildrootVersion, dev, cmdline, needsUpgrade, hasSDcard, bootFromSDcard };
