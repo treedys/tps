@@ -8,7 +8,7 @@ const styles = {
             padding: '.5em 0em'
         },
         label: {
-            width: "5em",
+            width: "6em",
             fontSize: "1em",
             alignSelf: "baseline",
             marginRight: "1em",
