@@ -14,10 +14,26 @@ const styles = {
         borderRadius: '6px',
         overflow: 'hidden'
     },
-    port: {
+    switchIndex: {
+        position: "absolute",
+        top: "4px",
+        right: "4px",
+        margin: "0px",
+        color: 'white',
+        textShadow: 'rgba(0, 0, 0, 0.156863) 0px 0px 10px, rgba(0, 0, 0, 0.227451) 0px 0px 10px'
+    },
+    portIndex: {
         position: "absolute",
         bottom: "4px",
         right: "4px",
+        margin: "0px",
+        color: 'white',
+        textShadow: 'rgba(0, 0, 0, 0.156863) 0px 0px 10px, rgba(0, 0, 0, 0.227451) 0px 0px 10px'
+    },
+    port: {
+        position: "absolute",
+        bottom: "4px",
+        left: "4px",
         margin: "0px",
         color: 'white',
         textShadow: 'rgba(0, 0, 0, 0.156863) 0px 0px 10px, rgba(0, 0, 0, 0.227451) 0px 0px 10px'
@@ -100,13 +116,15 @@ const cameraDrag = 'CAMERA';
 )
 export class Camera extends React.Component {
     render() {
-        let { index, camera, isDragging, isOver, connectDragSource, connectDropTarget, ...props} = this.props;
+        let { index, camera, switchData, isDragging, isOver, connectDragSource, connectDropTarget, ...props} = this.props;
 
         return !isDragging && connectDropTarget(connectDragSource(
             <div style={{ ...styles.camera, ...(isOver && { border:"2px solid black" }) }}>
                 <img src={ camera?.online ? `/preview/${camera.mac}/0-2.jpg?${Date.now()}` : assets.noise } style={{width:'100%', height:'auto'}} />
                 <p style={styles.port}>{index}</p>
                 { camera && <div style={{ ...styles.led, ...( camera.online ? styles.on : styles.off) }}/> }
+                { camera && <div style={ styles.switchIndex }>{switchData?.name||"--"}</div> }
+                { camera && <div style={ styles.portIndex }>{camera?.port||"--"}</div> }
             </div>));
     }
 }
@@ -115,7 +133,7 @@ export class Camera extends React.Component {
 export class CameraList extends React.Component {
 
     render() {
-        let { config, cameras, onConfigChange, ...props} = this.props;
+        let { config, cameras, switches, onConfigChange, ...props} = this.props;
 
         if( !(config && cameras) )
             return <h1>No data</h1>;
@@ -139,9 +157,10 @@ export class CameraList extends React.Component {
                 for(let column=0; column<config.columns; column++) {
                     const mac = index<count && source[start+index];
                     const camera = cameras.find( camera => camera.mac==mac );
+                    const switchData = switches.find( switchData => switchData.address == camera?.switchAddress );
 
                     if(index<count) {
-                        columns.push(<td key={column} style={cellStyle}><Camera camera={camera} index={start+index} onDrop={onDrop}/></td>);
+                        columns.push(<td key={column} style={cellStyle}><Camera camera={camera} switchData={switchData} index={start+index} onDrop={onDrop}/></td>);
                     } else {
                         columns.push(<td key={column} style={{ ...cellStyle, border:"2px solid #55555522", borderRadius:"5px",  minHeight:"40px"}}/>);
                     }
