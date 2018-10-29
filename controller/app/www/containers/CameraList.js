@@ -1,4 +1,5 @@
 import React from 'react';
+import { NavLink  } from 'react-router-dom'
 import { DragSource, DropTarget, DragDropContext } from 'react-dnd';
 import HTML5Backend from 'react-dnd-html5-backend';
 import { Row, Col } from '../components/';
@@ -9,10 +10,12 @@ const styles = {
         width: `${100/8}%`
     },
     camera: {
+        width: "100%",
+        height: "auto",
         position: "relative",
         boxShadow: 'rgba(0, 0, 0, 0.156863) 0px 0px 10px, rgba(0, 0, 0, 0.227451) 0px 0px 10px',
         borderRadius: '6px',
-        overflow: 'hidden'
+        overflow: 'auto'
     },
     switchIndex: {
         position: "absolute",
@@ -55,11 +58,15 @@ const styles = {
     }
 };
 
-export const CameraLink = ({ camera, port, ...params }) =>
-    <div style={styles.camera}>
-        <img src={ camera.online ? `/preview/${camera.id}/0-2.jpg?${Date.now()}` : assets.noise } style={{width:'100%', height:'auto'}} {...params} />
-        <p style={styles.port}>{port} - { camera.index!=undefined ? camera.index : '--'}</p>
-        <div style={{ ...styles.led, ...( camera.online ? styles.on : styles.off) }}/>
+export const CameraLink = ({ camera, switchData, index, style, ...params }) =>
+    <div style={{ ...styles.camera, ...style }}>
+        <NavLink to={`/cameras/${camera?.id}`}>
+            <img src={ camera?.online ? `/preview/${camera.id}/0-2.jpg?${Date.now()}` : assets.noise } style={{width:'100%', height:'auto'}} {...params} />
+        </NavLink>
+        <p style={styles.port}>{index||camera?.index||"--"}</p>
+        <div style={{ ...styles.led, ...( camera?.online ? styles.on : styles.off) }}/>
+        <div style={ styles.switchIndex }>{switchData?.name||"--"}</div>
+        <div style={ styles.portIndex }>{camera?.port||"--"}</div>
     </div>
 
 export const SwitchCameraList = ({ switchData, cameras, ...params }) => {
@@ -83,7 +90,7 @@ export const SwitchCameraList = ({ switchData, cameras, ...params }) => {
                     camera.port==port && camera.switchAddress==switchData.address)
                         || { online: false, port: port, switchAddress: switchData.address } ;
 
-                cols.push(<td style={styles.cell} key={port}><CameraLink camera={camera} port={port} {...params}/></td>);
+                cols.push(<td style={styles.cell} key={port}><CameraLink camera={camera} switchData={switchData} {...params}/></td>);
             }
         }
         rows.push(<tr key={row}>{cols}</tr>);
@@ -116,16 +123,13 @@ const cameraDrag = 'CAMERA';
 )
 export class Camera extends React.Component {
     render() {
-        let { index, camera, switchData, isDragging, isOver, connectDragSource, connectDropTarget, ...props} = this.props;
+        let { isDragging, isOver, connectDragSource, connectDropTarget, ...props} = this.props;
 
-        return !isDragging && connectDropTarget(connectDragSource(
-            <div style={{ ...styles.camera, ...(isOver && { border:"2px solid black" }) }}>
-                <img src={ camera?.online ? `/preview/${camera.mac}/0-2.jpg?${Date.now()}` : assets.noise } style={{width:'100%', height:'auto'}} />
-                <p style={styles.port}>{index}</p>
-                { camera && <div style={{ ...styles.led, ...( camera.online ? styles.on : styles.off) }}/> }
-                { camera && <div style={ styles.switchIndex }>{switchData?.name||"--"}</div> }
-                { camera && <div style={ styles.portIndex }>{camera?.port||"--"}</div> }
-            </div>));
+        return !isDragging && <CameraLink
+            ref={ instance => connectDropTarget(connectDragSource(findDOMNode(instance))) }
+            style={{ ...(isOver && { border:"2px solid black" }) }}
+            {...props}
+        />;
     }
 }
 

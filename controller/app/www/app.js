@@ -12,7 +12,7 @@ import {
     PageList, PageLink,
     Scan, ScanList,
     Calibration, CalibrationList,
-    SwitchList, SwitchCameraList, CameraList,
+    SwitchList, SwitchCameraList, CameraList, CameraLink,
     Settings
 } from './containers/';
 
@@ -299,8 +299,12 @@ export default class App extends React.Component {
                                 <CameraList cameras={this.state.cameras} switches={ this.state.switches } config={this.state.config?.scanner} onConfigChange={ config => services.config.patch('0', { scanner: config }) }/>
                         }/>
 
-                        <Route path="/cameras/:switchId" render={ props =>
+                        <Route path="/cameras/switch/:switchId" render={ props =>
                             <SwitchCameraList cameras={this.state.cameras} switchData={ this.state.switches?.[props.match.params.switchId] }/>
+                        }/>
+
+                        <Route path="/cameras/:cameraId" render={ props =>
+                            <CameraLink camera={this.state.cameras?.find( camera => camera.id==props.match.params.cameraId ) }/>
                         }/>
 
                         <Route path="/settings" render={ props =>

@@ -39,7 +39,7 @@ export const CamerasMapLink = props =>
     </PageSubLink>
 
 export const SwitchLink = ({switchData, ...props}) =>
-    <PageSubLink to={`/cameras/${switchData.id}`}
+    <PageSubLink to={`/cameras/switch/${switchData.id}`}
         icon={assets.switchIcon}>
         <Col style={{ margin: "1em" }} className="fill align-center">
             <Row style={ styles.link.description.primary }>
