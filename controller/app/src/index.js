@@ -76,6 +76,7 @@ app.post("/api/shoot/preview", async (browser_request, browser_response) => {
         await status.service.patch(0, { shooting: false });
         browser_response.status(204).end();
     } catch(error) {
+        debug('Error:', error);
         browser_response.status(500).send(error);
     }
 });

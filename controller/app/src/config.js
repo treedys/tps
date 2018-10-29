@@ -71,6 +71,7 @@ const settings = {
         gpioDelay27:      0,
         open:          true,
         close:         true,
+        rotation:        90, // 0, 90, 180, 270
     }
 };
 
@@ -149,7 +150,7 @@ const _pack = config => {
             break;
     }
 
-    const message = Buffer.alloc(27);
+    const message = Buffer.alloc(29);
 
     let offset = 0;
 
@@ -159,6 +160,7 @@ const _pack = config => {
     offset = message.writeInt16LE(config.iso,          offset);
     offset = message.writeInt16LE(config.redGain,      offset);
     offset = message.writeInt16LE(config.blueGain,     offset);
+    offset = message.writeInt16LE(config.rotation,     offset);
     offset = message.writeInt16LE(config.gpioDelay17,  offset);
     offset = message.writeInt16LE(config.gpioDelay18,  offset);
     offset = message.writeInt16LE(config.gpioDelay22,  offset);

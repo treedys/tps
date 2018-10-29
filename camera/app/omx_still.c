@@ -176,7 +176,7 @@ enum error_code set_camera_videoport(void)
 }
 
 static WARN_UNUSED
-enum error_code set_camera_previewport(void)
+enum error_code set_camera_previewport(struct camera_shot_configuration config)
 {
     enum error_code result;
 
@@ -208,7 +208,7 @@ enum error_code set_camera_previewport(void)
 
     result = omx_set_parameter(camera.handle, OMX_IndexParamPortDefinition, &port_def); if(result!=OK) { return result; }
 
-    result = omx_config_rotation    (camera.handle,      70, CAM_ROTATION    ); if(result!=OK) { return result; }
+    result = omx_config_rotation    (camera.handle,      70, config.rotation); if(result!=OK) { return result; }
 
     return OK;
 }
@@ -249,7 +249,7 @@ enum error_code set_camera_settings(struct camera_shot_configuration config)
 
     result = omx_config_image_filter(camera.handle, OMX_ALL, CAM_IMAGE_FILTER); if(result!=OK) { return result; }
     result = omx_config_mirror      (camera.handle,      71, CAM_MIRROR      ); if(result!=OK) { return result; }
-    result = omx_config_rotation    (camera.handle,      71, CAM_ROTATION    ); if(result!=OK) { return result; }
+    result = omx_config_rotation    (camera.handle,      71, config.rotation ); if(result!=OK) { return result; }
     result = omx_config_color_enhancement(camera.handle, OMX_ALL, CAM_COLOR_ENABLE, CAM_COLOR_U, CAM_COLOR_V); if(result!=OK) { return result; }
     result = omx_config_denoise     (camera.handle,       CAM_NOISE_REDUCTION); if(result!=OK) { return result; }
     result = omx_config_input_crop_percentage(camera.handle, OMX_ALL,
@@ -290,11 +290,11 @@ enum error_code init_camera(struct camera_shot_configuration config)
 {
     enum error_code result;
 
-    result = load_camera_drivers(&camera);  if(result!=OK) { return result; }
-    result = set_camera_sensor_framesize(); if(result!=OK) { return result; }
-    result = set_camera_videoport();        if(result!=OK) { return result; }
-    result = set_camera_previewport();      if(result!=OK) { return result; }
-    result = set_camera_settings(config);   if(result!=OK) { return result; }
+    result = load_camera_drivers(&camera);   if(result!=OK) { return result; }
+    result = set_camera_sensor_framesize();  if(result!=OK) { return result; }
+    result = set_camera_videoport();         if(result!=OK) { return result; }
+    result = set_camera_previewport(config); if(result!=OK) { return result; }
+    result = set_camera_settings(config);    if(result!=OK) { return result; }
 
     return OK;
 }

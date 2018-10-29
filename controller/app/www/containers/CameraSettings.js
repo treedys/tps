@@ -39,6 +39,13 @@ const whiteBalanceOptions = [
     { value: 9, name: "Horizon"      }
 ];
 
+const rotationOptions = [
+    { value:   0, name:   "0" },
+    { value:  90, name:  "90" },
+    { value: 180, name: "180" },
+    { value: 270, name: "270" }
+];
+
 const shotIntervalOptions = [ "normal", "short" ];
 const stripLightOptions  = [ "full", "high", "medium", "low" ];
 
@@ -67,6 +74,7 @@ export default class CameraSettings extends React.Component {
                     <Form.Field><LabeledSelect    label="White balance"         options={whiteBalanceOptions} value={this.state.settings.projection.whiteBalance   } onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.projection.whiteBalance    = value; } )); } } /></Form.Field>
                     <Form.Field><LabeledTextInput label="Projection delay"                                    value={this.state.settings.projection.projectionDelay} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.projection.projectionDelay = value; } )); } } /></Form.Field>
                     <Form.Field><LabeledSelect    label="Strip light intensity" options={stripLightOptions}   value={this.state.settings.projection.stripLight     } onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.projection.stripLight      = value; } )); } } /></Form.Field>
+                    <Form.Field><LabeledSelect    label="Rotation"              options={rotationOptions}     value={this.state.settings.projection.rotation       } onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.projection.rotation        = value; } )); } } /></Form.Field>
                     </> :
                     <table style={{width:"100%"}}>
                         <thead>
@@ -131,6 +139,11 @@ export default class CameraSettings extends React.Component {
                                 <td style={styles.label}>Strip light intensity</td>
                                 <td><Form.Field><LabeledSelect options={stripLightOptions} value={this.state.settings.projection.stripLight} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.projection.stripLight = value; } )); } } /></Form.Field></td>
                                 <td><Form.Field><LabeledSelect options={stripLightOptions} value={this.state.settings.normal    .stripLight} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.normal    .stripLight = value; } )); } } /></Form.Field></td>
+                            </tr>
+                            <tr>
+                                <td style={styles.label}>Rotation</td>
+                                <td><Form.Field><LabeledSelect options={rotationOptions} value={this.state.settings.projection.rotation} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.projection.rotation = value; } )); } } /></Form.Field></td>
+                                <td><Form.Field><LabeledSelect options={rotationOptions} value={this.state.settings.normal    .rotation} onChange={ ({target:{value}}) => { this.changeState(produce( state => { state.settings.normal    .rotation = value; } )); } } /></Form.Field></td>
                             </tr>
                         </tbody>
                     </table>
