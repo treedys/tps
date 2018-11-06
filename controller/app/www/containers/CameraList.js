@@ -125,11 +125,13 @@ export class Camera extends React.Component {
     render() {
         let { isDragging, isOver, connectDragSource, connectDropTarget, ...props} = this.props;
 
-        return !isDragging && <CameraLink
-            ref={ instance => connectDropTarget(connectDragSource(findDOMNode(instance))) }
-            style={{ ...(isOver && { border:"2px solid black" }) }}
-            {...props}
-        />;
+        return !isDragging && connectDropTarget(connectDragSource(
+            <div>
+                <CameraLink
+                    style={{ ...(isOver && { border:"2px solid black" }) }}
+                    {...props}
+                />
+            </div>));
     }
 }
 
