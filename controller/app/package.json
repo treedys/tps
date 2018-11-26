@@ -81,6 +81,6 @@
     "webpack-node-externals": "^1.7.2"
   },
   "optionalDependencies": {
-    "netlink-notify": "github:cenuij/netlink-notify"
+    "netlink-notify": "github:treedys/netlink-notify"
   }
 }
