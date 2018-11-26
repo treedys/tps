@@ -19,7 +19,11 @@ const common = {
     // Exclude built-in modules like path, fs, etc.
     target: 'node',
     // Exclude node_modules from webpack bundle
-    externals: [ nodeExternals() ],
+    externals: [ nodeExternals({
+        modulesFromFile: {
+            exclude: [ "devDependencies" ]
+        }
+    }) ],
     entry: { "treedys-controller": path.resolve(__dirname, "src/index.js") },
     output: { path: __dirname, filename: "[name].js", },
     module: {
