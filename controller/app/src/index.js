@@ -97,7 +97,7 @@ app.post("/api/shoot/scan", async (browser_request, browser_response) => {
     try {
         await status.service.patch(0, { shooting: true });
         await send.shootAll(scanId);
-        await delay(2*1000);
+        await delay(5*1000);
         await status.service.patch(0, { shooting: false });
     } catch(error) {
         debug(`Error Scan:${scanId}`, error);
@@ -226,7 +226,7 @@ app.post("/api/shoot/calibration", async (browser_request, browser_response) => 
     try {
         await status.service.patch(0, { shooting: true });
         await send.shootAll(calibrationId);
-        await delay(2*1000);
+        await delay(5*1000);
         await status.service.patch(0, { shooting: false });
 
         await status.service.patch(0, { downloading: true });
