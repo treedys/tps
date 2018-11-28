@@ -34,7 +34,8 @@ const common = {
                 ],
                 plugins: [
                     "@babel/proposal-class-properties",
-                    "@babel/syntax-export-extensions",
+                    "@babel/syntax-export-namespace-from",
+                    "@babel/syntax-export-default-from",
                     ["@babel/proposal-decorators", { legacy: true }],
                     "@babel/proposal-object-rest-spread",
                     "@babel/proposal-export-default-from",

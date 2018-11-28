@@ -3,7 +3,7 @@ const webpack = require("webpack");
 const merge = require("webpack-merge");
 const CleanPlugin = require('clean-webpack-plugin');
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-const ExtractTextPlugin = require("extract-text-webpack-plugin");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
 const WWW = path.resolve(__dirname, "www");
 const BUILD = path.resolve(__dirname, "build");
@@ -41,7 +41,12 @@ const common = {
     },
     module: {
         rules: [
-            { test: /\.css$/, use: ExtractTextPlugin.extract({ fallback: "style-loader", use: "css-loader" }) },
+            { test: /\.css$/,
+                use: [
+                    { loader: MiniCssExtractPlugin.loader },
+                    { loader: "css-loader" }
+                ]
+            },
             { test: static_files, loader: "file-loader", options: { name: "[name].[ext]" } },
             { test: /\.(js|jsx)$/, loader: "babel-loader", exclude: /(node_modules)/, options: {
                 presets: [
@@ -50,7 +55,8 @@ const common = {
                 ],
                 plugins: [
                     "@babel/proposal-class-properties",
-                    "@babel/syntax-export-extensions",
+                    "@babel/syntax-export-namespace-from",
+                    "@babel/syntax-export-default-from",
                     ["@babel/proposal-decorators", { legacy: true }],
                     "@babel/proposal-object-rest-spread",
                     "@babel/proposal-export-default-from",
@@ -90,7 +96,7 @@ const debug = {
     devtool: 'source-map',
     plugins: [
         new HtmlWebpackPlugin({ template: path.resolve(WWW, "index.html") }),
-        new ExtractTextPlugin({ filename: "[name].css" })
+        new MiniCssExtractPlugin({ filename: "[name].css" })
     ]
 };
 
@@ -126,8 +132,7 @@ const release = {
                 removeStyleLinkTypeAttributes: true
             }
         }),
-        // FIXME: https://github.com/webpack-contrib/extract-text-webpack-plugin/issues/763#issuecomment-377990665
-        new ExtractTextPlugin({ filename: "[name].[md5:contenthash:hex:8].css", allChunks: true })
+        new MiniCssExtractPlugin({ filename: "[name].[chunkhash:8].css" })
     ]
 
 };
