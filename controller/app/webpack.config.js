@@ -30,7 +30,6 @@ const common = {
             "react",
             "react-dom",
             "react-router-dom",
-            "react-tap-event-plugin",
             "react-svg"
         ]
     },
