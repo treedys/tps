@@ -35,13 +35,13 @@ const styles = {
     }
 };
 
-export const Logo     = (props) => <Icon url={ assets.logoTreedys } style={ styles.logo     } {...props}/>
-export const Language = (props) => <Icon url={ assets.language    } style={ styles.language } {...props}/>
-export const Alerts   = (props) => <Icon url={ assets.cloche      } style={ styles.alerts   } {...props}/>
+export const Logo     = (props) => <Icon src={ assets.logoTreedys } style={ styles.logo     } {...props}/>
+export const Language = (props) => <Icon src={ assets.language    } style={ styles.language } {...props}/>
+export const Alerts   = (props) => <Icon src={ assets.cloche      } style={ styles.alerts   } {...props}/>
 
 export const User     = (props) =>
     <Circle radius={40} style={ styles.user.circle }>
-        <Icon url={ assets.user } style={ styles.user.icon }/>
+        <Icon src={ assets.user } style={ styles.user.icon }/>
     </Circle>
 
 export const Header = (props) =>
