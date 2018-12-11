@@ -1,1 +1,6 @@
 output/
+snap/.snapcraft/
+*.snap
+parts/
+prime/
+stage/

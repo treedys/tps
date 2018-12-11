@@ -35,7 +35,7 @@
     }
   },
   "scripts": {
-    "prepack": "npm install && npm run build",
+    "prepack": "npm run build",
     "postpack": "postpack",
     "build": "cross-env NODE_OPTIONS=--max_old_space_size=8192 packware",
     "start": "cross-env NODE_OPTIONS=--max_old_space_size=8192 packware && node treedys-controller.js",

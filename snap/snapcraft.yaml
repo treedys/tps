@@ -1,0 +1,71 @@
+name: treedys-controller # you probably want to 'snapcraft register <name>'
+base: core18
+version: '0.1'
+summary: Treedy's Scanner Controller service
+description: |
+    Treedy's Scannera Controller service.
+
+grade: devel # must be 'stable' to release into candidate/stable channels
+confinement: strict
+
+apps:
+    treedys-controller:
+        command: 'bin/treedys-controller --camera-firmware=$SNAP/camera-firmware --dnsmasq=$SNAP/usr/sbin/dnsmasq --dnsmasq-leases=$SNAP_DATA/dnsmasq.leases'
+        daemon: simple
+        restart-condition: always
+        plugs:
+            - network
+            - network-bind
+            - network-control               # sudo snap connect treedys-controller:network-control; sudo snap restart treedys-controller;
+            - hostname-control              # sudo snap connect treedys-controller:hostname-control; sudo snap restart treedys-controller;
+            - avahi-control                 # sudo snap connect treedys-controller:avahi-control; sudo snap restart treedys-controller;
+
+parts:
+    treedys-controller:
+        plugin: nodejs
+        nodejs-version: '10.17.0'
+        nodejs-package-manager: 'npm'
+        source: controller/app
+        build-environment:
+            - SUDO_UID: '0'
+            - SUDO_GID: '0'
+            - SUDO_USER: 'root'
+        stage-packages:
+            - 'libmnl0'
+            - 'dnsmasq'
+        build-packages:
+            - 'build-essential'
+            - 'libmnl-dev'
+            - 'git'
+            - 'python'
+    camera-firmware:
+        plugin: kbuild
+        source: camera
+        override-pull: |
+            make -C $SNAPCRAFT_PROJECT_DIR/buildroot/ O=$SNAPCRAFT_PART_SRC BR2_EXTERNAL=../camera/ scanner_camera_defconfig
+        override-build: |
+            unset LD_LIBRARY_PATH
+            make -s #snapcraftctl build
+            sed "s:root=/dev/mmcblk0p2::g" -i $SNAPCRAFT_PART_BUILD/images/rpi-firmware/cmdline.txt
+        organize:
+            $SNAPCRAFT_PART_BUILD/images/rpi-firmware/overlays/*:   /camera-firmware/overlays/
+            $SNAPCRAFT_PART_BUILD/images/rpi-firmware/bootcode.bin: /camera-firmware/
+            $SNAPCRAFT_PART_BUILD/images/rpi-firmware/cmdline.txt:  /camera-firmware/
+            $SNAPCRAFT_PART_BUILD/images/rpi-firmware/config.txt:   /camera-firmware/
+            $SNAPCRAFT_PART_BUILD/images/rpi-firmware/fixup.dat:    /camera-firmware/
+            $SNAPCRAFT_PART_BUILD/images/rpi-firmware/start.elf:    /camera-firmware/
+            $SNAPCRAFT_PART_BUILD/images/*.dtb:                     /camera-firmware/
+            $SNAPCRAFT_PART_BUILD/images/zImage:                    /camera-firmware/
+            $SNAPCRAFT_PART_BUILD/images/sdcard.img:                /camera-firmware/
+        stage:
+            - camera-firmware/*
+        build-packages:
+            - 'build-essential'
+            - 'sed'
+            - 'rsync'
+            - 'libncurses-dev'
+            - 'file'
+            - 'git'
+            - 'python'
+            - 'cpio'
+            - 'unzip'

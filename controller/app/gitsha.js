@@ -1,9 +1,10 @@
 const webpack = require('webpack');
 const GitRevisionPlugin = require("git-revision-webpack-plugin");
 
-const            gitRevisionPlugin = new GitRevisionPlugin();
-const cameraFirmwareRevisionPlugin = new GitRevisionPlugin(commithashCommand: 'ls-tree --full-tree HEAD camera'    });
-const      buildrootRevisionPlugin = new GitRevisionPlugin(commithashCommand: 'ls-tree --full-tree HEAD buildroot' });
+const                  gitWorkTree = process.env.SNAPCRAFT_PROJECT_DIR;
+const            gitRevisionPlugin = new GitRevisionPlugin({ gitWorkTree });
+const cameraFirmwareRevisionPlugin = new GitRevisionPlugin({ gitWorkTree, commithashCommand: 'ls-tree --full-tree HEAD camera'    });
+const      buildrootRevisionPlugin = new GitRevisionPlugin({ gitWorkTree, commithashCommand: 'ls-tree --full-tree HEAD buildroot' });
 
 module.exports = config => ({
   ...config,

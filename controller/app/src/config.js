@@ -11,7 +11,7 @@ const debug = require('debug')('CONFIG');
 const avahiDaemon = new avahi.Daemon(dbus.systemBus());
 
 const settings = {
-    PATH: "/disk/sda1",
+    PATH: process.env.SNAP_COMMON,
     SWITCH_DEFAULT_ADDRESS: "192.168.0.1",
     MCAST_GROUP_ADDR: "224.1.1.1",
     MCAST_CAMERA_COMMAND_PORT: 6502,
