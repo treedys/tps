@@ -191,16 +191,17 @@ const pack = async () => {
     return Buffer.concat([_pack(projection), _pack(normal)]);
 };
 
-const cleanCameraMap = async context => {
-    const oldRecord = await service.get(context.id);
+const onConfigChange = async context => {
+    const newConfig = context.data;
+    const oldConfig = await service.get(context.id);
 
-    if(oldRecord.scanner && context.data.scanner) {
-        if((context.data.scanner.columns!=undefined && (context.data.scanner.columns != oldRecord.scanner.columns)) ||
-           (context.data.scanner.rows   !=undefined && (context.data.scanner.rows    != oldRecord.scanner.rows   )) ||
-           (context.data.scanner.extra  !=undefined && (context.data.scanner.extra   != oldRecord.scanner.extra  ))) {
+    if(oldConfig.scanner && newConfig.scanner) {
+        if((newConfig.scanner.columns!=undefined && (newConfig.scanner.columns != oldConfig.scanner.columns)) ||
+           (newConfig.scanner.rows   !=undefined && (newConfig.scanner.rows    != oldConfig.scanner.rows   )) ||
+           (newConfig.scanner.extra  !=undefined && (newConfig.scanner.extra   != oldConfig.scanner.extra  ))) {
 
-            context.data.scanner.new = [].concat(context.data.scanner.new || oldRecord.scanner.new, context.data.scanner.map || oldRecord.scanner.map).filter(mac=>!!mac);
-            context.data.scanner.map = [];
+            newConfig.scanner.new = [].concat(newConfig.scanner.new || oldConfig.scanner.new, newConfig.scanner.map || oldConfig.scanner.map).filter(mac=>!!mac);
+            newConfig.scanner.map = [];
         }
     }
 
@@ -209,8 +210,8 @@ const cleanCameraMap = async context => {
 
 service.hooks({
     before: {
-        update: cleanCameraMap,
-        patch: cleanCameraMap
+        update: onConfigChange,
+        patch: onConfigChange
     }
 });
 
