@@ -45,6 +45,7 @@ export default class Settings extends React.Component {
 
                     <h3>Scanner settings:</h3>
                     <Col style={ styles.container }>
+                        <Form.Field><LabeledTextInput id="hostname"   label="Network name"   value={this.state.settings.hostname  } onChange={ ({target:{value}}) => { this.setState(produce( state => { state.settings.hostname   = value; } )); } } /></Form.Field>
                         <Form.Field><LabeledTextInput id="preview"    label="Preview camera" value={this.state.settings.preview   } onChange={ ({target:{value}}) => { this.setState(produce( state => { state.settings.preview    = value; } )); } } /></Form.Field>
                         <Form.Field><LabeledTextInput id="nextId"     label="Next ID"        value={this.state.settings.nextId    } onChange={ ({target:{value}}) => { this.setState(produce( state => { state.settings.nextId     = value; } )); } } /></Form.Field>
                         <Form.Field><LabeledTextInput id="scanFields" label="Scan fields"    value={this.state.settings.scanFields} onChange={ ({target:{value}}) => { this.setState(produce( state => { state.settings.scanFields = value; } )); } } /></Form.Field>

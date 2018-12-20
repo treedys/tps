@@ -1,8 +1,14 @@
 const app = require('./app.js');
+const os = require('os');
+const posix = require('posix');
+const dbus = require('dbus-native');
+const avahi = require('avahi-dbus');
 const nedb = require('nedb');
 const feathersNedb = require('feathers-nedb');
 const path = require('path');
 const debug = require('debug')('APP:config');
+
+const avahiDaemon = new avahi.Daemon(dbus.systemBus());
 
 const settings = {
     PATH: "/disk/sda1",
@@ -70,6 +76,7 @@ const settings = {
 
 const defaultConfig = {
     _id: '0',
+    hostname: 'scanner',
     preview: 1,
     nextId: 1,
     scanFields: 'First Name;Last Name;Email;Gender:Male,Female,Other',
@@ -100,6 +107,9 @@ const initDefault = async error => {
 
         if(configs.length==0)
             await service.create(defaultConfig);
+
+        await updateHostName(configs[0]?.hostname);
+
     } catch(error) {
         debug("initDefault:", error);
         await service.create(defaultConfig);
@@ -191,6 +201,18 @@ const pack = async () => {
     return Buffer.concat([_pack(projection), _pack(normal)]);
 };
 
+const updateHostName =  async hostname => {
+    hostname = hostname || "scanner";
+    if(os.hostname() != hostname) {
+        try {
+            posix.sethostname(hostname);
+            avahiDaemon.SetHostName(hostname);
+        } catch(error) {
+            debug("updateHostName:", error);
+        }
+    }
+}
+
 const onConfigChange = async context => {
     const newConfig = context.data;
     const oldConfig = await service.get(context.id);
@@ -204,6 +226,8 @@ const onConfigChange = async context => {
             newConfig.scanner.map = [];
         }
     }
+
+    await updateHostName(newConfig.hostname);
 
     return context;
 };
