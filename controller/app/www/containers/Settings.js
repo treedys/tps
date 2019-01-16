@@ -16,9 +16,7 @@ export default class Settings extends React.Component {
 
     state = {}
 
-    static getDerivedStateFromProps({settings}, oldState) {
-        return (oldState.origSettings!==settings) ? { settings, origSettings:settings } : null;
-    }
+    static getDerivedStateFromProps = ({settings}, oldState) => (oldState.origSettings!==settings) ? { settings, origSettings:settings } : null;
 
     componentDidUpdate(prevProps) {
         if(prevProps.settings!==this.props.settings)

@@ -30,9 +30,7 @@ export default class Scan extends React.Component {
 
     state = {}
 
-    static getDerivedStateFromProps({scan}, oldState) {
-        return (oldState.origScan!==scan) ? { scan, origScan:scan } : null;
-    }
+    static getDerivedStateFromProps = ({scan}, oldState) => (oldState.origScan!==scan) ? { scan, origScan:scan } : null;
 
     componentDidUpdate(prevProps) {
         if(prevProps.scan!==this.props.scan)

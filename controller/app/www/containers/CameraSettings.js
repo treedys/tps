@@ -47,7 +47,7 @@ export default class CameraSettings extends React.Component {
 
     state = {}
 
-    static getDerivedStateFromProps = ({settings}) => ({settings})
+    static getDerivedStateFromProps = ({settings}, oldState) => oldState.origSettings!==settings ? { settings, origSettings:settings } : null;
 
     render() {
         const {settings, ...props} = this.props;
