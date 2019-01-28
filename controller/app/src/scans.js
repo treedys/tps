@@ -81,21 +81,36 @@ app.get('/scan/:scan.zip', async (browser_request, browser_response) => {
     try {
         const archive       = archiver('zip', { store: true });
         const scanId        = browser_request.scan[service.id];
+        const calibrationId = browser_request.scan.calibrationId;
 
         archive.pipe(browser_response);
 
         const { scanPath                        } = paths(scansPath,        scanId.toString());
+        const { scanPath: parentCalibrationPath } = paths(scansPath, calibrationId.toString());
 
         const      normalPath = Path.join(             scanPath,      'normal');
         const  projectionPath = Path.join(             scanPath,  'projection');
+        const calibrationPath = Path.join(parentCalibrationPath, 'calibration');
 
         const      normalFilesJpg = await globby( Path.join(     normalPath, '*.jpg'));
         const  projectionFilesJpg = await globby( Path.join( projectionPath, '*.jpg'));
+        const calibrationFilesJpg = await globby( Path.join(calibrationPath, '*.jpg'));
+
+        const      normalFilesMkv = await globby( Path.join(     normalPath, '*.mkv'));
+        const  projectionFilesMkv = await globby( Path.join( projectionPath, '*.mkv'));
+        const calibrationFilesMkv = await globby( Path.join(calibrationPath, '*.mkv'));
 
         archive.file( Path.join(scanPath, 'scan.json'), { name: 'scan.json'} );
 
-             normalFilesJpg.forEach( filePath => archive.file( filePath, { name: Path.join(     'normal', Path.basename(filePath))}));
-         projectionFilesJpg.forEach( filePath => archive.file( filePath, { name: Path.join( 'projection', Path.basename(filePath))}));
+        if(!browser_request.query.hasOwnProperty('mkv')) {
+                 normalFilesJpg.forEach( filePath => archive.file( filePath, { name: Path.join(     'normal', Path.basename(filePath))}));
+             projectionFilesJpg.forEach( filePath => archive.file( filePath, { name: Path.join( 'projection', Path.basename(filePath))}));
+//          calibrationFilesJpg.forEach( filePath => archive.file( filePath, { name: Path.join('calibration', Path.basename(filePath))}));
+        } else {
+                 normalFilesMkv.forEach( filePath => archive.file( filePath, { name: Path.join(     'normal', Path.basename(filePath))}));
+             projectionFilesMkv.forEach( filePath => archive.file( filePath, { name: Path.join( 'projection', Path.basename(filePath))}));
+            calibrationFilesMkv.forEach( filePath => archive.file( filePath, { name: Path.join('calibration', Path.basename(filePath))}));
+        }
 
         archive.on('warning', error => debug(`SCAN: ${scanId} - Archive warning:`, error));
         archive.on('error',   error => debug(`SCAN: ${scanId} - Archive error:`  , error));

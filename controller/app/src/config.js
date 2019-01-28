@@ -52,6 +52,7 @@ const defaultConfig = {
     preview: 1,
     nextId: 1,
     scanFields: 'First Name;Last Name;Email;Gender:Male,Female,Other',
+    h265bitrate: 8000000,
     camera: {
         normal: settings.CAMERA,
         projection: settings.CAMERA

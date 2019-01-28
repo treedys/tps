@@ -87,9 +87,15 @@ app.get('/calibration/:calibration.zip', async (browser_request, browser_respons
 
         const calibrationFilesJpg = await globby( Path.join(calibrationPath, '*.jpg'));
 
+        const calibrationFilesMkv = await globby( Path.join(calibrationPath, '*.mkv'));
+
         archive.file( Path.join(parentCalibrationPath, 'calibration.json'), { name: 'calibration.json'} );
 
-        calibrationFilesJpg.forEach( filePath => archive.file( filePath, { name: Path.join('calibration', Path.basename(filePath))}));
+        if(!browser_request.query.hasOwnProperty('mkv')) {
+            calibrationFilesJpg.forEach( filePath => archive.file( filePath, { name: Path.join('calibration', Path.basename(filePath))}));
+        } else {
+            calibrationFilesMkv.forEach( filePath => archive.file( filePath, { name: Path.join('calibration', Path.basename(filePath))}));
+        }
 
         archive.on('warning', error => debug(`CALIBRATION: ${calibrationId} - Archive warning:`, error));
         archive.on('error',   error => debug(`CALIBRATION: ${calibrationId} - Archive error:`  , error));

@@ -61,6 +61,9 @@ export default class Scan extends React.Component {
             .map( field => field.split(':') )
             .every( ([id,label,options]) => scan[id] );
 
+        const enableDownloadJPG = everyFieldIsPopulated && scan.downloadingEnd;
+        const enableDownloadMKV = everyFieldIsPopulated && scan.encodingEnd;
+
         return <Row className="fill">
             <div className="fill" style={ styles.preview.container }>
                 { scan.done || !status.shooting
@@ -74,11 +77,12 @@ export default class Scan extends React.Component {
                 <Col style={ styles.information.container }>
 
                     <Row>
-                        { !scan.done && <Button onClick={ () => this.props.onAccept(scan) } disabled={status.shooting||status.downloading} className="fill">Accept  </Button> }
-                        { !scan.done && <Button onClick={ () => this.props.onReject(scan) } disabled={status.shooting||status.downloading} className="fill">Reject  </Button> }
+                        { !scan.downloadingEnd && <Button onClick={ () => this.props.onAccept(scan) } disabled={status.shooting||status.downloading} className="fill">Accept  </Button> }
+                        { !scan.downloadingEnd && <Button onClick={ () => this.props.onReject(scan) } disabled={status.shooting||status.downloading} className="fill">Reject  </Button> }
 
-                        {  scan.done && <Button href={`/scan/${scan.id}.zip`}               disabled={!everyFieldIsPopulated}              className="fill">Download</Button> }
-                        {  scan.done && <Button onClick={ () => this.props.onDelete(scan) }                                                className="fill">Delete  </Button> }
+                        {  scan.downloadingEnd && <Button href=   {`/scan/${scan.id}.zip`           } disabled={!enableDownloadJPG}                  className="fill">Download JPG</Button> }
+                        {  scan.downloadingEnd && <Button href=   {`/scan/${scan.id}.zip?mkv`       } disabled={!enableDownloadMKV}                  className="fill">Download MKV</Button> }
+                        {  scan.downloadingEnd && <Button onClick={ () => this.props.onDelete(scan) } disabled={!scan.done}                          className="fill">   Delete   </Button> }
                     </Row>
 
                     <Col style={{ display: "block" }} className="fill scroll">

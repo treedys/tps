@@ -6,7 +6,7 @@ description: |
     Treedy's Scannera Controller service.
 
 grade: devel # must be 'stable' to release into candidate/stable channels
-confinement: strict
+confinement: classic 
 
 apps:
     treedys-controller:
@@ -40,6 +40,8 @@ parts:
             - 'libmnl-dev'
             - 'git'
             - 'python'
+            - 'libgstreamer1.0-dev'
+            - 'libgstreamer-plugins-base1.0-dev'
     camera-firmware:
         plugin: kbuild
         source: camera

@@ -36,8 +36,9 @@ export default ({ calibration, previewCamera, onDelete}) => calibration ?
         <Col style={ styles.information.container }>
 
             <Row>
-                <Button href={`/calibration/${calibration.id}.zip`} disabled={!calibration.done} className="fill">Download</Button>
-                <Button onClick={onDelete}                          disabled={!calibration.done} className="fill">Delete</Button>
+                <Button href={`/calibration/${calibration.id}.zip`    } disabled={!calibration.downloadingEnd} className="fill">Download JPG</Button>
+                <Button href={`/calibration/${calibration.id}.zip?mkv`} disabled={!calibration.encodingEnd   } className="fill">Download MKV</Button>
+                <Button onClick={onDelete}                              disabled={!calibration.done          } className="fill">   Delete   </Button>
             </Row>
 
             <h3>Calibration information:</h3>

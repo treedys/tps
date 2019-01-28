@@ -5,7 +5,10 @@ const config = require("./config");
 const multicast = require("./multicast");
 
 const pTimeout = require('p-timeout');
+const pCancelable = require('p-cancelable');
 const delay = require('delay');
+const bottleneck = require("bottleneck");
+const { spawn } = require('child_process');
 
 const app = require("./app.js");
 const status = require('./status.js');
@@ -83,6 +86,7 @@ app.post("/api/shoot/scan", async (browser_request, browser_response) => {
     try {
         const scan = await scans.service.create({
             config: {
+                h265bitrate: configRecord.h265bitrate,
                 camera: configRecord.camera
             }
         });
@@ -154,6 +158,75 @@ const downloadToFile = (url, filePath) => new Promise( async (resolve, reject) =
     }
 });
 
+const encodeLimiter = new bottleneck({ maxConcurrent: 8 });
+
+const encodeFile = async (jpgFileName, mkvFileName) => {
+    if(await fs.exists(jpgFileName) && (await fs.stat(jpgFileName)).size>0) {
+        const pipelineStr = `filesrc location=${jpgFileName} ! image/jpeg,framerate=1/1 ! decodebin ! nvvidconv ! nvv4l2h265enc bitrate=${configRecord?.h265bitrate} iframeinterval=1 ! h265parse ! matroskamux ! filesink location=${mkvFileName}`;
+
+        try {
+            await encodeLimiter.schedule( () => pTimeout(new pCancelable( (resolve, reject, onCancel) => {
+
+                const gstLaunch = spawn('/usr/bin/gst-launch-1.0', pipelineStr.split(' '));
+
+                onCancel( () => {
+                    debug(`Canceling ${mkvFileName}`);
+                    gstLaunch.kill('SIGKILL');
+                });
+
+                let output = "";
+
+                gstLaunch.on('close', (code, signal) => {
+                    if(!code)
+                        resolve();
+                    else {
+                        debug(`close: $d{mkfVileName}\n${output}`);
+                        reject();
+                    }
+                });
+
+                gstLaunch.on('error', (err) => {
+                    debug(`${mkvFileName} error: ${err?.toString?.()}`);
+                    reject();
+                });
+
+                gstLaunch.stdout.on('data', data => output.concat(`stdout: ${data.toString()}`));
+                gstLaunch.stderr.on('data', data => output.concat(`stderr: ${data.toString()}`));
+
+            }), 5*1000, `Timeout encoding ${mkvFileName}`) );
+        } catch(error) {
+            debug(`${mkvFileName} - encodding - error:`, error);
+            debug(`${mkvFileName} - encodding - pipeline:`, pipelineStr);
+            if(await fs.exists(mkvFileName)) fs.unlinkSync(mkvFileName);
+        }
+    }
+}
+
+const encodeScanFiles = async (srcScanId, destScanId, name) => {
+    try {
+        await fs.ensureDir(path.join(config.PATH,`db/${destScanId}/${name}/`))
+
+        // FIXME: Don't use " and remove all spaces after commas
+        // https://lists.freedesktop.org/archives/gstreamer-devel/2016-August/060093.html
+
+        // PIPELINE DEBUG: GST_DEBUG=GST_CAPS:4 GST_DEBUG_COLOR_MODE=off GST_DEBUG_DUMP_DOT_DIR=./ gst-launch-1.0 ...
+        //                 dot -Tpdf 00....dot > name.pdf
+
+        await Promise.all( configRecord.scanner.map.map( async (mac, index) => {
+            try {
+                const jpgFileName = path.join(config.PATH, `/db/${srcScanId}/${name}/${index}.jpg`);
+                const mkvFileName = path.join(config.PATH, `/db/${destScanId}/${name}/${index}.mkv`);
+
+                await encodeFile(jpgFileName, mkvFileName);
+            } catch(error) {
+                debug(`SCAN: ${destScanId} - encodding ${name}:${index} error:`, error);
+            }
+        }));
+    } catch(error) {
+        debug(`SCAN: ${destScanId} - encodding - error:`, error);
+    }
+};
+
 app.post("/scan/:scan/download", async (browser_request, browser_response) => {
 
     const scanId = browser_request.scan[scans.service.id];
@@ -201,9 +274,15 @@ app.post("/scan/:scan/download", async (browser_request, browser_response) => {
             }
         }));
 
-        await scans.service.patch(scanId, { done: Date.now() });
-
         await status.service.patch(0, { downloading: false });
+
+        debug(`SCAN: ${scanId} - encoding!`);
+
+        await scans.service.patch(scanId, { downloadingEnd: Date.now(), encodingStart: Date.now() });
+
+        await Promise.all(shotsConfig.map( async ({ name }) => await encodeScanFiles(scanId, scanId, name) ));
+
+        await scans.service.patch(scanId, { encodingEnd: Date.now(), done: Date.now() });
 
         debug(`SCAN: ${scanId} - done!`);
     } catch(error) {
@@ -220,6 +299,7 @@ app.post("/api/shoot/calibration", async (browser_request, browser_response) => 
     try {
         const calibration = await calibrations.service.create({
             config: {
+                h265bitrate: configRecord.h265bitrate,
                 camera: configRecord.camera
             }
         });
@@ -270,9 +350,15 @@ app.post("/api/shoot/calibration", async (browser_request, browser_response) => 
             }
         }));
 
-        await calibrations.service.patch(calibrationId, { done: Date.now() });
-
         await status.service.patch(0, { downloading: false });
+
+        debug(`CALIBRATION: ${calibrationId} - encoding!`);
+
+        await calibrations.service.patch(calibrationId, { downloadingEnd: Date.now(), encodingStart: Date.now() });
+
+        await encodeScanFiles(calibrationId, calibrationId, 'calibration');
+
+        await calibrations.service.patch(calibrationId, { encodingEnd: Date.now(), done: Date.now() });
 
         debug(`CALIBRATION: ${calibrationId} - done!`);
     } catch(error) {
