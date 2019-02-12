@@ -47,6 +47,11 @@ export const ScanLink = ({scan, selected, previewCamera, onSelectedChange, ...pr
                 <span style={{ minWidth: "2em" }} className="fill"/>
                 <span>{moment(scan.date).toDate().toLocaleDateString()}</span>
             </Row>
+            <Row style={ styles.link.description.secondary }>
+                <span>D:{moment(scan.downloadingEnd).diff(scan.downloadingStart, 'seconds')}</span>
+                <span style={{ minWidth: "2em" }} className="fill"/>
+                <span>E:{moment(scan.   encodingEnd).diff(scan.   encodingStart, 'seconds')}</span>
+            </Row>
         </Col>
     </PageSubLink>
 

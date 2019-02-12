@@ -115,12 +115,14 @@ const downloadToFile = (url, filePath) => new Promise( async (resolve, reject) =
     const httpRequest = request.get(url, {timeout:5*1000});
 
     httpRequest.on('error', error => {
+        debug('HTTP request error:', error);
         fileStream.destroy();
         httpRequest.destroy();
         reject(error);
     });
 
     fileStream.on('error', error => {
+        debug('File stream error:', error);
         fileStream.destroy();
         httpRequest.destroy();
         reject(error);
@@ -237,6 +239,7 @@ app.post("/scan/:scan/download", async (browser_request, browser_response) => {
         browser_response.status(204).end();
 
         await status.service.patch(0, { downloading: true });
+        await scans.service.patch(scanId, { downloadingStart: Date.now() });
 
         await Promise.all(shotsConfig.map( ({ name }) =>
             fs.ensureDir(path.join(config.PATH,`db/${scanId}/${name}/`))
