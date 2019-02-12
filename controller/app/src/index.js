@@ -108,7 +108,7 @@ const downloadToFile = (url, filePath) => new Promise( async (resolve, reject) =
 
     // Use HEAD request to check if the target file exists
     const fileStream = fs.createWriteStream(filePath);
-    const httpRequest = request.get(url, {timeout:2*1000});
+    const httpRequest = request.get(url, {timeout:5*1000});
 
     httpRequest.on('error', error => {
         fileStream.destroy();
