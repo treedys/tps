@@ -93,7 +93,7 @@ const defaultConfig = {
     }
 };
 
-const defer = () => { let resolve, reject, promise = new Promise((_resolve, _reject) => { resolve=_resolve; reject=_reject; }); return { resolve, reject, promise }; };
+const defer = require('p-defer');
 
 const initialisedDefer = defer();
 

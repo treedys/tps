@@ -4,7 +4,7 @@ const debug = require("debug")("APP");
 const multicast = require("./multicast");
 
 const pTimeout = require('p-timeout');
-const delay = ms => new Promise(res => setTimeout(res, ms))
+const delay = require('delay');
 const sstream = require('./sstream.js');
 const eol = require('eol');
 
@@ -55,7 +55,7 @@ const eventToPromise = require('event-to-promise');
 const fs = require('fs-extra');
 const path = require('path');
 
-const defer = () => { let resolve, reject, promise = new Promise((_resolve, _reject) => { resolve=_resolve; reject=_reject; }); return { resolve, reject, promise }; };
+const defer = require('p-defer');
 
 const configRecordDefer = defer();
 

@@ -5,7 +5,7 @@ const eventToPromise = require('event-to-promise');
 const telnet = require("telnet-client");
 const mutex = require("await-mutex").default;
 
-const delay = ms => new Promise(res => setTimeout(res, ms))
+const delay = require('delay');
 
 const telnetConfig = {
     port: 23,
