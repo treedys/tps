@@ -16,7 +16,7 @@ const isDirectory = async path => (await fs.stat(path)).isDirectory();
 const calibrationsPath = Path.join(config.PATH,'/db');
 
 const defaultCalibration = () => ({
-    date   : Date.now()
+    date   : Date.now(),
 });
 
 app.param('calibration', async (browser_request, browser_response, next, id) => {
@@ -24,7 +24,7 @@ app.param('calibration', async (browser_request, browser_response, next, id) => 
         browser_request.calibration = await service.get(id);
 
         if(!browser_request.calibration) {
-            next(new Error("Wrong calibration ID"));
+            next(new Error("CALIBRATION: ${id} - not found"));
         } else {
             next();
         }
@@ -59,7 +59,7 @@ app.get('/calibration/:calibration/preview.jpg', async (browser_request, browser
         file_stream.pipe(browser_response);
 
         file_stream.on('error', error => {
-            debug('Calibration preview error:', error);
+            debug(`CALIBRATION: ${calibrationId} - preview error:`, error);
 
             if(!browser_response.headersSent && !browser_response.finished)
                 browser_response.redirect('/noise.jpg');
@@ -70,7 +70,7 @@ app.get('/calibration/:calibration/preview.jpg', async (browser_request, browser
         browser_response.on('end',   () => file_stream.destroy() );
 
     } catch(error) {
-        debug('Error:', error);
+        debug(`CALIBRATION: ${browser_request.calibration[service.id]} - preview error:`, error);
         browser_response.status(500).send(error);
     }
 });
@@ -86,9 +86,8 @@ app.get('/calibration/:calibration.zip', async (browser_request, browser_respons
 
         archive.directory(calibrationPath, false);
 
-        archive.on('warning', error => debug('Archive warning:', error));
-
-        archive.on('error', error => debug('Archive error:', error));
+        archive.on('warning', error => debug(`CALIBRATION: ${calibrationId} - Archive warning:`, error));
+        archive.on('error',   error => debug(`CALIBRATION: ${calibrationId} - Archive error:`  , error));
 
         archive.on('progress', async data => {
             if(data.entries.total==data.entries.processed &&
@@ -101,7 +100,7 @@ app.get('/calibration/:calibration.zip', async (browser_request, browser_respons
         archive.finalize();
 
     } catch(error) {
-        debug('Error:', error);
+        debug(`CALIBRATION: ${browser_request.calibration[service.id]} - archive error:`, error);
         browser_response.status(500).send(error);
     }
 });
@@ -152,7 +151,7 @@ const fail = async (id, value) => {
             failed: [...(new Set(calibration.failed)).add(value)].sort((a,b)=>a-b)
         });
     } catch(error) {
-        debug("Error updating failed cameras", error);
+        debug(`CALIBRATION: ${id} - Error updating failed camera ${value}`, error);
     }
 
     unlock();

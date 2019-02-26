@@ -27,7 +27,7 @@ app.param('scan', async (browser_request, browser_response, next, id) => {
         browser_request.scan = await service.get(id);
 
         if(!browser_request.scan) {
-            next(new Error("Wrong scan ID"));
+            next(new Error("SCAN: ${id} - not found"));
         } else {
             next();
         }
@@ -62,7 +62,7 @@ app.get('/scan/:scan/preview-:index.jpg', async (browser_request, browser_respon
         file_stream.pipe(browser_response);
 
         file_stream.on('error', error => {
-            debug('Scan preview error:', error);
+            debug(`SCAN: ${scanId} - preview error:`, error);
 
             if(!browser_response.headersSent && !browser_response.finished)
                 browser_response.redirect('/noise.jpg');
@@ -73,7 +73,7 @@ app.get('/scan/:scan/preview-:index.jpg', async (browser_request, browser_respon
         browser_response.on('end',   () => file_stream.destroy() );
 
     } catch(error) {
-        debug('Error:', error);
+        debug(`SCAN: ${browser_request.scan[service.id]} - preview error:`, error);
         browser_response.status(500).send(error);
     }
 });
@@ -89,9 +89,8 @@ app.get('/scan/:scan.zip', async (browser_request, browser_response) => {
 
         archive.directory(scanPath, false);
 
-        archive.on('warning', error => debug('Archive warning:', error));
-
-        archive.on('error', error => debug('Archive error:', error));
+        archive.on('warning', error => debug(`SCAN: ${scanId} - Archive warning:`, error));
+        archive.on('error',   error => debug(`SCAN: ${scanId} - Archive error:`  , error));
 
         archive.on('progress', async data => {
             if(data.entries.total==data.entries.processed &&
@@ -104,7 +103,7 @@ app.get('/scan/:scan.zip', async (browser_request, browser_response) => {
         archive.finalize();
 
     } catch(error) {
-        debug('Error:', error);
+        debug(`SCAN: ${browser_request.scan[service.id]} - archive error:`, error);
         browser_response.status(500).send(error);
     }
 });
@@ -155,7 +154,7 @@ const fail = async (id, value) => {
             failed: [...(new Set(scan.failed)).add(value)].sort((a,b)=>a-b)
         });
     } catch(error) {
-        debug("Error updating failed cameras", error);
+        debug(`SCAN: ${id} - Error updating failed camera ${value}`, error);
     }
 
     unlock();

@@ -88,7 +88,7 @@ app.post("/api/shoot/scan", async (browser_request, browser_response) => {
         const scan = await scans.service.create({});
         scanId = scan[scans.service.id];
         browser_response.send({ id: scanId });
-        debug(`Start scan ${scanId}`);
+        debug(`SCAN: ${scanId} - Start`);
     } catch(error) {
         browser_response.status(500).send(error);
         return;
@@ -100,7 +100,7 @@ app.post("/api/shoot/scan", async (browser_request, browser_response) => {
         await delay(5*1000);
         await status.service.patch(0, { shooting: false });
     } catch(error) {
-        debug(`Error Scan:${scanId}`, error);
+        debug(`SCAN: ${scanId} - Error:`, error);
     }
 });
 
@@ -156,7 +156,7 @@ app.post("/scan/:scan/download", async (browser_request, browser_response) => {
 
     const scanId = browser_request.scan[scans.service.id];
 
-    debug(`Downloading scan ${scanId}`);
+    debug(`SCAN: ${scanId} - Downloading scan`);
 
     try {
         browser_response.status(204).end();
@@ -187,7 +187,7 @@ app.post("/scan/:scan/download", async (browser_request, browser_response) => {
 
                         await downloadToFile(cameraUrl, fileName);
                     } catch(error) {
-                        debug(`Scan:${scanId} Camera:${index} error:`, error);
+                        debug(`SCAN: ${scanId} CAMERA: ${index} - error:`, error);
 
                         await scans.fail(scanId, index);
                     }
@@ -195,17 +195,17 @@ app.post("/scan/:scan/download", async (browser_request, browser_response) => {
 
                 await send.erase(mac, scanId);
             } catch(error) {
-                debug(`Scan:${scanId} Camera:${index} error:`, error);
+                debug(`SCAN: ${scanId} CAMERA: ${index} - error:`, error);
             }
         }));
 
-        debug(`Scan:${scanId} done!`);
+        debug(`SCAN: ${scanId} - done!`);
 
         await status.service.patch(0, { downloading: false });
         await scans.service.patch(scanId, { done: Date.now() });
 
     } catch(error) {
-        debug(`Scan:${scanId} error:`, error);
+        debug(`SCAN: ${scanId} - error:`, error);
     }
 });
 
@@ -217,7 +217,7 @@ app.post("/api/shoot/calibration", async (browser_request, browser_response) => 
         const calibration = await calibrations.service.create({});
         calibrationId = calibration[calibrations.service.id];
         browser_response.send({ id: calibrationId });
-        debug(`Start calibration ${calibrationId}`);
+        debug(`CALIBRATION: ${calibrationId} - Start`);
     } catch(error) {
         browser_response.status(500).send(error);
         return;
@@ -251,24 +251,24 @@ app.post("/api/shoot/calibration", async (browser_request, browser_response) => 
 
                     await downloadToFile(cameraUrl, fileName);
                 } catch(error) {
-                    debug(`Calibration:${calibrationId} camera:${index} error:`, error);
+                    debug(`CALIBRATION: ${calibrationId} CAMERA: ${index} - error:`, error);
 
                     await calibrations.fail(calibrationId, index);
                 }
 
                 await send.erase(mac, calibrationId);
             } catch(error) {
-                debug(`Calibration:${calibrationId} camera:${index} error:`, error);
+                debug(`CALIBRATION: ${calibrationId} CAMERA: ${index} - error:`, error);
             }
         }));
 
-        debug(`Calibration:${calibrationId} done!`);
+        debug(`CALIBRATION: ${calibrationId} - done!`);
 
         await status.service.patch(0, { downloading: false });
         await calibrations.service.patch(calibrationId, { done: Date.now() });
 
     } catch(error) {
-        debug(`Calibration:${calibrationId} error:`, error);
+        debug(`CALIBRATION: ${calibrationId} - error:`, error);
     }
 });
 
@@ -279,13 +279,13 @@ const powerCycleAllPorts = async switchConfig =>
             let tasks = [];
 
             for(let port=0; port < switchConfig.ports; port++) {
-                debug(`Forced power cycle ${switchConfig.address}:${port}`);
+                debug(`SWITCH: ${switchConfig.address}:${port} - Forced power cycle `);
                 tasks.push(device.powerCycle(port, 4000));
             }
 
             await Promise.all(tasks);
         } catch(error) {
-            debug(`Power cycle ${switchConfig.address}`, error);
+            debug(`SWITCH: ${switchConfig.address} - Power cycle error:`, error);
         }
     });
 
@@ -325,7 +325,7 @@ const downloadContent = async (mac, file) =>
             if(response?.statusCode!=200) { req.abort(); resolve(undefined); }
             resolve(body); req.end();
         });
-    })), 10*1000, `Timeout downloading ${mac} ${file}`);
+    })), 10*1000, `CAMERA: ${liveCameras[mac].switchAddress}:${liveCameras[mac].port} - Timeout downloading ${file}`);
 
 const checkNetboot = async (mac) => {
     await send.exec(mac, "vcgencmd otp_dump > /var/www/otp_dump");
@@ -335,7 +335,7 @@ const checkNetboot = async (mac) => {
     const otp = eol.split(otp_dump).map(line => line.split(':')).reduce( (otp, [addr, value]) => Object.assign(otp, typeof(value)!="undefined" && { [parseInt(addr)]:parseInt(value,16) }), []);
 
     if(otp[17]!=0x3020000a) {
-        debug(`Configuring netboot on ${mac} - ${otp[17]?.toString(16)}`);
+        debug(`CAMERA: ${liveCameras[mac].switchAddress}:${liveCameras[mac].port} - Configuring netboot - ${otp[17]?.toString(16)}`);
         await send.exec(mac, `mkdir /var/fat;mount /dev/mmcblk0p1 /var/fat;echo "program_usb_boot_mode=1" >> /var/fat/config.txt;sync;sync;sync;reboot;`);
     }
 }
@@ -370,7 +370,7 @@ const upgradeCameraFirmmware = async (mac) => {
         const camera = await cameraState(mac);
 
         if(!camera.needsUpgrade && (!camera.hasSDcard || camera.bootFromSDcard)) {
-            debug(`Camera ${mac} is uptodate`);
+            debug(`CAMERA: ${liveCameras[mac].switchAddress}:${liveCameras[mac].port} - Firmware is uptodate`);
             unlock();
             return;
         }
@@ -380,13 +380,13 @@ const upgradeCameraFirmmware = async (mac) => {
         if(!camera.hasSDcard && camera.needsUpgrade) {
             await send.exec(mac, "reboot");
         } else if(camera.hasSDcard && (!camera.bootFromSDcard || camera.needsUpgrade)) {
-            debug(`Upgrading camera ${mac} from version ${camera.cameraVersion||"unknown"} to ${CAMERAFIRMWARESHA1}`);
+            debug(`CAMERA: ${liveCameras[mac].switchAddress}:${liveCameras[mac].port} - Upgrading firmware from version ${camera.cameraVersion||"unknown"} to ${CAMERAFIRMWARESHA1}`);
             const cmd =  `"tftp -g -l /tmp/sdcard.img -r sdcard.img ${addressEnd(liveCameras[mac].address,200)} && dd if=/tmp/sdcard.img of=/dev/mmcblk0 && sync; reboot;"`;
             await send.exec(mac, `echo ${cmd} > /var/www/upgrade.sh`);
             await send.exec(mac, "chmod +x /var/www/upgrade.sh");
             await send.exec(mac, "/var/www/upgrade.sh");
         } else {
-            debug(`Camera ${mac} needsUpgrade=${camera.needsUpgrade} hasSDcard=${camera.hasSDcard} bootFromSDcard=${camera.bootFromSDcard}`);
+            debug(`CAMERA: ${liveCameras[mac].switchAddress}:${liveCameras[mac].port} - needsUpgrade=${camera.needsUpgrade} hasSDcard=${camera.hasSDcard} bootFromSDcard=${camera.bootFromSDcard}`);
             unlock();
             return;
         }
@@ -397,9 +397,9 @@ const upgradeCameraFirmmware = async (mac) => {
             // TODO: Timout the loop
             try {
                 afterReboot = await cameraState(mac);
-                debug(`Camera ${mac} needsUpgrade=${afterReboot.needsUpgrade} hasSDcard=${afterReboot.hasSDcard} bootFromSDcard=${afterReboot.bootFromSDcard}`);
+                debug(`CAMERA: ${liveCameras[mac].switchAddress}:${liveCameras[mac].port} - needsUpgrade=${afterReboot.needsUpgrade} hasSDcard=${afterReboot.hasSDcard} bootFromSDcard=${afterReboot.bootFromSDcard}`);
             } catch(error) {
-                debug("Upgrade polling error", error);
+                debug(`CAMERA: ${liveCameras[mac].switchAddress}:${liveCameras[mac].port} - Upgrade polling error:`, error);
             }
         } while(afterReboot.needsUpgrade || (afterReboot.hasSDcard && !afterReboot.bootFromSDcard));
 
@@ -407,7 +407,7 @@ const upgradeCameraFirmmware = async (mac) => {
         unlock();
 
     } catch(error) {
-        debug("Camera upgrade error", error);
+        debug(`CAMERA: ${liveCameras[mac].switchAddress}:${liveCameras[mac].port} - Camera upgrade error:`, error);
         unlock();
     }
 }
@@ -444,7 +444,7 @@ const onMessage = async (message, rinfo) => {
 
         if(!liveCameras[mac]) {
             try {
-                debug(`Found new ${mac} ${address}`);
+                debug(`CAMERA: ${mac} ${address} - New`);
                 await cameras.service.create({ id: mac, address, mac, online:true });
                 liveCameras[mac] = { address, online:true, lastSeen: Date.now() };
 
@@ -471,11 +471,11 @@ const onMessage = async (message, rinfo) => {
                 await upgradeCameraFirmmware(mac);
 
             } catch(error) {
-                debug("onMessage new:", error);
+                debug(`CAMERA: ${mac} ${address} - New error:`, error);
             }
         } else if(liveCameras[mac].address != address || !liveCameras[mac].online) {
             try {
-                debug(`Recovering ${liveCameras[mac].switchAddress}:${liveCameras[mac].port} ${address}`);
+                debug(`CAMERA: ${liveCameras[mac].switchAddress}:${liveCameras[mac].port} - Recovering at ${address}`);
                 await cameras.service.patch(mac, { address, online: true });
                 liveCameras[mac] = { ...liveCameras[mac], address, online: true };
 
@@ -483,7 +483,7 @@ const onMessage = async (message, rinfo) => {
                 await upgradeCameraFirmmware(mac);
 
             } catch(error) {
-                debug("onMessage update:", error);
+                debug(`CAMERA: ${liveCameras[mac].switchAddress}:${liveCameras[mac].port} - Update error:`, error);
             }
         }
 
@@ -491,7 +491,7 @@ const onMessage = async (message, rinfo) => {
     } else if(message.length==500) {
         const camera = Object.values(liveCameras).find( c => c.address==rinfo.address );
         // TODO: Log message to external file on the SSD
-        debug(`CAMERA ${camera?.switchAddress}:${camera?.port} ERROR:`, message.toString("ascii", 0, 500));
+        debug(`CAMERA ${camera?.switchAddress}:${camera?.port} - ERROR:`, message.toString("ascii", 0, 500));
     } else {
         debug("Received:", message.length, message);
     }
@@ -522,7 +522,7 @@ const linkSwitch = async switchConfig =>
                             index: liveCameras[mac].index
                         });
 
-                        debug(`Linking ${switchConfig.address}:${port} to ${liveCameras[mac].address}`);
+                        debug(`CAMERA: ${switchConfig.address}:${port} - Linking to ${liveCameras[mac].address}`);
                     }
                 }
             }

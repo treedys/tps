@@ -52,7 +52,7 @@ module.exports = function() {
 
         const disconnect = async () => {
 
-            debug("Disconnecting");
+            debug(`SWITCH: ${address} - Disconnecting`);
 
             /* FIXME: finally doesn't work well with async/await
                         try {
@@ -64,7 +64,7 @@ module.exports = function() {
             try {
                 connection.end();
                 await eventToPromise.multi(connection, ["close"], ["error", "failedlogin", "timeout", "bufferexceeded"]);
-                debug("Disconnected");
+                debug(`SWITCH: ${address} - Disconnected`);
                 unlock();
             } catch(error) {
                 connection.getSocket().destroy();
@@ -73,7 +73,7 @@ module.exports = function() {
             }
         };
 
-        debug("Connecting to ", address);
+        debug(`SWITCH: ${address} - Connecting`);
 
         let err = undefined;
 
@@ -83,7 +83,7 @@ module.exports = function() {
 
                 await eventToPromise.multi(connection, ["ready"], ["error", "failedlogin", "timeout", "bufferexceeded"]);
 
-                debug("Connected");
+                debug(`SWITCH: ${address} - Connected`);
 
                 return {
                     disconnect,
@@ -103,12 +103,12 @@ module.exports = function() {
                     enableOnly
                 };
             } catch(error) {
-                debug(`Connect failed: ${error}`);
+                debug(`SWITCH: ${address} - Connect failed: ${error.toString()}`);
                 try { await disconnect(); } catch (ignore) {}
                 err = error;
             }
         }
-        debug("Connection failed");
+        debug(`SWITCH: ${address} - Connect failed`);
         unlock();
         throw err;
     };

@@ -12,7 +12,7 @@ app.param('camera', async (browser_request, browser_response, next, id) => {
         browser_request.camera = await service.get(id);
 
         if(!browser_request.camera) {
-            next(new Error("Wrong camera ID"));
+            next(new Error(`CAMERA: ${id} - Not Found`));
         } else {
             next();
         }
@@ -49,11 +49,16 @@ app.get('/preview/:camera*', async (browser_request, browser_response) => {
             if(!browser_response.headersSent && !browser_response.finished)
                 browser_response.redirect('/noise.jpg');
             camera_request.destroy();
-            debug('Camera preview Error:', error);
+            debug(`CAMERA: ${browser_request.camera.switchAddress}:${browser_request.camera.port} - preview Error:`, error);
         });
 
-        camera_request.on('end', chunk => debug(`End ${path}`, chunk));
-        camera_request.on('close', () => { debug(`Close ${path}`); camera_request.destroy(); } );
+        camera_request.on('end', chunk => {
+            debug(`CAMERA: ${browser_request.camera.switchAddress}:${browser_request.camera.port} - request End`, chunk)
+        });
+        camera_request.on('close', () => {
+            debug(`CAMERA: ${browser_request.camera.switchAddress}:${browser_request.camera.port} - request Close`);
+            camera_request.destroy();
+        });
 
     } catch(error) {
         browser_response.status(500).send(error);

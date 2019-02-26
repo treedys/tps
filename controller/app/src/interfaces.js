@@ -36,9 +36,12 @@ class networkInterfaces extends EventEmitter {
     }
 
     onRoute(data) {
+        debug(`netlink-notify.route:`, data);
     }
 
     onLink(data) {
+        debug(`netlink-notify.link:`, data);
+
         let networkInterface = this.map.get(data.data.name);
 
         if(!networkInterface)
@@ -70,21 +73,22 @@ class networkInterfaces extends EventEmitter {
     }
 
     onAddress(data) {
+        debug(`netlink-notify.address:`, data);
     }
 
     onError(error) {
-        debug("Error:", error);
+        debug(`netlink-notify.error:`, data);
     }
 
     async add(name, address) {
-        debug("add:", name, address);
+        debug(`add: ${name} at ${address}`);
         this.map.set(name, { address, up:false, running: false});
         await ifconfig.down(name);
     }
 
     async address(name, address) {
         const networkInterface = this.map.get(name);
-        debug("address:", name, address);
+        debug(`address: ${name} at ${address}`);
         networkInterface.address = address;
 
         if(this.isUp(name)) {
@@ -100,43 +104,43 @@ class networkInterfaces extends EventEmitter {
 
         if(this.isDown(name)) {
             const networkInterface = this.map.get(name);
-            debug("up:", name, address);
+            debug(`up: ${name} at ${address}`);
             await Promise.all([
                 ifconfig.up(ipConfiguration(name, networkInterface.address)),
                 netlink && eventToPromise(this, actionName("running", name))
             ]);
-            debug("done up:", name, address);
+            debug(`up: ${name} at ${address} - done`);
         }
     }
 
     async down(name) {
         if(this.isUp(name)) {
             const networkInterface = this.map.get(name);
-            debug("down:", name);
+            debug(`down: ${name}`);
             await Promise.all([
                 ifconfig.down(name),
                 netlink && eventToPromise(this, actionName("stopped", name))
             ]);
-            debug("done down:", name);
+            debug(`down: ${name} - done`);
         }
     }
 
     async upAll() {
-        debug("upAll");
+        debug("upAll:");
         await Promise.all(Array.from( this.map.keys(), name => this.up(name) ));
-        debug("allUp:");
+        debug("upAll: done");
     }
 
     async downAll() {
-        debug("downAll");
+        debug("downAll:");
         await Promise.all(Array.from( this.map.keys(), name => this.down(name) ));
-        debug("allDown:");
+        debug("downAll: done");
     }
 
     async upOnly(only, address) {
-        debug("upOnly:", only);
+        debug(`upOnly: ${only} at ${address}`);
         await Promise.all(Array.from( this.map.keys(), name => name==only ? this.up(name, address) : this.down(name) ));
-        debug("onlyUp:", only);
+        debug(`upOnly: ${only} at ${address} - done`);
     }
 
     isUp(name) {
