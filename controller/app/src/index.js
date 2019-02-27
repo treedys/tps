@@ -272,52 +272,6 @@ app.post("/api/shoot/calibration", async (browser_request, browser_response) => 
     }
 });
 
-const powerCycleAllPorts = async switchConfig =>
-    tplinks[switchConfig.address].session(switchConfig.address, async device => {
-
-        try {
-            let tasks = [];
-
-            for(let port=0; port < switchConfig.ports; port++) {
-                debug(`SWITCH: ${switchConfig.address}:${port} - Forced power cycle `);
-                tasks.push(device.powerCycle(port, 4000));
-            }
-
-            await Promise.all(tasks);
-        } catch(error) {
-            debug(`SWITCH: ${switchConfig.address} - Power cycle error:`, error);
-        }
-    });
-
-app.post("/api/cameras/restart", async (browser_request, browser_response) => {
-    try {
-        let tasks = [];
-
-        await status.service.patch(0, { restarting: true });
-
-        for(let switch0 of config.SWITCHES) {
-
-            tasks.push(powerCycleAllPorts(switch0));
-
-            for(let switch1 of switch0.switches) {
-                tasks.push(powerCycleAllPorts(switch1));
-            }
-        }
-
-        await Promise.all(tasks);
-
-        lastReboot = Date.now();
-
-        await status.service.patch(0, { restarting: false });
-
-        browser_response.status(204).end();
-
-    } catch(error) {
-        await status.service.patch(0, { restarting: false });
-        browser_response.status(500).send(error);
-    }
-});
-
 const downloadContent = async (mac, file) =>
     pTimeout(retry(5, async () => new Promise( (resolve,reject) => {
         const req = request(`http://${liveCameras[mac].address}/${file}`, {timeout:2*1000}, (error, response, body) => {
