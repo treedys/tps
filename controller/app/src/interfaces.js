@@ -10,6 +10,7 @@ const ip = require("ip");
 const doasync = require("doasync");
 const ifconfig = doasync(require("wireless-tools/ifconfig"));
 
+const netInterfaces = require('netinterfaces');
 const netlink = require('netlink-notify');
 
 // Configure the interface with address
@@ -33,6 +34,10 @@ class networkInterfaces extends EventEmitter {
         netlink?.from.on('link',    data => this.onLink   (JSON.parse(data)) );
         netlink?.from.on('address', data => this.onAddress(JSON.parse(data)) );
         netlink?.from.on('error',   data => this.onError  (data) );
+    }
+
+    listAll() {
+        return netInterfaces.list();
     }
 
     onRoute(data) {
