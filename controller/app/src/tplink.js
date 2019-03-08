@@ -6,6 +6,7 @@ const telnet = require("telnet-client");
 const mutex = require("await-mutex").default;
 
 const delay = require('delay');
+const camelCase = require('camelcase');
 
 const telnetConfig = {
     port: 23,
@@ -96,7 +97,9 @@ module.exports = function() {
                     powerEnable,
                     powerDisable,
                     powerCycle,
+                    powerStatus,
                     systemInfo,
+                    portStatus,
                     portMacTable,
                     portEnable,
                     portDisable,
@@ -226,7 +229,7 @@ module.exports = function() {
             let columns = lines[lineIdx].trim().split(/\s+/);
 
             if(columns.length!=5) {
-                debug(`Skipping: ${lines[lineIdx]}`);
+                debug(`portMacTable: Skipping: ${lines[lineIdx]}`);
                 continue;
             }
 
@@ -239,6 +242,60 @@ module.exports = function() {
         }
 
         return table;
+    }
+
+    let portStatus = async (options) => {
+        const lines = (await privileged('show interface status', options)).split(/[\r\n]+/).filter(line => line!='' );
+
+        const headers = lines[0].trim().split(/\s+/).map(camelCase);
+
+        let table = [];
+
+        for(let lineIdx = 2; lineIdx<lines.length; lineIdx++) {
+
+            const columns = lines[lineIdx].trim().split(/\s+/);
+
+            if(columns.length!=headers.length) {
+                debug(`portStatus: Skipping: ${lines[lineIdx]}`);
+                continue;
+            }
+
+            const result  = headers.reduce( (result, key, index) => ({ ...result, [key]: columns[index] }), {} );
+
+            if(result.port)
+                result.port = parseInt(result.port.split("/")[2])-1;
+
+            table.push(result);
+        }
+
+        return table.reduce( (result, status) => ({ ...result, [status.port]:{ ...status, online:status.status=='LinkUp' } }), {} );;
+    }
+
+    let powerStatus = async (options) => {
+        const lines = (await privileged('show power inline information interface', options)).split(/[\r\n]+/).filter(line => line!='' );
+
+        const headers = lines[0].trim().split(/\s+/).map(camelCase);
+
+        let table = [];
+
+        for(let lineIdx = 2; lineIdx<lines.length; lineIdx++) {
+
+            const columns = lines[lineIdx].trim().replace(/Class /g,'Class_').split(/\s+/);
+
+            if(columns.length!=headers.length) {
+                debug(`powerStatus: Skipping: ${lines[lineIdx]}`);
+                continue;
+            }
+
+            const result  = headers.reduce( (result, key, index) => ({ ...result, [key]: columns[index] }), {} );
+
+            if(result.interface)
+                result.interface = parseInt(result.interface.split("/")[2])-1;
+
+            table.push(result);
+        }
+
+        return table.reduce( (result, status) => ({ ...result, [status.interface]:{ ...status, PoE:status.powerStatus=='ON' } }), {} );;
     }
 
     let changeIpAddress = async (oldAddress, vlan, newAddress, mask, options) => {
