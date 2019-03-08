@@ -48,6 +48,7 @@ module.exports = function() {
 
     let connect = async (address, options) => {
 
+        // FIXME: Check for deadlock (timeout?)
         let unlock = await connectionMutex.lock();
 
         const disconnect = async () => {
@@ -95,6 +96,7 @@ module.exports = function() {
                     powerEnable,
                     powerDisable,
                     powerCycle,
+                    systemInfo,
                     portMacTable,
                     portEnable,
                     portDisable,
@@ -206,6 +208,13 @@ module.exports = function() {
         for(let port=0; port<totalPorts; port++)
             await (ports.includes(port) ? portEnable : portDisable)(port, options)
     }
+
+    const systemInfo = async (options) =>
+        (await privileged("show system-info", options))
+            .split(/[\r\n]+/)
+            .map( line => line.split(/-(.+)/))
+            .filter( ([key, value]) => key )
+            .reduce( (result, [key, value]) => ({ ...result, [key.trim()]: value.trim()}), {});
 
     let portMacTable = async (options) => {
         let lines = (await privileged("show mac address-table", options)).split(/[\r\n]+/);

@@ -93,6 +93,10 @@ class networkInterfaces extends EventEmitter {
 
     async address(name, address) {
         const networkInterface = this.map.get(name);
+
+        if(networkInterface.address==address)
+            return;
+
         debug(`address: ${name} at ${address}`);
         networkInterface.address = address;
 
