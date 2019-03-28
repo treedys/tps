@@ -64,11 +64,12 @@ module.exports = function() {
                         }
                         */
             try {
-                connection.end();
+                connection.destroy();
                 await eventToPromise.multi(connection, ["close"], ["error", "failedlogin", "timeout", "bufferexceeded"]);
                 debug(`SWITCH: ${address} - Disconnected`);
                 unlock();
             } catch(error) {
+                debug(`SWITCH: ${address} - Disconnecting error:`, error);
                 connection.getSocket().destroy();
                 unlock();
                 throw error;
