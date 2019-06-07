@@ -61,7 +61,7 @@ const styles = {
 export const CameraLink = ({ camera, switchData, index, style, ...params }) =>
     <div style={{ ...styles.camera, ...style }}>
         <NavLink to={`/cameras/${camera?.id}`}>
-            <img src={ camera?.online ? `/preview/${camera.id}/0-2.jpg?${Date.now()}` : assets.noise } style={{width:'100%', height:'auto'}} {...params} />
+            <img src={ camera?.online ? `/preview/${camera.id}/0-2.jpg?${Math.floor(Date.now()/2000)}` : assets.noise } style={{width:'100%', height:'auto'}} {...params} />
         </NavLink>
         <p style={styles.port}>{index||camera?.index||"--"}</p>
         <div style={{ ...styles.led, ...( camera?.online ? styles.on : styles.off) }}/>
