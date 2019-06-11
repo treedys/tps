@@ -1,5 +1,6 @@
 import mixin from 'lodash-decorators/mixin'
 
+// FIXME: Replace `mixin` with manual decorator
 export const changeState = mixin({
     changeState(newState) {
         return new Promise( resolve =>

@@ -1,10 +1,11 @@
 
-const debug = require("debug")("TPLINK");
+const _debug = require("debug")("TPLINK");
 
 const eventToPromise = require('event-to-promise');
 const telnet = require("telnet-client");
 const mutex = require("await-mutex").default;
 
+const pTimeout = require('p-timeout');
 const delay = require('delay');
 const camelCase = require('camelcase');
 
@@ -31,6 +32,8 @@ module.exports = function() {
     var execMutex = new mutex();
     var connectionMutex = new mutex();
 
+    let debug = _debug;
+
     connection.on("error",       error => debug("TELNET:ERROR:",      error ));
     connection.on("failedlogin",  data => debug("TELNET:FAILEDLOGIN:", data ));
     connection.on("timeout",        () => debug("TELNET:TIMEOUT:"           ));
@@ -52,6 +55,8 @@ module.exports = function() {
         // FIXME: Check for deadlock (timeout?)
         let unlock = await connectionMutex.lock();
 
+        debug = _debug.extend(address);
+
         const disconnect = async () => {
 
             debug(`SWITCH: ${address} - Disconnecting`);
@@ -64,14 +69,17 @@ module.exports = function() {
                         }
                         */
             try {
+                // FIXME: connection.destroy immediately resolves
                 connection.destroy();
                 await eventToPromise.multi(connection, ["close"], ["error", "failedlogin", "timeout", "bufferexceeded"]);
                 debug(`SWITCH: ${address} - Disconnected`);
                 unlock();
+                debug = _debug;
             } catch(error) {
                 debug(`SWITCH: ${address} - Disconnecting error:`, error);
                 connection.getSocket().destroy();
                 unlock();
+                debug = _debug;
                 throw error;
             }
         };
@@ -82,13 +90,12 @@ module.exports = function() {
 
         for(let retries=0; retries<5; retries++) {
             try {
-                connection.connect({ ...telnetConfig, ...options, host: address });
-
-                await eventToPromise.multi(connection, ["ready"], ["error", "failedlogin", "timeout", "bufferexceeded"]);
+                await connection.connect({ ...telnetConfig, ...options, host: address });
 
                 debug(`SWITCH: ${address} - Connected`);
 
                 return {
+                    connection,
                     disconnect,
                     execute,
                     privileged,
@@ -110,11 +117,15 @@ module.exports = function() {
                 };
             } catch(error) {
                 debug(`SWITCH: ${address} - Connect failed: ${error.toString()}`);
-                try { await disconnect(); } catch (ignore) {}
+                try { await connection.destroy(); } catch(ignore) { connection.getSocket().destroy(); }
                 err = error;
             }
+
+            await delay(1*1000);
         }
+
         debug(`SWITCH: ${address} - Connect failed`);
+        debug = _debug;
         unlock();
         throw err;
     };
@@ -158,10 +169,9 @@ module.exports = function() {
             let result = "";
             for(command of commands.split("|")) {
                 debug("TELNET:EXEC:", command);
-                let [res,] = await Promise.all([
-                    connection.exec(command, { ...execOpts, ...options}),
-                    eventToPromise.multi(connection, ["responseready"], ["error", "failedlogin", "timeout", "bufferexceeded"])
-                ]);
+
+                const res = await connection.exec(command, { ...execOpts, ...options});
+
                 debug("TELNET:RES:", res);
                 result += res;
             }
@@ -193,24 +203,33 @@ module.exports = function() {
     let disableAll   = async (except, totalPorts, options) => {
         let excepts = [].concat(except);
 
-        for(let port=0; port<totalPorts; port++)
-            if(!excepts.includes(port))
-                await portDisable(port, options);
+        const cmd = [ ...(Array(totalPorts).keys()) ]
+            .filter( port => !excepts.includes(port) )
+            .map( port => `interface gigabitEthernet 1/0/${port+1}|shutdown|exit` )
+            .join('|');
+
+        await config(cmd);
     }
 
     let enableAll    = async (except, totalPorts, options) => {
         let excepts = [].concat(except);
 
-        for(let port=0; port<totalPorts; port++)
-            if(!excepts.includes(port))
-                await portEnable(port, options);
+        const cmd = [ ...(Array(totalPorts).keys()) ]
+            .filter( port => !excepts.includes(port) )
+            .map( port => `interface gigabitEthernet 1/0/${port+1}|no shutdown|exit` )
+            .join('|');
+
+        await config(cmd);
     }
 
     let enableOnly   = async (portToEnable, totalPorts, options) => {
-        let ports = [].concat(portToEnable);
+        const enabled = [].concat(portToEnable);
 
-        for(let port=0; port<totalPorts; port++)
-            await (ports.includes(port) ? portEnable : portDisable)(port, options)
+        const cmd = [ ...(Array(totalPorts).keys()) ]
+            .map( port => `interface gigabitEthernet 1/0/${port+1}|${enabled.includes(port)?'no shutdown':'shutdown'}|exit` )
+            .join('|');
+
+        await config(cmd);
     }
 
     const systemInfo = async (options) =>
@@ -302,7 +321,11 @@ module.exports = function() {
     let changeIpAddress = async (oldAddress, vlan, newAddress, mask, options) => {
         let device = await connect(oldAddress);
 
-        try { await device.vlan(vlan, `ip address ${newAddress} ${mask}`, options); } catch(error) { }
+        try {
+            await pTimeout(device.vlan(vlan, `ip address ${newAddress} ${mask}`, options), 5*1000);
+        } catch(error) {
+            debug(`Change IP error:`, error);
+        }
         await delay(10*1000);
         connection.getSocket().destroy();
         try { await device.disconnect(); } catch (error) { }

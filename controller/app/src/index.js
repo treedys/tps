@@ -1,12 +1,11 @@
+const debug = require("debug")("APP");
+
 const config = require("./config");
 
-const debug = require("debug")("APP");
 const multicast = require("./multicast");
 
 const pTimeout = require('p-timeout');
 const delay = require('delay');
-const sstream = require('./sstream.js');
-const eol = require('eol');
 
 const app = require("./app.js");
 const status = require('./status.js');
@@ -14,8 +13,7 @@ const switches = require('./switches.js');
 const cameras = require('./cameras.js');
 const scans = require('./scans.js');
 const calibrations = require('./calibrations.js');
-
-const liveCameras = {};
+const network = require('./network.js');
 
 const sendCmd = async (args) => {
 
@@ -61,11 +59,7 @@ const configRecordDefer = defer();
 
 let configRecord;
 
-const cameraIndex = mac => {
-    const index = configRecord?.scanner?.map?.indexOf(mac);
-
-    return index!=undefined && index>=0 ? index : undefined;
-}
+let computer;
 
 app.post("/api/shoot/preview", async (browser_request, browser_response) => {
     debug("Camera preview");
@@ -173,7 +167,7 @@ app.post("/scan/:scan/download", async (browser_request, browser_response) => {
                 if(!mac)
                     return;
 
-                const camera = liveCameras[mac];
+                const camera = cameras.live[mac];
 
                 if(!camera || !camera.online) {
                     await scans.fail(scanId, index);
@@ -239,7 +233,7 @@ app.post("/api/shoot/calibration", async (browser_request, browser_response) => 
                 if(!mac)
                     return;
 
-                const camera = liveCameras[mac];
+                const camera = cameras.live[mac];
 
                 if(!camera || !camera.online) {
                     await calibrations.fail(calibrationId, index);
@@ -273,530 +267,52 @@ app.post("/api/shoot/calibration", async (browser_request, browser_response) => 
     }
 });
 
-const downloadContent = async (mac, file) =>
-    pTimeout(retry(5, async () => new Promise( (resolve,reject) => {
-        const req = request(`http://${liveCameras[mac].address}/${file}`, {timeout:2*1000}, (error, response, body) => {
-            if(error) { req.abort(); reject(error); }
-            if(response?.statusCode!=200) { req.abort(); resolve(undefined); }
-            resolve(body); req.end();
-        });
-    })), 10*1000, `CAMERA: ${liveCameras[mac].switchAddress}:${liveCameras[mac].port} - Timeout downloading ${file}`);
-
-const checkNetboot = async (mac) => {
-    await send.exec(mac, "vcgencmd otp_dump > /var/www/otp_dump");
-    await delay(100);
-
-    const otp_dump = await downloadContent(mac, "otp_dump");
-    const otp = eol.split(otp_dump).map(line => line.split(':')).reduce( (otp, [addr, value]) => Object.assign(otp, typeof(value)!="undefined" && { [parseInt(addr)]:parseInt(value,16) }), []);
-
-    if(otp[17]!=0x3020000a) {
-        debug(`CAMERA: ${liveCameras[mac].switchAddress}:${liveCameras[mac].port} - Configuring netboot - ${otp[17]?.toString(16)}`);
-        await send.exec(mac, `mkdir /var/fat;mount /dev/mmcblk0p1 /var/fat;echo "program_usb_boot_mode=1" >> /var/fat/config.txt;sync;sync;sync;reboot;`);
-    }
-}
-
-const cameraState= async (mac) => {
-    await send.exec(mac, "cp /etc/*-version /var/www/");
-    await delay(100);
-
-    const    cameraVersion = await downloadContent(mac,    "camera-version");
-    const buildrootVersion = await downloadContent(mac, "buildroot-version");
-
-    const needsUpgrade = cameraVersion?.trim()!=CAMERAFIRMWARESHA1 || buildrootVersion?.trim()!=BUILDROOTSHA1;
-
-    await send.exec(mac, "ls /dev/ > /var/www/dev");
-    await delay(100);
-    const dev = await downloadContent(mac, "dev");
-    const hasSDcard = dev.includes("mmcblk0");
-
-    await send.exec(mac, "cp /proc/cmdline /var/www/");
-    await delay(100);
-    const cmdline = await downloadContent(mac, "cmdline");
-    const bootFromSDcard = cmdline.includes("root=/dev/mmcblk0");
-
-    return { cameraVersion, buildrootVersion, dev, cmdline, needsUpgrade, hasSDcard, bootFromSDcard };
-}
-
-const upgradeCameraFirmmware = async (mac) => {
-
-    const unlock = await upgradeMutex.lock();
-
-    try {
-        const camera = await cameraState(mac);
-
-        if(!camera.needsUpgrade && (!camera.hasSDcard || camera.bootFromSDcard)) {
-            debug(`CAMERA: ${liveCameras[mac].switchAddress}:${liveCameras[mac].port} - Firmware is uptodate`);
-            unlock();
-            return;
-        }
-
-        // TODO: add the camera to the upgrade list
-
-        if(!camera.hasSDcard && camera.needsUpgrade) {
-            await send.exec(mac, "reboot");
-        } else if(camera.hasSDcard && (!camera.bootFromSDcard || camera.needsUpgrade)) {
-            debug(`CAMERA: ${liveCameras[mac].switchAddress}:${liveCameras[mac].port} - Upgrading firmware from version ${camera.cameraVersion||"unknown"} to ${CAMERAFIRMWARESHA1}`);
-            const cmd =  `"tftp -g -l /tmp/sdcard.img -r sdcard.img ${addressEnd(liveCameras[mac].address,200)} && dd if=/tmp/sdcard.img of=/dev/mmcblk0 && sync; reboot;"`;
-            await send.exec(mac, `echo ${cmd} > /var/www/upgrade.sh`);
-            await send.exec(mac, "chmod +x /var/www/upgrade.sh");
-            await send.exec(mac, "/var/www/upgrade.sh");
-        } else {
-            debug(`CAMERA: ${liveCameras[mac].switchAddress}:${liveCameras[mac].port} - needsUpgrade=${camera.needsUpgrade} hasSDcard=${camera.hasSDcard} bootFromSDcard=${camera.bootFromSDcard}`);
-            unlock();
-            return;
-        }
-
-        let afterReboot;
-        do {
-            await delay(5*1000);
-            // TODO: Timout the loop
-            try {
-                afterReboot = await cameraState(mac);
-                debug(`CAMERA: ${liveCameras[mac].switchAddress}:${liveCameras[mac].port} - needsUpgrade=${afterReboot.needsUpgrade} hasSDcard=${afterReboot.hasSDcard} bootFromSDcard=${afterReboot.bootFromSDcard}`);
-            } catch(error) {
-                debug(`CAMERA: ${liveCameras[mac].switchAddress}:${liveCameras[mac].port} - Upgrade polling error:`, error);
-            }
-        } while(afterReboot.needsUpgrade || (afterReboot.hasSDcard && !afterReboot.bootFromSDcard));
-
-        // TODO: remove the camera from the upgrade list
-        unlock();
-
-    } catch(error) {
-        debug(`CAMERA: ${liveCameras[mac].switchAddress}:${liveCameras[mac].port} - Camera upgrade error:`, error);
-        unlock();
-    }
-}
-
-let linking = false;
-
-const mutex = require("await-mutex").default;
-const newCameraMutex = new mutex();
-const upgradeMutex = new mutex();
-
-const eraseNewCameras = async () => {
-
-    let unlock = await newCameraMutex.lock();
-
-    try {
-        let { scanner } = configRecord;
-
-        scanner = scanner || {};
-        scanner.new = [];
-
-        await config.service.patch('0', { scanner } );
-
-        unlock();
-    } catch(error) {
-        unlock();
-        throw error;
-    }
-}
+let discovering = false;
 
 const onMessage = async (message, rinfo) => {
     if(message.length==18) {
         const address = rinfo.address;
         const mac = message.toString("ascii", 0, 17);
 
-        if(!liveCameras[mac]) {
-            try {
-                debug(`CAMERA: ${mac} ${address} - New`);
-                await cameras.service.create({ id: mac, address, mac, online:true });
-                liveCameras[mac] = { address, online:true, lastSeen: Date.now() };
-
-                let unlock = await newCameraMutex.lock();
-
-                try {
-                    let { scanner } = configRecord;
-
-                    scanner = scanner || {};
-                    scanner.map = scanner.map || [];
-                    scanner.new = scanner.new || [];
-
-                    if(!scanner.map.includes(mac) && !scanner.new.includes(mac)) {
-                        scanner.new.push(mac);
-                        await config.service.patch('0', { scanner } );
-                    }
-                    unlock();
-                } catch(error) {
-                    unlock();
-                    throw error;
-                }
-
-                await checkNetboot(mac);
-                await upgradeCameraFirmmware(mac);
-
-            } catch(error) {
-                debug(`CAMERA: ${mac} ${address} - New error:`, error);
-            }
-        } else if(liveCameras[mac].address != address || !liveCameras[mac].online) {
-            try {
-                debug(`CAMERA: ${liveCameras[mac].switchAddress}:${liveCameras[mac].port} - Recovering at ${address}`);
-                await cameras.service.patch(mac, { address, online: true });
-                liveCameras[mac] = { ...liveCameras[mac], address, online: true };
-
-                await checkNetboot(mac);
-                await upgradeCameraFirmmware(mac);
-
-            } catch(error) {
-                debug(`CAMERA: ${liveCameras[mac].switchAddress}:${liveCameras[mac].port} - Update error:`, error);
-            }
-        }
-
-        liveCameras[mac].lastSeen = Date.now();
+        await cameras.update({mac, address, online:true, lastSeen: Date.now() });
     } else if(message.length==500) {
-        const camera = Object.values(liveCameras).find( c => c.address==rinfo.address );
+        const camera = Object.values(cameras.live).find( c => c.address==rinfo.address );
+        const error = message.toString("ascii", 0, 500);
         // TODO: Log message to external file on the SSD
-        debug(`CAMERA ${camera?.switchAddress}:${camera?.port} - ERROR:`, message.toString("ascii", 0, 500));
+        if(camera)
+            camera.debug(`ERROR: ${error}`);
+        else
+            debug(`CAMERA ${rinfo.address} - ERROR: ${errror}`);
     } else {
         debug("Received:", message.length, message);
     }
 };
 
-const linkSwitch = async switchConfig =>
-    await tplinks[switchConfig.address].session(switchConfig.address, async device => {
-
-        try {
-            const table = await device.portMacTable();
-
-            for(let { port, mac } of table) {
-                if(liveCameras[mac] && port<switchConfig.ports && port!=switchConfig.uplinkPort) {
-                    if( liveCameras[mac].switchAddress != switchConfig.address ||
-                        liveCameras[mac].port          != port                 ||
-                        liveCameras[mac].index         != cameraIndex(mac)) {
-
-                        liveCameras[mac] = {
-                            ...liveCameras[mac],
-                            switchAddress:switchConfig.address,
-                            port,
-                            index:cameraIndex(mac)
-                        };
-
-                        await cameras.service.patch(mac, {
-                            switchAddress:switchConfig.address,
-                            port,
-                            index: liveCameras[mac].index
-                        });
-
-                        debug(`CAMERA: ${switchConfig.address}:${port} - Linking to ${liveCameras[mac].address}`);
-                    }
-                }
-            }
-        } catch(error) {
-            debug(`linkSwitch ${switchConfig.address}:`, error);
-        }
-    });
-
-const link = async () => {
-    try {
-        let tasks = [];
-
-        // Get MAC addresses from the switches
-        for(let switch0 of config.SWITCHES) {
-
-            if(switch0.switches.length==0)
-                tasks.push(linkSwitch(switch0));
-
-            for(let switch1 of switch0.switches) {
-
-                tasks.push(linkSwitch(switch1));
-            }
-        }
-
-        await Promise.all(tasks);
-    } catch(error) {
-        debug("link:", error);
-    }
-}
-
 const discover = async () => {
 
     try {
-        await send.pingAll();
+        if(!discovering) {
+            discovering = true;
 
-        if(!linking) {
-            linking = true;
+            await computer?.discover();
 
-            try { await link() } catch(error) { debug("Link:", error); }
-
-            linking = false;
+            discovering = false;
         }
     } catch(error) {
+        discovering = false;
         debug("discover:", error);
     }
-}
 
-const interfaces = require('./interfaces.js');
-
-const ip = require("ip");
-const time = require("time-since");
-const Bottleneck = require("bottleneck");
-
-const bootLimiter = new Bottleneck({ maxConcurrent: 10 });
-//bootLimiter.on('debug', (msg, data) => debug("BOTTLENECK:", msg, data));
-
-const powerCycle = async (address, port) => {
     try {
-        debug(`Power cycle ${address}:${port}`);
-        await tplinks[address].session( address, device => device.powerDisable(port) );
-        await delay(  3*1000 );
-        await tplinks[address].session( address, device => device.powerEnable(port) );
-        await delay( 30*1000 );
+        await send.pingAll();
     } catch(error) {
-        debug(`Power cycle ${address}:${port}`, error);
+        debug("linking:", error);
     }
 }
-
-let tplinks = {};
-
-const tplinksPrepare = () => {
-    for(let switch0 of config.SWITCHES) {
-
-        tplinks[switch0.address] = require("./tplink")();
-
-        for(let switch1 of switch0.switches)
-            tplinks[switch1.address] = require("./tplink")();
-    }
-};
-
-tplinksPrepare();
-
-const addressEnd = (address, end) => ip.toString( [...ip.toBuffer(address).slice(0, 3), end] );
-
-let probeSwitch0 = async (switch0, address)  => {
-    try {
-        debug(`Checking switch0 ${address}`);
-
-        await interfaces.upOnly(switch0.interface, addressEnd(address, 200));
-        return await tplinks[switch0.address].probe(address, config.SWITCH_PROBE_TIMEOUTS);
-    } catch(error) {
-        debug(`Checking switch0 ${address}`, error);
-        return false;
-    }
-}
-
-let probeSwitch1 = async (switch0, switch1, address) => {
-    try {
-        debug(`Checking switch1 ${address}`);
-
-        await interfaces.upOnly(switch0.interface, addressEnd(switch0.address, 200));
-        await tplinks[switch0.address].session(switch0.address, device => device.enableOnly( [switch1.hostPort, switch0.uplinkPort], switch0.ports ));
-
-        await interfaces.upOnly(switch0.interface, addressEnd(address, 200));
-        return await tplinks[switch1.address].probe(address, config.SWITCH_PROBE_TIMEOUTS);
-    } catch(error) {
-        debug(`Checking switch1 ${address}`);
-        return false;
-    }
-}
-
-let configure = async (netInterface, switchConfig, defaultAddress) => {
-
-    debug(`Starting session to configure switch at ${switchConfig.address}`);
-
-    await retry(5, async () => {
-        await interfaces.upOnly(netInterface, addressEnd( defaultAddress, 200 ));
-        await tplinks[switchConfig.address].session(defaultAddress, async device => {
-            debug(`Configuring switch ${switchConfig.address}`);
-
-            // First get rid of logging messages that mess with the CLI commands execution
-            await device.config("no logging monitor|no logging buffer");
-
-            debug("Monitor disabled");
-
-            if(config.SWITCH_CONFIG_SPANNING_TREE) {
-                debug("Configuring spanning tree");
-
-                await device.config("spanning-tree|spanning-tree mode rstp");
-
-                for(let port=0; port<switchConfig.ports; port++)
-                    await device.port(port, "spanning-tree|spanning-tree common-config portfast enable");
-
-                debug("Spanning tree configured");
-            }
-
-            if(config.SWITCH_CONFIG_PoE) {
-                debug("Configuring PoE");
-
-                for(let port=0; port<switchConfig.ports; port++)
-                    await device.powerDisable(port);
-
-                debug("PoE configured");
-            }
-
-            debug("Configure port speed");
-
-            for(let port=0; port<switchConfig.ports; port++)
-                await device.port(port, `speed ${(port==switchConfig.uplinkPort&&"1000")||switchConfig.speed||"auto"}`);
-
-            debug("Port speed configured");
-
-        }, config.SWITCH_CONFIG_TIMEOUTS);
-
-        debug(`Changing IP address to ${switchConfig.address}`);
-        await tplinks[switchConfig.address].changeIpAddress(defaultAddress, 0, switchConfig.address, "255.255.255.0");
-        debug("IP address changed");
-
-        await interfaces.upOnly(netInterface, addressEnd( switchConfig.address, 200 ));
-        await tplinks[switchConfig.address].session(switchConfig.address, async device => {
-            debug("Updating startup config");
-            await device.privileged("copy running-config startup-config");
-            debug("Startup config updated");
-        });
-    });
-
-    debug("Switch configured");
-}
-
-let lastReboot;
-
-const powerCycleSwitch = async switchConfig => {
-    try {
-        var tasks = [];
-
-        for(let port=0; port < switchConfig.ports; port++) {
-            if(!Object.values(liveCameras).find(camera => camera.switchAddress==switchConfig.address && camera.port==port) &&
-                port!=switchConfig.uplinkPort) {
-                tasks.push(bootLimiter.schedule(async () => await powerCycle( switchConfig.address, port )));
-            }
-        }
-
-        await Promise.all(tasks);
-    } catch(error) {
-        debug(`powerCycleSwitch ${switchConfig.address}`, error);
-    }
-}
-
-let loop = async () => {
-
-    let tasks = [];
-
-    for(let mac in liveCameras) {
-
-        let camera = liveCameras[mac];
-
-        // FIXME: Rewrite the camera discovery process
-        let notSeen     = !camera.lastSeen   || time.since(camera.lastSeen  ).secs()>10*60;
-        let notRebooted = !camera.lastReboot || time.since(camera.lastReboot).secs()>60;
-
-        if(camera.online && notSeen) {
-
-            debug(`Lost connection to ${camera.switchAddress}:${camera.port} ${camera.address}`);
-
-            camera.online = false;
-
-            tasks.push(await cameras.service.patch(mac, { online: false }) );
-        }
-
-        if(notSeen && notRebooted) {
-
-            if(camera.switchAddress && camera.port)
-                tasks.push(bootLimiter.schedule( async () => {
-                    await powerCycle(camera.switchAddress, camera.port );
-                    camera.lastReboot = Date.now();
-                }));
-        }
-    }
-
-    await Promise.all(tasks);
-
-    if(!lastReboot || time.since(lastReboot).secs()>60) {
-
-        await status.service.patch(0, { restarting: true });
-
-        let tasks = [];
-
-        for(let switch0 of config.SWITCHES) {
-            if(switch0.switches.length==0)
-                tasks.push(powerCycleSwitch(switch0));
-
-            for(let switch1 of switch0.switches ) {
-                tasks.push(powerCycleSwitch(switch1));
-            }
-        }
-
-        await Promise.all(tasks);
-
-        lastReboot = Date.now();
-
-        await status.service.patch(0, { restarting: false });
-    } else if(!tasks.length) {
-        await delay(1000);
-    }
-}
-
-let retry = async (maxRetries, callback) => {
-
-    let lastError = undefined;
-
-    for(let retries=0; retries<maxRetries; retries++) {
-        try {
-            return await callback();
-        } catch(error) {
-            lastError = error;
-        }
-    }
-
-    throw lastError;
-};
-
-const probeAndConfigureSwitch0 = async switch0 => {
-
-    if(!await probeSwitch0(switch0, switch0.address)) {
-
-        if(!await probeSwitch0(switch0, config.SWITCH_DEFAULT_ADDRESS))
-            throw `Can't connect to switch ${switch0.address}`;
-
-        await configure(switch0.interface, switch0, config.SWITCH_DEFAULT_ADDRESS);
-    }
-
-    debug(`Found switch ${switch0.address}`);
-}
-
-const probeAndConfigureSwitch1 = async (switch0, switch1) => {
-
-    if(!await probeSwitch1(switch0, switch1, switch1.address)) {
-
-        if(!await probeSwitch1(switch0, switch1, config.SWITCH_DEFAULT_ADDRESS))
-            throw `Can't connect to switch ${switch1.address}`;
-
-        await interfaces.upOnly(switch0.interface, addressEnd( switch0.address, 200 ));
-        await tplinks[switch0.address].session(switch0.address, device => device.enableOnly([switch1.hostPort, switch0.uplinkPort], switch0.ports));
-
-        await configure(switch0.interface, switch1, config.SWITCH_DEFAULT_ADDRESS);
-    }
-
-    debug(`Found switch ${switch1.address}`);
-}
-
-const enableAllInterfaces = async () => {
-    debug("Enable all network interfaces");
-
-    await Promise.all(config.SWITCHES.map(
-        async switch0 => {
-            await interfaces.up(switch0.interface, addressEnd( switch0.address, 200 ));
-            await tplinks[switch0.address].session(switch0.address, device => device.enableAll([], switch0.ports));
-        }
-    ));
-
-    debug("Network interfaces are enabled");
-};
-
-let configureAllSwitches = async () => {
-
-    debug("Configuring all switches");
-
-    for(let switch0 of config.SWITCHES) {
-        await probeAndConfigureSwitch0(switch0);
-
-        for(let switch1 of switch0.switches) {
-            await probeAndConfigureSwitch1(switch0, switch1);
-        }
-    }
-
-    await enableAllInterfaces();
-};
 
 let run = async () => {
+
+    computer = await new network.computer();
 
     let discoverInterval;
 
@@ -807,46 +323,11 @@ let run = async () => {
     await configRecordDefer.promise;
 
     try {
-        debug("Configure all network interfaces");
-        // Prepare network interfaces
-        await Promise.all(config.SWITCHES.map(
-            async ({ interface:netInterface, address }) => {
-                await interfaces.add(netInterface, addressEnd( address, 200));
-                await interfaces.up(netInterface);
-            }
-        ));
-
-        // Probe and configure all switches
-        debug("Detecting switches.");
-
-        for(;;) {
-            try {
-                for(let switch0 of config.SWITCHES) {
-                    if(!await tplinks[switch0.address].probe(switch0.address)) {
-                        debug(`Can't find switch ${switch0.address}`);
-                        await configureAllSwitches();
-                        break;
-                    } else {
-                        for(let switch1 of switch0.switches )
-                            if(!await tplinks[switch1.address].probe(switch1.address)) {
-                                debug(`Can\'t find switch ${switch1.address}`);
-                                await configureAllSwitches();
-                                break;
-                            }
-                    }
-                }
-
-                break;
-            } catch(error) {
-                debug("Retrying switch detection on:", error);
-                continue;
-            }
-        }
-
         debug("UDP binding");
 
-        for(let { address } of config.SWITCHES)
-            await multicast.server(config.MCAST_CAMERA_COMMAND_PORT, addressEnd( address, 200 ) );
+        for(let port of computer.ports)
+            if(!port.isSystemPort)
+                await multicast.server(config.MCAST_CAMERA_COMMAND_PORT, port.ipAddress);
 
         debug("UDP server binded");
 
@@ -858,7 +339,7 @@ let run = async () => {
 
         debug("Rediscover existing non-alocated cameras");
 
-        await eraseNewCameras();
+        await config.eraseNewCameras();
 
         debug("Starting camera heartbeat");
 
@@ -872,7 +353,7 @@ let run = async () => {
         await status.service.patch(0, { operational: true });
 
         while(true)
-            await loop();
+            await delay(1*1000);
 
     } catch(error) {
         debug("Error:", error);

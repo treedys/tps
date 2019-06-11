@@ -1,79 +1,65 @@
 const EventEmitter = require('events');
 const eventToPromise = require('event-to-promise');
 
-const config = require("./config");
-
-const debug = require("debug")("interfaces");
+const debug = require("debug")("INTERFACES");
 
 const ip = require("ip");
+const { promisify } = require('util');
 
-const doasync = require("doasync");
-const ifconfig = doasync(require("wireless-tools/ifconfig"));
+const pify = require('pify');
+const ipLink = pify(require('iproute').link);
+const ipAddress = pify(require('iproute').address);
 
-const netInterfaces = require('netinterfaces');
 const netlink = require('netlink-notify');
 
-// Configure the interface with address
-let ipConfiguration = (name, address) => ({
-    interface: name,
-    ipv4_address: address,
-    ipv4_broadcast: ip.toString([...ip.toBuffer(address).slice( 0, 3 ), 255]),
-    ipv4_subnet_mask: "255.255.255.0"
-});
+const actionName = () => Array.prototype.join.call(arguments,'_');
 
-const actionName = (action, name) => action+" "+name;
-
-/* TODO: mutex calls */
 class networkInterfaces extends EventEmitter {
     constructor() {
         super();
 
-        this.map = new Map();
+        return this.asyncConstructor();
+    }
+
+    async asyncConstructor() {
+
+        this.interfaces = (await ipLink.show() ).reduce( (result, { name, flags, mac }) => ({ ...result, [name]: { name, up:flags.includes('UP'), running:flags.includes('LOWER_UP'), mac } }), {});
+
+        debug(this.interfaces);
 
         netlink?.from.on('route',   data => this.onRoute  (JSON.parse(data)) );
         netlink?.from.on('link',    data => this.onLink   (JSON.parse(data)) );
         netlink?.from.on('address', data => this.onAddress(JSON.parse(data)) );
         netlink?.from.on('error',   data => this.onError  (data) );
+
+        return this;
     }
 
     listAll() {
-        return netInterfaces.list();
+        return this.interfaces;
     }
 
     onRoute(data) {
         debug(`netlink-notify.route:`, data);
+        this.emit(actionName('route', data.data.addr.oif, data.event, data.data.type, data.data.addr.dst));
     }
 
     onLink(data) {
-        debug(`netlink-notify.link:`, data);
 
-        let networkInterface = this.map.get(data.data.name);
+        debug('netlink-notify.link:', data);
 
-        if(!networkInterface)
-            return;
+        const name = data?.data?.name;
+        const up = data?.data?.up;
+        const running = data?.data?.running;
 
-        if(!networkInterface.up && data.data.up) {
-            debug(`up ${data.data.name}`);
-            networkInterface.up = true;
-            this.emit(actionName("up", data.data.name), data);
+        if(this.interfaces[name].up != up) {
+            this.interfaces[name].up = up;
+            this.emit(actionName(up?"up":"down", name));
         }
 
-        if(networkInterface.up && !data.data.up) {
-            debug(`down ${data.data.name}`);
-            networkInterface.up = false;
-            this.emit(actionName("down", data.data.name), data);
-        }
-
-        if(!networkInterface.running && data.data.running) {
-            debug(`running ${data.data.name}`);
-            networkInterface.running = true;
-            this.emit(actionName("running", data.data.name), data);
-        }
-
-        if(networkInterface.running && !data.data.running) {
-            debug(`stopped ${data.data.name}`);
-            networkInterface.running = false;
-            this.emit(actionName("stopped", data.data.name), data);
+        if(this.interfaces[name].running != running) {
+            this.interfaces[name].running = running;
+            this.emit(actionName(running?"running":"stopped", name));
         }
     }
 
@@ -85,82 +71,73 @@ class networkInterfaces extends EventEmitter {
         debug(`netlink-notify.error:`, data);
     }
 
-    async add(name, address) {
-        debug(`add: ${name} at ${address}`);
-        this.map.set(name, { address, up:false, running: false});
-        await ifconfig.down(name);
+    async clean(name) {
+        await Promise.all(
+            (await ipAddress.show({ dev:name }))[name]
+            .filter( ({type}) => type=="inet" )
+            .map( ({address}) => Promise.all([
+                netlink && eventToPromise(this, actionName('route', name, 'delete', 'local', address)),
+                // address is already reported with /24 sufix which breaks this.unroute
+                ipAddress.delete({ dev:name, address })
+            ]) ));
     }
 
-    async address(name, address) {
-        const networkInterface = this.map.get(name);
+    async route(name, address) {
+        debug(`route: ${name} at ${address}`);
 
-        if(networkInterface.address==address)
-            return;
-
-        debug(`address: ${name} at ${address}`);
-        networkInterface.address = address;
-
-        if(this.isUp(name)) {
-            await this.down(name);
-            await this.up(name);
+        try {
+            await Promise.all([
+                netlink && eventToPromise(this, actionName('route', name, 'new', 'local', address)),
+                ipAddress.add({ dev:name, scope:'global', local: `${address}/24` })
+            ]);
+        } catch (error) {
+            debug(`route:`, error);
         }
     }
 
-    async up(name, address) {
+    async unroute(name, address) {
+        debug(`unroute: ${name} at ${address}`);
 
-        if(address)
-            await this.address(name, address);
-
-        if(this.isDown(name)) {
-            const networkInterface = this.map.get(name);
-            debug(`up: ${name} at ${address}`);
+        try {
             await Promise.all([
-                ifconfig.up(ipConfiguration(name, networkInterface.address)),
-                netlink && eventToPromise(this, actionName("running", name))
+                netlink && eventToPromise(this, actionName('route', name, 'delete', 'local', address)),
+                ipAddress.delete({ dev:name, address: `${address}/24` })
             ]);
-            debug(`up: ${name} at ${address} - done`);
+        } catch (error) {
+            debug(`unroute:`, error);
+        }
+    }
+
+    async up(name) {
+
+        if(!this.isUp(name)) {
+            debug(`up: ${name}`);
+            await Promise.all([
+                netlink && eventToPromise(this, actionName("up", name)),
+                ipLink.set({ dev:name, state:'up' })
+            ]);
+            debug(`up: ${name} - done`);
         }
     }
 
     async down(name) {
         if(this.isUp(name)) {
-            const networkInterface = this.map.get(name);
             debug(`down: ${name}`);
             await Promise.all([
-                ifconfig.down(name),
-                netlink && eventToPromise(this, actionName("stopped", name))
+                netlink && eventToPromise(this, actionName("stopped", name)),
+                ipLink.set({ dev:name, state:'down' })
             ]);
             debug(`down: ${name} - done`);
         }
     }
 
-    async upAll() {
-        debug("upAll:");
-        await Promise.all(Array.from( this.map.keys(), name => this.up(name) ));
-        debug("upAll: done");
-    }
-
-    async downAll() {
-        debug("downAll:");
-        await Promise.all(Array.from( this.map.keys(), name => this.down(name) ));
-        debug("downAll: done");
-    }
-
-    async upOnly(only, address) {
-        debug(`upOnly: ${only} at ${address}`);
-        await Promise.all(Array.from( this.map.keys(), name => name==only ? this.up(name, address) : this.down(name) ));
-        debug(`upOnly: ${only} at ${address} - done`);
+    isRunning(name) {
+        return this.interfaces[name].running;
     }
 
     isUp(name) {
-        const networkInterface = this.map.get(name);
-        return networkInterface.running;
-    }
-
-    isDown(name) {
-        const networkInterface = this.map.get(name);
-        return !networkInterface.running;
+        return this.interfaces[name].up;
     }
 }
 
-module.exports = new networkInterfaces();
+module.exports = networkInterfaces;

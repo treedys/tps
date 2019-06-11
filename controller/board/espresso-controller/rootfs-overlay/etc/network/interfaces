@@ -8,18 +8,3 @@ netmask 255.255.255.0
 
 auto eth1
 iface eth1 inet dhcp
-
-auto wan
-iface wan inet static
-address 192.168.201.200
-netmask 255.255.255.0
-
-auto lan0
-iface lan0 inet static
-address 192.168.202.200
-netmask 255.255.255.0
-
-auto lan1
-iface lan1 inet static
-address 192.168.203.200
-netmask 255.255.255.0

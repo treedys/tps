@@ -6,7 +6,7 @@ const avahi = require('avahi-dbus');
 const nedb = require('nedb');
 const feathersNedb = require('feathers-nedb');
 const path = require('path');
-const debug = require('debug')('APP:config');
+const debug = require('debug')('CONFIG');
 
 const avahiDaemon = new avahi.Daemon(dbus.systemBus());
 
@@ -17,42 +17,13 @@ const settings = {
     MCAST_CAMERA_COMMAND_PORT: 6502,
     MCAST_CAMERA_REPLY_PORT: 6501,
     SWITCH_PROBE_TIMEOUTS: {
-        timeout: 1*10*1000,
-        execTimeout: 1*10*1000
+        timeout: 5*1000,
+        execTimeout: 5*1000
     },
     SWITCH_CONFIG_TIMEOUTS: {
         timeout: 2*60*1000,
         execTimeout: 2*60*1000
     },
-    SWITCH_CONFIG_SPANNING_TREE: false,
-    SWITCH_CONFIG_PoE: false,
-    SWITCHES: [
-        {
-            interface: "p1p1",
-            address: "192.168.201.199",
-            ports: 48,
-            uplinkPort: 47,
-            speed: 100,
-            switches: [
-            ]
-        }, {
-            interface: "p12p1",
-            address: "192.168.202.199",
-            ports: 48,
-            uplinkPort: 47,
-            speed: 100,
-            switches: [
-            ]
-        }, {
-            interface: "p13p1",
-            address: "192.168.203.199",
-            ports: 48,
-            uplinkPort: 47,
-            speed: 100,
-            switches: [
-            ]
-        }
-    ],
     CAMERA: {
         quality:         75, //    1 .. 100
         sharpness:        0, // -100 .. 100
@@ -106,8 +77,10 @@ const initDefault = async error => {
     try {
         const configs = await service.find();
 
-        if(configs.length==0)
+        if(configs.length==0) {
+            debug("Creating default config");
             await service.create(defaultConfig);
+        }
 
         await updateHostName(configs[0]?.hostname);
 
@@ -207,6 +180,7 @@ const updateHostName =  async hostname => {
     hostname = hostname || "scanner";
     if(os.hostname() != hostname) {
         try {
+            debug(`Updating hostname from ${os.hostname()} to ${hostname}`);
             posix.sethostname(hostname);
             avahiDaemon.SetHostName(hostname);
         } catch(error) {
@@ -223,6 +197,8 @@ const onConfigChange = async context => {
         if((newConfig.scanner.columns!=undefined && (newConfig.scanner.columns != oldConfig.scanner.columns)) ||
            (newConfig.scanner.rows   !=undefined && (newConfig.scanner.rows    != oldConfig.scanner.rows   )) ||
            (newConfig.scanner.extra  !=undefined && (newConfig.scanner.extra   != oldConfig.scanner.extra  ))) {
+
+            debug("Resetting camera map", oldConfig.scanner, newConfig.scanner);
 
             newConfig.scanner.new = [].concat(newConfig.scanner.new || oldConfig.scanner.new, newConfig.scanner.map || oldConfig.scanner.map).filter(mac=>!!mac);
             newConfig.scanner.map = [];
@@ -241,5 +217,68 @@ service.hooks({
     }
 });
 
-module.exports = { ...settings, service, pack, initialised: initialisedDefer };
+const mutex = require("await-mutex").default;
+const newCameraMutex = new mutex();
+
+const getScanner = async () => ({
+    ... defaultConfig.scanner,
+    ... ( await service.get('0') )?.scanner
+})
+
+const eraseNewCameras = async () => {
+
+    let unlock = await newCameraMutex.lock();
+
+    try {
+        await service.patch('0', {
+            scanner: {
+                ...(await getScanner()),
+                new: []
+            }
+        });
+
+        unlock();
+    } catch(error) {
+        unlock();
+        throw error;
+    }
+}
+
+const addNewCamera = async (mac) => {
+
+    let unlock = await newCameraMutex.lock();
+
+    try {
+        let scanner = await getScanner();
+
+        if(!scanner.map.includes(mac) && !scanner.new.includes(mac)) {
+            debug(`Adding new camera ${mac}`);
+
+            scanner.new.push(mac);
+
+            await service.patch('0', { scanner } );
+        }
+
+        unlock();
+    } catch(error) {
+        unlock();
+        throw error;
+    }
+}
+
+const cameraIndex = async (mac) => {
+    const index = (await getScanner()).map.indexOf(mac);
+
+    return index>=0 ? index : undefined;
+}
+
+module.exports = {
+    ...settings,
+    service,
+    pack,
+    eraseNewCameras,
+    addNewCamera,
+    cameraIndex,
+    initialised: initialisedDefer
+};
 

@@ -3,15 +3,6 @@ const config = require('./config.js');
 
 let switches = [];
 
-for(let switch0 of config.SWITCHES) {
-    if(switch0.switches.length==0)
-        switches.push(switch0);
-
-    for(let switch1 of switch0.switches ) {
-        switches.push(switch1);
-    }
-}
-
 app.use('/api/switches', {
     find: params => Promise.resolve(switches.map( (sw, index) => ({
         id: index,

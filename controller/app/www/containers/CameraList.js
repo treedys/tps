@@ -65,7 +65,7 @@ export const CameraLink = ({ camera, switchData, index, style, ...params }) =>
         </NavLink>
         <p style={styles.port}>{index||camera?.index||"--"}</p>
         <div style={{ ...styles.led, ...( camera?.online ? styles.on : styles.off) }}/>
-        <div style={ styles.switchIndex }>{switchData?.name||"--"}</div>
+        <div style={ styles.switchIndex }>{camera?.switchName||"--"}</div>
         <div style={ styles.portIndex }>{camera?.port||"--"}</div>
     </div>
 
@@ -163,7 +163,7 @@ export class CameraList extends React.Component {
                 for(let column=0; column<config.columns; column++) {
                     const mac = index<count && source[start+index];
                     const camera = cameras.find( camera => camera.mac==mac );
-                    const switchData = switches.find( switchData => switchData.address == camera?.switchAddress );
+                    const switchData = switches?.find( switchData => switchData.address == camera?.switchAddress );
 
                     if(index<count) {
                         columns.push(<td key={column} style={cellStyle}><Camera camera={camera} switchData={switchData} index={start+index} onDrop={onDrop}/></td>);
