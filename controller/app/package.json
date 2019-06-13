@@ -64,6 +64,7 @@
     "immer": "^1.8.0",
     "immutable": "^4.0.0-rc.12",
     "ip": "^1.1.5",
+    "ip-range-check": "0.0.2",
     "iproute": "^1.0.2",
     "lodash-decorators": "^6.0.0",
     "mini-css-extract-plugin": "^0.4.5",
