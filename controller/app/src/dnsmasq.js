@@ -39,7 +39,7 @@ module.exports = async (ports) => {
         ] : [] ),
         ...( ports.length ? [
             '--dhcp-reply-delay=1',
-            ...ports.map( port  => `--dhcp-range=${port.interface},${port.start},${port.end}` )
+            ...ports.map( port  => `--dhcp-range=${port.interface},${port.start},${port.end},72h` )
         ] : [] )
     ]);
 
