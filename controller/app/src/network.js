@@ -25,20 +25,18 @@ class computer {
 
         this.interfaces = await new interfaces();
 
-        this.ports = Object.values(this.interfaces.listAll()).map( ({ name, mac }, index) => ({
-            index,
-            name,
-            mac,
-            ipAddress: ip.toString([ 192, 168, 200+index, 200 ]),
-            ipSubnet: ip.subnet(this.portAddress(index), "255.255.255.0"),
-            isSystemPort: name=="lo" || name=="eno1"
-        }) );
+        this.ports = Object.values(this.interfaces.listAll())
+            .filter( ({ name }) => !(name=="lo" || name=="eno1" || name=="eth0" || name.startsWith("usb") || name.startsWith("dummy") || name.startsWith("rndis") || name.startsWith("l4t")) )
+            .map( ({ name, mac }, index) => ({
+                index,
+                name,
+                mac,
+                ipAddress: ip.toString([ 192, 168, 201+index, 200 ]),
+                ipSubnet: ip.subnet(this.portAddress(index), "255.255.255.0")
+            }) );
 
-        await Promise.all(this.ports.map( port => !port.isSystemPort && this.interfaces.up(port.name) ));
+        await Promise.all(this.ports.map( port => this.interfaces.up(port.name) ));
         await Promise.all(this.ports.map( async port => {
-
-            if(port.isSystemPort)
-                return;
 
             await this.interfaces.clean(port.name);
 
@@ -55,10 +53,6 @@ class computer {
 
         this.ports = await Promise.all(this.ports.map( async port => {
             try {
-                if(this.isSystemPort(port.index)) {
-                    return port;
-                }
-
                 if(!this.interfaces.isRunning(port.name) && !port.switch) {
                     return port;
                 }
@@ -121,8 +115,8 @@ class computer {
         if(changed)
             dnsmasq(this.ports.filter(port => port.switch).map(port => ({
                 interface: port.name,
-                start:     ip.toString([ 192, 168, 200+port.index,   1 ]),
-                end:       ip.toString([ 192, 168, 200+port.index, 199 ])
+                start:     ip.toString([ 192, 168, 201+port.index,   1 ]),
+                end:       ip.toString([ 192, 168, 201+port.index, 199 ])
             }) ));
 
         await Promise.all(this.ports.filter(port => port.switch).map(async port => {
@@ -201,11 +195,11 @@ class computer {
     }
 
     portAddress(portIndex) {
-        return ip.toString( [ 192, 168, 200+portIndex, 201 ] );
+        return ip.toString( [ 192, 168, 201+portIndex, 201 ] );
     }
 
     ipRange(portIndex) {
-        return `192.168.${200+portIndex}.0/24`;
+        return `192.168.${201+portIndex}.0/24`;
     }
 
     mac(portIndex) {
