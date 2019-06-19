@@ -31,7 +31,7 @@ class computer {
                 index,
                 name,
                 mac,
-                ipAddress: ip.toString([ 192, 168, 201+index, 200 ]),
+                pcAddress: ip.toString([ 192, 168, 201+index, 200 ]),
                 ipSubnet: ip.subnet(this.portAddress(index), "255.255.255.0")
             }) );
 
@@ -40,7 +40,7 @@ class computer {
 
             await this.interfaces.clean(port.name);
 
-            await this.interfaces.route(port.name, port.ipAddress);
+            await this.interfaces.route(port.name, port.pcAddress);
         }));
 
         this.debug('Initialised');
@@ -74,33 +74,23 @@ class computer {
                 }
 
                 if(!port.switch) {
-                    this.debug(`${port.name}: Check for configured switch`);
-
-                    if(await this.routeOnly(port.index, this.portAddress(port.index), async () => await tplink.probe(this.portAddress(port.index, { timeout: 10*1000 })))) {
-                        this.debug(`${port.name}: Found configured switch`);
+                    if(await this.routeOnly(port.index, this.portAddress(port.index), async () => await tplink.probe(this.portAddress(port.index), { timeout: 10*1000 }))) {
+                        this.debug(`${port.name}: Discovered configured switch`);
                         port.switch = await new tplink(this, port.index);
                         if(port.switch) {
-                            this.debug(`${port.name}: Created`);
                             changed = true;
-                        } else
-                            this.debug(`${port.name}: Failed`);
-                    } else {
-                        this.debug(`${port.name}: Not found`);
+                        }
                     }
                 }
 
                 if(!port.switch) {
-                    this.debug(`${port.name}: Check for factory default switch`);
-
                     if(await this.routeOnly(port.index, config.SWITCH_DEFAULT_ADDRESS, async () => await tplink.probe(config.SWITCH_DEFAULT_ADDRESS, { timeout: 10*1000 }))) {
-                        this.debug(`${port.name}: Found factory default switch`);
+                        this.debug(`${port.name}: Discovered factory default switch`);
                         if(await tplink.configure(this, port.index, this.portAddress(port.index))) {
                             port.switch = await new tplink(this, port.index);
                             if(port.switch) {
-                                this.debug(`${port.name}: Configured`);
                                 changed = true;
-                            } else
-                                this.debug(`${port.name}: Failed`);
+                            }
                         }
                     }
                 }
@@ -218,8 +208,6 @@ class tplink {
 
         this.debug = parentSwitch.debug.extend(this.switchName);
 
-        this.debug('Creating');
-
         return this.asyncConstructor();
     }
 
@@ -229,7 +217,6 @@ class tplink {
             await this.parentSwitch.route(this.parentPort, this.switchAddress, async () => {
                 await this.tplink.session(this.switchAddress, async device => {
 
-                    this.debug('Get system info');
                     const systemInfo = await device.systemInfo();
 
                     const { groups: { ports, sfp } }              = systemInfo['System Description'].match(/JetStream (?<ports>[0-9]+)-Port .* with (?<sfp>[0-9]+) SFP Slots/);
@@ -239,13 +226,10 @@ class tplink {
 
                     // FIXME: Reboot the switch if it is online more than 24h
 
-                    this.debug('Enable all ports');
                     await device.enableAll([], this.numberOfPorts);
 
-                    this.debug('Look for uplink port');
                     this.uplinkPort = Number(await this.findMacPort( this.parentSwitch.mac(this.parentPort), device ));
 
-                    this.debug('Speedup uplink port');
                     await device.port(this.uplinkPort, 'speed auto');
 
                     // Create an empty array for all ports
@@ -253,7 +237,7 @@ class tplink {
 
                     await Promise.all(this.ports.map( async ({port}) => {
                         try {
-                            await device.portEnable(port);
+                            await device.powerEnable(port);
                             this.ports[port].lastPowerCycle = Date.now();
                         } catch(error) {
                             this.debug(`${port}: Power up error:`, error);
@@ -263,7 +247,7 @@ class tplink {
                     // Give some time to PoE to power up
                     await delay(2*1000);
 
-                    this.debug(`Discovered ${model}-${ports} at ${this.switchAddress} Uplink port ${this.uplinkPort}`);
+                    this.debug(`Created ${model}-${ports} at ${this.switchAddress} Uplink port ${this.uplinkPort}`);
                 });
             });
 
@@ -373,7 +357,7 @@ class tplink {
         });
 
         if(unknownPortList.length) {
-            this.debug(`Checking for configured switch on ports [${unknownPortList.join(', ')}]`);
+            this.debug(`Checking for switch on ports [${unknownPortList.join(', ')}]`);
 
             await this.parentSwitch.routeOnly(this.parentPort, config.SWITCH_DEFAULT_ADDRESS, async () => {
                 await this.tplink.session(this.switchAddress, async device => {
@@ -384,19 +368,12 @@ class tplink {
                         try {
                             await device.portEnable(port);
 
-                            this.debug(`${port}: Probe for configured switch.`);
                             if(await tplink.probe(this.portAddress(port, { timeout: 10*1000 }))) {
-                                this.debug(`${port}: Found configured switch.`);
                                 knownPortList.push(port);
+                            } else if(await tplink.probe(config.SWITCH_DEFAULT_ADDRESS, { timeout: 10*1000 })) {
+                                defaultPortList.push(port);
                             } else {
-                                this.debug(`${port}: Configured switch not found, probe for factory default switch.`);
-                                if(await tplink.probe(config.SWITCH_DEFAULT_ADDRESS, { timeout: 10*1000 })) {
-                                    this.debug(`${port}: Found factory default switch.`);
-                                    defaultPortList.push(port);
-                                } else {
-                                    this.debug(`${port}: Factory default switch not found.`);
-                                    emptyPortList.push(port);
-                                }
+                                emptyPortList.push(port);
                             }
 
                             await device.portDisable(port);
@@ -415,9 +392,7 @@ class tplink {
 
             await Promise.all(defaultPortList.map( async port => {
                 try {
-                    this.debug(`${port}: Configuring.`);
                     if(await tplink.configure(this, port, this.portAddress(port))) {
-                        this.debug(`${port}: Configured.`);
                         knownPortList.push(port);
                     }
                 } catch (error) {
@@ -431,19 +406,13 @@ class tplink {
 
             await Promise.all(knownPortList.map( async port => {
                 try {
-                    this.debug(`${port}: Creating.`);
                     this.ports[port].switch = await new tplink(this, port);
 
                     if(this.ports[port].switch) {
                         // FIXME: Configuring port speed could close this.ports[port].switch.tplink
-                        this.debug(`${port}: Configuring auto speed.`);
                         await this.tplink.session(this.switchAddress, async device =>
                             await device.port(port, "speed auto")
                         );
-
-                        this.debug(`${port}: Done.`);
-                    } else {
-                        this.debug(`${port}: Failed.`);
                     }
                 } catch(error) {
                     this.debug(`${this.portName(port)}: Error:`, error);
@@ -456,7 +425,7 @@ class tplink {
         }
 
         if(cameraPortList.length) {
-            this.debug(`Checking for new cameras on ports [${cameraPortList.join(', ')}]`);
+            this.debug(`Checking for cameras on ports [${cameraPortList.join(', ')}]`);
 
             try {
                 const portMacTable = (await this.parentSwitch.route(this.parentPort, this.switchAddress, async () =>
@@ -466,7 +435,7 @@ class tplink {
                 )).filter( line => cameraPortList.includes(line.port) );
 
                 if(portMacTable.length) {
-                    this.debug(`Updating cameras on ports [${portMacTable.map(line => line.port).join(', ')}]`);
+                    this.debug(`Discovered cameras on ports [${portMacTable.map(line => line.port).join(', ')}]`);
 
                     await Promise.all(portMacTable.map( async ({port, mac}) => {
                         try {
@@ -498,8 +467,6 @@ class tplink {
                         }
                     }));
                 })});
-
-            this.debug(`PoE power cycled on ports [${powerCyclePortList.join(', ')}]`);
         }
 
         // Discovering child switches
