@@ -4,11 +4,59 @@ const debug = require("debug")("MULTICAST");
 const eventToPromise = require('event-to-promise');
 const dgram = require("dgram");
 
-let client;
+const netlink = require('netlink-notify');
+
+let client, group;
 let servers = {};
 
+const bind = async host => {
+    debug(`Binding ${host}:${servers[host].port}`);
+
+    servers[host].socket = dgram.createSocket({ type:"udp4", reuseaddr:true });
+
+    servers[host].socket.bind(servers[host].port, host);
+    await eventToPromise(servers[host].socket, "listening");
+
+    servers[host].socket.setBroadcast(true);
+    servers[host].socket.setMulticastTTL(128);
+
+    client?.addMembership(group, host);
+}
+
+const unbind = async host => {
+    debug(`Unbinding ${host}:${servers[host].port}`);
+
+    client?.dropMembership(group, host);
+
+    servers[host].socket.close();
+    await eventToPromise(servers[host].socket, 'close');
+    delete servers[host].socket;
+}
+
+netlink?.from.on('route', async data => {
+
+    try {
+        const route = JSON.parse(data);
+
+        const event = route?.event;
+        const type = route?.data?.type;
+        const host = route?.data?.addr?.dst;
+
+        if(event=='delete' && type=='local' && servers[host]?.socket) {
+            await unbind(host);
+        }
+
+        if(event=='new' && type=='local' && servers[host]) {
+            await bind(host);
+        }
+    } catch (error) {
+        debug('onRoute error:', error);
+    }
+});
+
 module.exports = {
-    client: async (port, group) => {
+    client: async (port, _group) => {
+        group = _group;
         client = dgram.createSocket("udp4");
 
         client.bind(port);
@@ -21,22 +69,26 @@ module.exports = {
             client.addMembership(group, host);
         }
     },
-    server: async (port, host, ) => {
+    server: async (port, host) => {
 
-        servers[host] = dgram.createSocket({ type:"udp4", reuseAddr:true });
+        debug(`Server ${host}:${port}`);
+        servers[host] = servers[host] || { port };
 
-        servers[host].bind(port, host);
-        await eventToPromise(servers[host], "listening");
+        await bind(host);
+    },
+    remove: async (port, host) => {
+        debug(`Remove ${host}:${port}`);
 
-        servers[host].setBroadcast(true);
-        servers[host].setMulticastTTL(128);
+        await unbind(host);
+
+        delete servers[host];
     },
     send: async (msg, offset, length, port , address) => {
         let tasks = [];
 
         for(let host in servers)
             tasks.push(new Promise((resolve, reject) =>
-                servers[host].send(msg, offset, length, port, address, error =>
+                servers[host].socket.send(msg, offset, length, port, address, error =>
                     error ? reject(error) : resolve())));
 
         await Promise.all(tasks);

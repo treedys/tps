@@ -323,14 +323,6 @@ let run = async () => {
     await configRecordDefer.promise;
 
     try {
-        debug("UDP binding");
-
-        for(let port of computer.ports)
-            if(!port.isSystemPort)
-                await multicast.server(config.MCAST_CAMERA_COMMAND_PORT, port.ipAddress);
-
-        debug("UDP server binded");
-
         await multicast.client(config.MCAST_CAMERA_REPLY_PORT, config.MCAST_GROUP_ADDR);
 
         debug("UDP client binded");

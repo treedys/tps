@@ -10,6 +10,7 @@ const config = require('./config.js');
 const interfaces = require('./interfaces.js');
 const dnsmasq = require('./dnsmasq.js');
 const cameras = require('./cameras.js');
+const multicast = require("./multicast");
 
 class computer {
 
@@ -60,6 +61,7 @@ class computer {
                 if(port.switch) {
                     if(port.switch.tplink?.connection?.getConnection()?.destroyed) {
                         port.switch.debug('Switch disconnected');
+                        await multicast.remove(config.MCAST_CAMERA_COMMAND_PORT, port.pcAddress);
                         await portswitch.close();
                         portswitch = undefined;
                         changed = true;
@@ -67,6 +69,7 @@ class computer {
 
                     if(!(this.interfaces.isRunning(port.name) && await tplink.probe(this.portAddress(port.index)))) {
                         port.switch.debug('Switch gone');
+                        await multicast.remove(config.MCAST_CAMERA_COMMAND_PORT, port.pcAddress);
                         await port.switch.close();
                         port.switch = undefined;
                         changed = true;
@@ -78,6 +81,7 @@ class computer {
                         this.debug(`${port.name}: Discovered configured switch`);
                         port.switch = await new tplink(this, port.index);
                         if(port.switch) {
+                            await multicast.server(config.MCAST_CAMERA_COMMAND_PORT, port.pcAddress);
                             changed = true;
                         }
                     }
@@ -89,6 +93,7 @@ class computer {
                         if(await tplink.configure(this, port.index, this.portAddress(port.index))) {
                             port.switch = await new tplink(this, port.index);
                             if(port.switch) {
+                                await multicast.server(config.MCAST_CAMERA_COMMAND_PORT, port.pcAddress);
                                 changed = true;
                             }
                         }
