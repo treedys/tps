@@ -144,15 +144,19 @@ const downloadContent = async (camera, file) => {
 }
 
 const checkNetboot = async (camera) => {
-    await send.exec(camera.mac, "vcgencmd otp_dump > /var/www/otp_dump");
-    await delay(100);
+    try {
+        await send.exec(camera.mac, "vcgencmd otp_dump > /var/www/otp_dump");
+        await delay(100);
 
-    const otp_dump = await downloadContent(camera, "otp_dump");
-    const otp = eol.split(otp_dump).map(line => line.split(':')).reduce( (otp, [addr, value]) => Object.assign(otp, typeof(value)!="undefined" && { [parseInt(addr)]:parseInt(value,16) }), []);
+        const otp_dump = await downloadContent(camera, "otp_dump");
+        const otp = eol.split(otp_dump).map(line => line.split(':')).reduce( (otp, [addr, value]) => Object.assign(otp, typeof(value)!="undefined" && { [parseInt(addr)]:parseInt(value,16) }), []);
 
-    if(otp[17]!=0x3020000a) {
-        camera.debug(`Configuring netboot - ${otp[17]?.toString(16)}`);
-        await send.exec(camera.mac, `mkdir /var/fat;mount /dev/mmcblk0p1 /var/fat;echo "program_usb_boot_mode=1" >> /var/fat/config.txt;sync;sync;sync;reboot;`);
+        if(otp[17]!=0x3020000a) {
+            camera.debug(`Configuring netboot - ${otp[17]?.toString(16)}`);
+            await send.exec(camera.mac, `mkdir /var/fat;mount /dev/mmcblk0p1 /var/fat;echo "program_usb_boot_mode=1" >> /var/fat/config.txt;sync;sync;sync;reboot;`);
+        }
+    } catch(error) {
+    	camera.debug(`checkNetboot ${otp_dump} error:`, error);
     }
 }
 
@@ -238,32 +242,37 @@ const isEmptyObject = o => Object.entries(o).length ===0;
 
 const update = async ({ mac, ...patch}) => {
 
-    if(!live[mac]) {
-        await config.addNewCamera(mac);
+    try {
+        if(!live[mac]) {
+            await config.addNewCamera(mac);
 
-        live[mac] = { id:mac, mac, debug: debug.extend(mac) };
-        await service.create(stripLiveFields(live[mac]));
-        live[mac].debug('Discovered', stripLiveFields(patch));
-    }
+            live[mac] = { id:mac, mac, debug: debug.extend(mac) };
+            await service.create(stripLiveFields(live[mac]));
+            live[mac].debug('Discovered', stripLiveFields(patch));
+        }
 
-    const oldCamera = live[mac];
-    const newCamera = { ...oldCamera, index: await config.cameraIndex(mac), ...patch };
-    const diff = diffPatch(oldCamera, newCamera);
-    const stripDiff = stripLiveFields(diff);
+        const oldCamera = live[mac];
+        const newCamera = { ...oldCamera, index: await config.cameraIndex(mac), ...patch };
+        const diff = diffPatch(oldCamera, newCamera);
+        const stripDiff = stripLiveFields(diff);
 
-    Object.assign(live[mac], diff);
+        Object.assign(live[mac], diff);
 
-    if(diff.index || diff.address || diff.switch)
-        live[mac].debug = debug.extend(`${live[mac].index} (${live[mac].switch?.switchName}:${live[mac].port} ${live[mac].address})`);
+        if(diff.index || diff.address || diff.switch)
+            live[mac].debug = debug.extend(`${live[mac].index} (${live[mac].switch?.switchName}:${live[mac].port} ${live[mac].address})`);
 
-    if(!isEmptyObject(stripDiff)) {
-        live[mac].debug('Updating:', stripDiff);
-        await service.patch(mac, stripDiff);
-    }
+        if(!isEmptyObject(stripDiff)) {
+            live[mac].debug('Updating:', stripDiff);
+            await service.patch(mac, stripDiff);
+        }
 
-    if(diff.online && live[mac].switch || live[mac].online && diff.switch) {
-        await checkNetboot(live[mac]);
-        await upgradeCameraFirmmware(live[mac]);
+        if(diff.online && live[mac].switch || live[mac].online && diff.switch) {
+            await checkNetboot(live[mac]);
+            await upgradeCameraFirmmware(live[mac]);
+        }
+    } catch(error) {
+       if(live[mac]) live[mac].debug('Update error:', error);
+       else debug(`${mac} Update error:`, error);
     }
 
     return live[mac];

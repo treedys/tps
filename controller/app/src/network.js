@@ -27,7 +27,15 @@ class computer {
         this.interfaces = await new interfaces();
 
         this.ports = Object.values(this.interfaces.listAll())
-            .filter( ({ name }) => !(name=="lo" || name=="eno1" || name=="eth0" || name.startsWith("usb") || name.startsWith("dummy") || name.startsWith("rndis") || name.startsWith("l4t")) )
+            .filter( ({ name }) => !(
+                name=="lo"
+                || name=="eno1"
+                || name=="eth0"
+                || name.startsWith("usb")
+                || name.startsWith("dummy")
+                || name.startsWith("rndis")
+                || name.startsWith("l4t")
+            ) )
             .map( ({ name, mac }, index) => ({
                 index,
                 name,
@@ -446,7 +454,7 @@ class tplink {
                         try {
                             this.ports[port].camera = await cameras.update({mac, switch:this, switchName:this.switchName, port});
                         } catch(error) {
-                            this.debug(`${this.portName(port)}: Error:`, error);
+                            this.debug(`${this.portName(port)}: Updating discovered camera error:`, error);
                         }
                     }));
                 }

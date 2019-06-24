@@ -87,9 +87,24 @@ module.exports = {
         let tasks = [];
 
         for(let host in servers)
-            tasks.push(new Promise((resolve, reject) =>
-                servers[host].socket.send(msg, offset, length, port, address, error =>
-                    error ? reject(error) : resolve())));
+            tasks.push(new Promise((resolve, reject) => {
+                try {
+                    if(!servers[host].socket || !servers[host].socket.send) {
+                        resolve();
+                        return;
+                    }
+
+                    servers[host].socket.send(msg, offset, length, port, address, error => {
+                        if(error)
+                            debug(`${host}: Socket error:`, error);
+
+                        resolve();
+                    });
+                } catch(error) {
+                    debug(`${host}: Send error:`, error);
+                    resolve();
+                }
+            }));
 
         await Promise.all(tasks);
     },
