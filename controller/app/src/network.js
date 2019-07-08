@@ -2,7 +2,6 @@ const ip = require("ip");
 const rwlock = require("async-rwlock").RWLock;
 const delay = require('delay');
 const time = require("time-since");
-const ipRangeCheck = require('ip-range-check');
 
 const debug = require('debug')('NETWORK');
 
@@ -208,6 +207,10 @@ class computer {
     mac(portIndex) {
         return this.ports[portIndex].mac;
     }
+
+    interfaceIndex(portIndex) {
+        return portIndex;
+    }
 };
 
 class tplink {
@@ -357,7 +360,7 @@ class tplink {
                             powerCyclePortList.push(port);
                         }
 
-                        if(powerStatus[port].PoE && this.ports[port].camera?.online && !ipRangeCheck(this.ports[port].camera?.address, this.ipRange(port)) && time.since(this.ports[port].lastPowerCycle).secs()>2*60) {
+                        if(powerStatus[port].PoE && this.ports[port].camera?.online && !this.ports[port].camera.sameIpRange && time.since(this.ports[port].lastPowerCycle).secs()>2*60) {
                             this.debug(`${port}: IP address (${this.ports[port].camera?.address}) not in range (${this.ipRange(port)}). Last power cycle ${time.since(this.ports[port].lastPowerCycle).secs()}s ago.`);
 
                             powerCyclePortList.push(port);
@@ -615,6 +618,10 @@ class tplink {
 
     mac(portIndex) {
         return this.parentSwitch.mac(this.parentPort);
+    }
+
+    interfaceIndex(portIndex) {
+        return this.parentSwitch.interfaceIndex(this.parentPort);
     }
 };
 
