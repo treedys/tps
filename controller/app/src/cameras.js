@@ -2,6 +2,7 @@ const app = require('./app.js');
 const config = require("./config");
 
 const multicast = require("./multicast");
+const dnsmasq = require('./dnsmasq.js');
 
 const memory = require('feathers-memory');
 const request = require('request');
@@ -186,6 +187,8 @@ const upgradeMutex = new mutex();
 
 const upgradeCameraFirmmware = async (camera) => {
 
+    await dnsmasq.lock.readLock();
+
     const unlock = await upgradeMutex.lock();
 
     try {
@@ -194,6 +197,7 @@ const upgradeCameraFirmmware = async (camera) => {
         if(!state.needsUpgrade && (!state.hasSDcard || state.bootFromSDcard)) {
             camera.debug('Firmware is uptodate');
             unlock();
+            dnsmasq.lock.unlock();
             return;
         }
 
@@ -212,6 +216,7 @@ const upgradeCameraFirmmware = async (camera) => {
         } else {
             camera.debug(`needsUpgrade=${state.needsUpgrade} hasSDcard=${state.hasSDcard} bootFromSDcard=${state.bootFromSDcard}`);
             unlock();
+            dnsmasq.lock.unlock();
             return;
         }
 
@@ -229,10 +234,12 @@ const upgradeCameraFirmmware = async (camera) => {
 
         // TODO: remove the camera from the upgrade list
         unlock();
+        dnsmasq.lock.unlock();
 
     } catch(error) {
         camera.debug('Camera upgrade error:', error);
         unlock();
+        dnsmasq.lock.unlock();
     }
 }
 
