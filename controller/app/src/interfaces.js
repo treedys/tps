@@ -2,6 +2,7 @@ const EventEmitter = require('events');
 const eventToPromise = require('event-to-promise');
 
 const debug = require("debug")("INTERFACES");
+const nmDebug = require("debug")("NM");
 
 const ip = require("ip");
 const { promisify } = require('util');
@@ -11,6 +12,7 @@ const ipLink = pify(require('iproute').link);
 const ipAddress = pify(require('iproute').address);
 
 const netlink = require('netlink-notify');
+const dnm = require('dbus-network-manager');
 
 const actionName = () => Array.prototype.join.call(arguments,'_');
 
@@ -22,6 +24,18 @@ class networkInterfaces extends EventEmitter {
     }
 
     async asyncConstructor() {
+
+        this.nm = await dnm.connect();
+
+        this.nm.on('DeviceAdded', dev => nmDebug(`Device added: ${dev}`));
+        this.nm.on('DeviceRemoved', dev=> nmDebug(`Device removed: ${dev}`));
+
+        for(let device of await this.nm.GetDevices()) {
+
+            const properties = await device.getProperties();
+
+            device.on('StateChanged', (newState, oldState, reason) => nmDebug(`State changed: ${properties.Interface} ${oldState} ${newState} ${reason}`));
+        }
 
         this.interfaces = (await ipLink.show() ).reduce( (result, { name, flags, mac }) => ({ ...result, [name]: { name, up:flags.includes('UP'), running:flags.includes('LOWER_UP'), mac } }), {});
 
