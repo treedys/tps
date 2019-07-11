@@ -22,7 +22,7 @@ restarter();
 const dnsmasqKill = async () => {
     if(dnsmasq && !dnsmasq.killed) {
         try {
-            dnsmasq.kill();
+            dnsmasq.kill('SIGKILL');
             await eventToPromise.multi(dnsmasq, ["exit"], ["error"] );
             dnsmasq = undefined;
         } catch(error) {
