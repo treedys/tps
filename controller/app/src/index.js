@@ -80,7 +80,11 @@ app.post("/api/shoot/scan", async (browser_request, browser_response) => {
     let scanId;
 
     try {
-        const scan = await scans.service.create({});
+        const scan = await scans.service.create({
+            config: {
+                camera: configRecord.camera
+            }
+        });
         scanId = scan[scans.service.id];
         browser_response.send({ id: scanId });
         debug(`SCAN: ${scanId} - Start`);
@@ -209,7 +213,11 @@ app.post("/api/shoot/calibration", async (browser_request, browser_response) => 
     let calibrationId;
 
     try {
-        const calibration = await calibrations.service.create({});
+        const calibration = await calibrations.service.create({
+            config: {
+                camera: configRecord.camera
+            }
+        });
         calibrationId = calibration[calibrations.service.id];
         browser_response.send({ id: calibrationId });
         debug(`CALIBRATION: ${calibrationId} - Start`);
