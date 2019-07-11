@@ -104,22 +104,24 @@ const service = app.service('/api/config');
 
 const _pack = config => {
 
+    const gpioDelay = (config.projectionDelay*.9) || 1;
+
     switch(config.stripLight) {
         case "full":
             config.gpioDelay17 = 0;
             config.gpioDelay18 = 0;
             break;
         case "high":
-            config.gpioDelay17 = 1;
+            config.gpioDelay17 = gpioDelay;
             config.gpioDelay18 = 0;
             break;
         case "medium":
             config.gpioDelay17 = 0;
-            config.gpioDelay18 = 1;
+            config.gpioDelay18 = gpioDelay;
             break;
         case "low":
-            config.gpioDelay17 = 1;
-            config.gpioDelay18 = 1;
+            config.gpioDelay17 = gpioDelay;
+            config.gpioDelay18 = gpioDelay;
             break;
     }
 
@@ -163,17 +165,17 @@ const pack = async () => {
             normal    .close = true;
             break;
         case "short":
-            projection.open  = true;
-            projection.close = false;
-            normal    .open  = false;
-            normal    .close = true;
+            projection.open  = false;
+            projection.close = true;
+            normal    .open  = true;
+            normal    .close = false;
             break;
     }
 
         normal.gpioDelay22 =     normal.projectionDelay ||     normal.gpioDelay22;
     projection.gpioDelay22 = projection.projectionDelay || projection.gpioDelay22;
 
-    return Buffer.concat([_pack(projection), _pack(normal)]);
+    return Buffer.concat([_pack(normal), _pack(projection)]);
 };
 
 const updateHostName =  async hostname => {
