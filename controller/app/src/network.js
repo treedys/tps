@@ -26,15 +26,11 @@ class computer {
         this.interfaces = await new interfaces();
 
         this.ports = Object.values(this.interfaces.listAll())
-            .filter( ({ name }) => !(
-                name=="lo"
-                || name=="eno1"
-                || name=="eth0"
-                || name.startsWith("enp0")
-                || name.startsWith("usb")
-                || name.startsWith("dummy")
-                || name.startsWith("rndis")
-                || name.startsWith("l4t")
+            .filter( ({ name }) => (
+                name=="eth1" ||
+                name=="eth2" ||
+                name=="eth3" ||
+                name=="eth4"
             ) )
             .map( ({ name, mac }, index) => ({
                 index,
