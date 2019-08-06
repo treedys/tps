@@ -4,7 +4,17 @@ const { spawn } = require('child_process');
 const eventToPromise = require('event-to-promise');
 const argv = require('minimist')(process.argv.slice(2));
 
+const noop = () => {};
+
 let dnsmasq;
+let start = noop, restart = noop;
+
+const restarter = async () => {
+    await restart();
+    setTimeout( restarter, 60*1000 );
+}
+
+restarter();
 
 const dnsmasqKill = async () => {
     if(dnsmasq && !dnsmasq.killed) {
@@ -17,35 +27,50 @@ const dnsmasqKill = async () => {
         }
     } else {
         if(dnsmasq)
-            debug(`Unexpected dnsmasq state: { killed:${dnsmasq.killed}, connected: ${dnsmasq.connected} }`, dnsmasq);
+            debug('Already killed');
     }
 }
 
 module.exports = async (ports) => {
 
+    let dnsmasqDebug = debug;
+
+    start = noop;
+    restart = noop;
+
     await dnsmasqKill();
 
-    dnsmasq = spawn( argv['dnsmasq'] || '/usr/sbin/dnsmasq', [
-        '--no-daemon',
-        '--conf-file=/dev/null',
-        '--port=0',
-        ...( argv['camera-firmware'] ? [
-            '--enable-tftp',
-            '--pxe-service=0,"Raspberry Pi Boot"',
-            `--tftp-root=${argv['camera-firmware']}`
-        ] : [] ),
-        ...( argv['dnsmasq-leases'] ? [
-            `--dhcp-leasefile=${argv['dnsmasq-leases']}`
-        ] : [] ),
-        ...( ports.length ? [
-            '--dhcp-reply-delay=1',
-            ...ports.map( port  => `--dhcp-range=${port.interface},${port.start},${port.end},72h` )
-        ] : [] )
-    ]);
+    start = () => {
+        dnsmasq = spawn( argv['dnsmasq'] || '/usr/sbin/dnsmasq', [
+            '--no-daemon',
+            '--conf-file=/dev/null',
+            '--port=0',
+            ...( argv['camera-firmware'] ? [
+                '--enable-tftp',
+                '--pxe-service=0,"Raspberry Pi Boot"',
+                `--tftp-root=${argv['camera-firmware']}`
+            ] : [] ),
+            ...( argv['dnsmasq-leases'] ? [
+                `--dhcp-leasefile=${argv['dnsmasq-leases']}`
+            ] : [] ),
+            ...( ports.length ? [
+                '--dhcp-reply-delay=1',
+                ...ports.map( port  => `--dhcp-range=${port.interface},${port.start},${port.end},72h` )
+            ] : [] )
+        ]);
 
-    const dnsmasqDebug = debug.extend(dnsmasq.pid);
+        dnsmasqDebug = debug.extend(dnsmasq.pid);
 
-    dnsmasqDebug('Start');
+        dnsmasqDebug('Started');
+    }
+
+    restart = async () => {
+        dnsmasqDebug("Restarting");
+        await dnsmasqKill();
+        start();
+    }
+
+    start();
 
     dnsmasq.on('close',      (code, signal)        => dnsmasqDebug(`close: ${code} ${signal}`         ));
     dnsmasq.on('error',      (err)                 => dnsmasqDebug(`error: ${err?.toString?.()}`      ));
