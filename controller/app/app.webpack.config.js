@@ -33,10 +33,10 @@ const common = {
                     [ "@babel/preset-env", { "targets":{ "node": "8.11.3" }, "modules": false }]
                 ],
                 plugins: [
+                    ["@babel/proposal-decorators", { legacy: true }],
                     "@babel/proposal-class-properties",
                     "@babel/syntax-export-namespace-from",
                     "@babel/syntax-export-default-from",
-                    ["@babel/proposal-decorators", { legacy: true }],
                     "@babel/proposal-object-rest-spread",
                     "@babel/proposal-export-default-from",
                     "@babel/proposal-optional-chaining"

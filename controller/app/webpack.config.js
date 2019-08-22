@@ -1,7 +1,7 @@
 const path = require("path");
 const webpack = require("webpack");
 const merge = require("webpack-merge");
-const CleanPlugin = require('clean-webpack-plugin');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
@@ -53,10 +53,10 @@ const common = {
                     "@babel/preset-react"
                 ],
                 plugins: [
+                    ["@babel/proposal-decorators", { legacy: true }],
                     "@babel/proposal-class-properties",
                     "@babel/syntax-export-namespace-from",
                     "@babel/syntax-export-default-from",
-                    ["@babel/proposal-decorators", { legacy: true }],
                     "@babel/proposal-object-rest-spread",
                     "@babel/proposal-export-default-from",
                     "@babel/proposal-optional-chaining"
@@ -69,7 +69,7 @@ const common = {
         }
     },
     plugins: [
-        new CleanPlugin([BUILD]),
+        new CleanWebpackPlugin(),
         new webpack.LoaderOptionsPlugin({ minimize: true }),
         new webpack.ProvidePlugin({
             feathers: "@feathersjs/client"
