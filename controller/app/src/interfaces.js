@@ -52,12 +52,12 @@ class networkInterfaces extends EventEmitter {
         const up = data?.data?.up;
         const running = data?.data?.running;
 
-        if(this.interfaces[name].up != up) {
+        if(this.interfaces[name]?.up != up) {
             this.interfaces[name].up = up;
             this.emit(actionName(up?"up":"down", name));
         }
 
-        if(this.interfaces[name].running != running) {
+        if(this.interfaces[name]?.running != running) {
             this.interfaces[name].running = running;
             this.emit(actionName(running?"running":"stopped", name));
         }
