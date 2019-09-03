@@ -198,12 +198,14 @@ app.post("/scan/:scan/download", async (browser_request, browser_response) => {
             }
         }));
 
-        debug(`SCAN: ${scanId} - done!`);
-
-        await status.service.patch(0, { downloading: false });
         await scans.service.patch(scanId, { done: Date.now() });
 
+        await status.service.patch(0, { downloading: false });
+
+        debug(`SCAN: ${scanId} - done!`);
     } catch(error) {
+        await status.service.patch(0, { downloading: false });
+
         debug(`SCAN: ${scanId} - error:`, error);
     }
 });
@@ -265,12 +267,14 @@ app.post("/api/shoot/calibration", async (browser_request, browser_response) => 
             }
         }));
 
-        debug(`CALIBRATION: ${calibrationId} - done!`);
-
-        await status.service.patch(0, { downloading: false });
         await calibrations.service.patch(calibrationId, { done: Date.now() });
 
+        await status.service.patch(0, { downloading: false });
+
+        debug(`CALIBRATION: ${calibrationId} - done!`);
     } catch(error) {
+        await status.service.patch(0, { downloading: false });
+
         debug(`CALIBRATION: ${calibrationId} - error:`, error);
     }
 });
