@@ -80,6 +80,7 @@
     "react-dom": "^16.9.0",
     "react-notification-badge": "github:treedys/react-notification-badge",
     "react-router-dom": "^5.0.1",
+    "react-style-object-to-css": "^1.1.2",
     "react-svg": "^10.0.18",
     "request": "^2.88.0",
     "style-loader": "^1.0.0",
