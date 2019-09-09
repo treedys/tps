@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink  } from 'react-router-dom'
-import { DragSource, DropTarget, DragDropContext } from 'react-dnd';
+import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import HTML5Backend from 'react-dnd-html5-backend';
 import { Row, Col } from '../components/';
 import assets from './assets'
@@ -103,146 +103,135 @@ export const SwitchCameraList = ({ switchData, cameras, ...params }) => {
 
 const cameraDrag = 'CAMERA';
 
-@DragSource(cameraDrag,
-    {
-        beginDrag: (props, monitor, component) => props.camera,
-        canDrag: (props, monitor) => !!props.camera
-    }, (connect, monitor) => ({
-        connectDragSource: connect.dragSource(),
-        isDragging: monitor.isDragging()
-    })
-)
-@DropTarget(cameraDrag,
-    {
-        canDrop: (props, monitor) => true,
-        drop: (props, monitor, component) => props.onDrop?.(props.index, monitor.getItem())
-    }, (connect, monitor) => ({
-        connectDropTarget: connect.dropTarget(),
-        isOver: monitor.isOver()
-    })
-)
-export class Camera extends React.Component {
-    render() {
-        let { isDragging, isOver, connectDragSource, connectDropTarget, ...props} = this.props;
+export const Camera = ({ ...params }) => {
+    const [{isDragging}, connectDragSource] = useDrag({
+        item: {
+            type: cameraDrag,
+            mac: params.camera?.mac
+        },
+        canDrag: monitor => !!params.camera,
+        collect: monitor => ({
+            isDragging: monitor.isDragging()
+        })
+    });
 
-        return !isDragging && connectDropTarget(connectDragSource(
-            <div>
-                <CameraLink
-                    style={{ ...(isOver && { border:"2px solid black" }) }}
-                    {...props}
-                />
-            </div>));
-    }
-}
+    const [{isOver}, connectDropTarget] = useDrop({
+        accept: cameraDrag,
+        drop: (item, monitor) => params.onDrop?.(params.index, item.mac),
+	collect: monitor => ({
+            isOver: monitor.isOver()
+        })
+    });
 
-@DragDropContext(HTML5Backend)
-export class CameraList extends React.Component {
+    return !isDragging && connectDropTarget(connectDragSource(
+        <div>
+            <CameraLink
+                style={{ ...(isOver && { border:"2px solid black" }) }}
+                {...params}
+            />
+        </div>));
+};
 
-    render() {
-        let { config, cameras, switches, onConfigChange, ...props} = this.props;
+export const CameraList = ({ config, cameras, switches, onConfigChange, ...props}) => {
+    if( !(config && cameras) )
+        return <h1>No data</h1>;
 
-        if( !(config && cameras) )
-            return <h1>No data</h1>;
+    let rows = [];
 
-        let rows = [];
+    const add = (label, source, start, count, onDrop) => {
+        rows.push(<tr key={rows.length}><td colSpan={config.columns}><h1>{label}</h1></td></tr>);
 
-        const add = (label, source, start, count, onDrop) => {
-            rows.push(<tr key={rows.length}><td colSpan={config.columns}><h1>{label}</h1></td></tr>);
+        const cellStyle = {
+            width   :`${100/config.columns}%`,
+            minWidth:`${100/config.columns}%`,
+            maxWidth:`${100/config.columns}%`
+        };
 
-            const cellStyle = {
-                width   :`${100/config.columns}%`,
-                minWidth:`${100/config.columns}%`,
-                maxWidth:`${100/config.columns}%`
-            };
+        let index = 0;
 
-            let index = 0;
+        for(let row=0; index<count; row++) {
+            let columns = [];
 
-            for(let row=0; index<count; row++) {
-                let columns = [];
+            for(let column=0; column<config.columns; column++) {
+                const mac = index<count && source[start+index];
+                const camera = cameras.find( camera => camera.mac==mac );
+                const switchData = switches?.find( switchData => switchData.address == camera?.switchAddress );
 
-                for(let column=0; column<config.columns; column++) {
-                    const mac = index<count && source[start+index];
-                    const camera = cameras.find( camera => camera.mac==mac );
-                    const switchData = switches?.find( switchData => switchData.address == camera?.switchAddress );
-
-                    if(index<count) {
-                        columns.push(<td key={column} style={cellStyle}><Camera camera={camera} switchData={switchData} index={start+index} onDrop={onDrop}/></td>);
-                    } else {
-                        columns.push(<td key={column} style={{ ...cellStyle, border:"2px solid #55555522", borderRadius:"5px",  minHeight:"40px"}}/>);
-                    }
-
-                    index++;
+                if(index<count) {
+                    columns.push(<td key={column} style={cellStyle}><Camera camera={camera} switchData={switchData} index={start+index} onDrop={onDrop}/></td>);
+                } else {
+                    columns.push(<td key={column} style={{ ...cellStyle, border:"2px solid #55555522", borderRadius:"5px",  minHeight:"40px"}}/>);
                 }
 
-                rows.push(<tr key={rows.length}>{columns}</tr>);
+                index++;
             }
+
+            rows.push(<tr key={rows.length}>{columns}</tr>);
+        }
+    }
+
+    const onDropMap = (index, mac) => {
+        let result = {
+            map: config.map ? config.map.slice(0) : [],
+            new: config.new ? config.new.slice(0) : []
+        };
+
+        if(result.map[index]) {
+            result.new.push(result.map[index]);
+            result.map[index] = undefined;
         }
 
-        const onDropMap = (index, { mac }) => {
-            let result = {
-                map: config.map ? config.map.slice(0) : [],
-                new: config.new ? config.new.slice(0) : []
-            };
+        const mapIndex = result.map.indexOf(mac);
 
-            console.log(result);
+        if(mapIndex>=0) {
+            result.new.push(result.map[mapIndex]);
+            result.map[mapIndex] = undefined;
+        }
 
-            if(result.map[index]) {
-                result.new.push(result.map[index]);
-                result.map[index] = undefined;
-            }
+        const newIndex = result.new.indexOf(mac);
 
-            const mapIndex = result.map.indexOf(mac);
+        if(newIndex>=0) {
+            result.new.splice(newIndex, 1);
+        }
 
-            if(mapIndex>=0) {
-                result.new.push(result.map[mapIndex]);
-                result.map[mapIndex] = undefined;
-            }
+        result.map[index] = mac;
 
-            const newIndex = result.new.indexOf(mac);
+        onConfigChange?.({ ...config, map: result.map, new: result.new });
+    };
 
-            if(newIndex>=0) {
-                result.new.splice(newIndex, 1);
-            }
-
-            result.map[index] = mac;
-
-            console.log(result);
-
-            onConfigChange?.({ ...config, map: result.map, new: result.new });
+    const onDropNew = (index, mac) => {
+        let result = {
+            map: config.map.slice(0),
+            new: config.new.slice(0)
         };
 
-        const onDropNew = (index, {mac}) => {
-            let result = {
-                map: config.map.slice(0),
-                new: config.new.slice(0)
-            };
+        const mapIndex = result.map.indexOf(mac);
 
-            const mapIndex = result.map.indexOf(mac);
+        if(mapIndex>=0) {
+            result.new.push(result.map[mapIndex]);
+            result.map[mapIndex] = undefined;
+        }
 
-            if(mapIndex>=0) {
-                result.new.push(result.map[mapIndex]);
-                result.map[mapIndex] = undefined;
-            }
+        const newIndex = result.new.indexOf(mac);
 
-            const newIndex = result.new.indexOf(mac);
+        if(newIndex>=0) {
+            result.new.splice(newIndex, 1);
+        }
 
-            if(newIndex>=0) {
-                result.new.splice(newIndex, 1);
-            }
+        result.new.splice(index, 0, mac);
 
-            result.new.splice(index, 0, mac);
+        onConfigChange?.({ ...config, map: result.map, new: result.new });
+    };
 
-            onConfigChange?.({ ...config, map: result.map, new: result.new });
-        };
+    if(true)              add("Cameras",       config.map,                          0, config.rows*config.columns, onDropMap);
+    if(config.extra)      add("Extra cameras", config.map, config.rows*config.columns, config.extra              , onDropMap);
+    if(config.new.length) add("New",           config.new,                          0, config.new.length         , onDropNew);
 
-        if(true)              add("Cameras",       config.map,                          0, config.rows*config.columns, onDropMap);
-        if(config.extra)      add("Extra cameras", config.map, config.rows*config.columns, config.extra              , onDropMap);
-        if(config.new.length) add("New",           config.new,                          0, config.new.length         , onDropNew);
-
-        return <Col className='fill scroll'>
+    return <Col className='fill scroll'>
+        <DndProvider backend={HTML5Backend}>
             <table style={{padding:"10px"}}><tbody>{rows}</tbody></table>
-        </Col>;
-    }
+        </DndProvider>
+    </Col>;
 }
 
 export default SwitchCameraList;
