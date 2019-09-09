@@ -6,5 +6,5 @@ export { CalibrationList, CalibrationLink } from './CalibrationList';
 export Calibration from './Calibration';
 export { SwitchList, SwitchLink } from './SwitchList';
 export { SwitchCameraList, CameraList, CameraLink, Camera } from './CameraList';
-export { CameraSettings } from './CameraSettings';
+export CameraSettings from './CameraSettings';
 export Settings from './Settings';
