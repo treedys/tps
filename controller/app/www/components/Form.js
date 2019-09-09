@@ -8,9 +8,9 @@ class FieldLifecycleWrapper extends React.Component {
      *        React context is not accessible from life cycle methods
      *        https://github.com/facebook/react/issues/12397
      * */
-    componentDidMount()             { this.props.form.register      (this.props.field); }
-    componentWillUnmount()          { this.props.form.unregister    (this.props.field); }
-    componentWillReceiveProps(next) { this.props.form.handleNewProps(this.props.field, next); }
+           componentDidMount()             { this.props.form.register      (this.props.field); }
+           componentWillUnmount()          { this.props.form.unregister    (this.props.field); }
+    UNSAFE_componentWillReceiveProps(next) { this.props.form.handleNewProps(this.props.field, next); }
 
     render = () => this.props.children;
 }
