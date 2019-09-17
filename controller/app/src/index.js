@@ -130,6 +130,7 @@ const downloadToFile = (url, filePath) => new Promise( async (resolve, reject) =
         if(response.statusCode!=200) {
             httpRequest.destroy();
             fileStream.destroy();
+            fs.unlinkSync(filePath);
             reject(new Error(`Response ${response.statusCode} from ${url}`));
             return;
         }
@@ -147,6 +148,7 @@ const downloadToFile = (url, filePath) => new Promise( async (resolve, reject) =
     } catch(error) {
         httpRequest.destroy();
         fileStream.destroy();
+        fs.unlinkSync(filePath);
         reject(error);
     }
 });
