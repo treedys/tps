@@ -71,9 +71,15 @@ module.exports = async (ports) => {
 
     restart = async () => {
         await lock.writeLock();
-        dnsmasqDebug("Restarting");
-        await dnsmasqKill();
-        start();
+
+        try {
+            dnsmasqDebug("Restarting");
+            await dnsmasqKill();
+            start();
+        } catch(error) {
+            dnsmasqDebug("Restarting error:", error);
+        }
+
         await lock.unlock();
     }
 
