@@ -5,6 +5,7 @@ const Path = require('path');
 const fs = require('fs-extra');
 const archiver = require('archiver');
 const mutex = require("await-mutex").default;
+const globby = require('globby');
 
 const debug = require('debug')('scans');
 
@@ -77,14 +78,23 @@ app.get('/scan/:scan/preview-:index.jpg', async (browser_request, browser_respon
 
 app.get('/scan/:scan.zip', async (browser_request, browser_response) => {
     try {
-        const archive = archiver('zip', { store: true });
-        const scanId = browser_request.scan[service.id];
+        const archive       = archiver('zip', { store: true });
+        const scanId        = browser_request.scan[service.id];
 
         archive.pipe(browser_response);
 
-        const { scanPath } = paths(scansPath, scanId);
+        const { scanPath                        } = paths(scansPath,        scanId.toString());
 
-        archive.directory(scanPath, false);
+        const      normalPath = Path.join(             scanPath,      'normal');
+        const  projectionPath = Path.join(             scanPath,  'projection');
+
+        const      normalFilesJpg = await globby( Path.join(     normalPath, '*.jpg'));
+        const  projectionFilesJpg = await globby( Path.join( projectionPath, '*.jpg'));
+
+        archive.file( Path.join(scanPath, 'scan.json'), { name: 'scan.json'} );
+
+             normalFilesJpg.forEach( filePath => archive.file( filePath, { name: Path.join(     'normal', Path.basename(filePath))}));
+         projectionFilesJpg.forEach( filePath => archive.file( filePath, { name: Path.join( 'projection', Path.basename(filePath))}));
 
         archive.on('warning', error => debug(`SCAN: ${scanId} - Archive warning:`, error));
         archive.on('error',   error => debug(`SCAN: ${scanId} - Archive error:`  , error));

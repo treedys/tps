@@ -5,6 +5,7 @@ const Path = require('path');
 const fs = require('fs-extra');
 const archiver = require('archiver');
 const mutex = require("await-mutex").default;
+const globby = require('globby');
 
 const debug = require('debug')('calibrations');
 
@@ -79,9 +80,15 @@ app.get('/calibration/:calibration.zip', async (browser_request, browser_respons
 
         archive.pipe(browser_response);
 
-        const { calibrationPath } = paths(calibrationsPath, calibrationId);
+        const { calibrationPath: parentCalibrationPath } = paths(calibrationsPath, calibrationId.toString());
 
-        archive.directory(calibrationPath, false);
+        const calibrationPath = Path.join(parentCalibrationPath, 'calibration');
+
+        const calibrationFilesJpg = await globby( Path.join(calibrationPath, '*.jpg'));
+
+        archive.file( Path.join(parentCalibrationPath, 'calibration.json'), { name: 'calibration.json'} );
+
+        calibrationFilesJpg.forEach( filePath => archive.file( filePath, { name: Path.join('calibration', Path.basename(filePath))}));
 
         archive.on('warning', error => debug(`CALIBRATION: ${calibrationId} - Archive warning:`, error));
         archive.on('error',   error => debug(`CALIBRATION: ${calibrationId} - Archive error:`  , error));
