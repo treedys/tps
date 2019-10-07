@@ -13,15 +13,17 @@ const styles = {
             alignSelf: "center",
             marginRight: "1em",
             fontWeight: "bold",
-            color: "#5A7287"
+            color: "#5A7287",
+            transition: 'box-shadow 0.1s'
         },
         input: {
             color: '#BDBDBD',
             backgroundColor: "#FFFFFF",
-            border: '2px solid #E1E7E7',
+            border: '1px solid #E1E7E7',
             borderRadius: '6px',
             padding: '1em',
-            fontSize: "1em"
+            fontSize: "1em",
+            transition: 'box-shadow 0.1s'
         }
     },
     focused: {
@@ -30,7 +32,8 @@ const styles = {
         },
         input: {
             color: '#343B4B',
-            border: '2px solid #00B7EC'
+            border: '1px solid #00B7EC',
+            boxShadow: 'rgba(0, 0, 0, 0.2) 0px 3px 8px'
         }
     },
     invalid: {
@@ -38,7 +41,7 @@ const styles = {
             color: '#EC4747'
         },
         input: {
-            border: '2px solid #EC4747'
+            border: '1px solid #EC4747'
         }
     },
     changed: {

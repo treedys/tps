@@ -2,25 +2,28 @@ import React from 'react';
 
 const styles = {
     button: {
-        border: '2px solid rgba(0,0,0,0.3)',
         borderRadius: '6px',
         margin: '1em',
         padding: '1em',
         fontSize: "1em",
         fontWeight: "bold",
         minWidth: "5em",
-        boxShadow: 'rgba(0, 0, 0, 0.156863) 0px 0px 10px, rgba(0, 0, 0, 0.227451) 0px 0px 10px',
         textDecoration: 'none',
         textAlign: 'center',
-        cursor: 'pointer'
+        cursor: 'pointer',
+        transition: 'box-shadow 0.1s'
     },
     enabled: {
+        border: '1px solid rgba(0,0,0,0.2)',
+        boxShadow: 'rgba(0, 0, 0, 0.2) 0px 6px 8px',
         color: '#FFFFFF',
         backgroundColor: "#00B7EC",
     },
     disabled: {
-        backgroundColor: '#CCC',
-        color: '#444'
+        border: '1px solid rgba(0, 0, 0, 0.1)',
+        boxShadow: 'rgba(0, 0, 0, 0.1) 0px 0px 8px',
+        backgroundColor: 'rgba(0, 0, 0, 0.05)',
+        color: 'rgba(0, 0, 0, 0.3)'
     }
 };
 

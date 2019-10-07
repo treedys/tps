@@ -21,7 +21,7 @@ const styles = {
             appearence: "none",
             color: '#BDBDBD',
             backgroundColor: "#FFFFFF",
-            border: '2px solid #E1E7E7',
+            border: '1px solid #E1E7E7',
             borderRadius: '6px',
             padding: '1em',
             fontSize: "1em"
@@ -41,7 +41,8 @@ const styles = {
         },
         select: {
             color: '#343B4B',
-            border: '2px solid #00B7EC'
+            border: '1px solid #00B7EC',
+            boxShadow: 'rgba(0, 0, 0, 0.2) 0px 3px 8px'
         }
     },
     invalid: {
@@ -49,7 +50,7 @@ const styles = {
             color: '#EC4747'
         },
         select: {
-            border: '2px solid #EC4747'
+            border: '1px solid #EC4747'
         }
     },
     changed: {
