@@ -2,7 +2,6 @@ import React from 'react';
 
 const styles = {
     button: {
-        alignSelf: "baseline",
         border: '2px solid rgba(0,0,0,0.3)',
         borderRadius: '6px',
         margin: '1em',

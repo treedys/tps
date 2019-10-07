@@ -12,7 +12,6 @@ const styles = {
     label: {
         width: "5em",
         fontSize: "1em",
-        alignSelf: "baseline",
         marginRight: "1em",
         fontWeight: "bold",
         color: "#5A7287"

@@ -54,10 +54,12 @@ body {
 
 .row.scroll {
     overflow-x: scroll;
+    scrollbar-width: none;
 }
 
 .col.scroll {
     overflow-y: scroll;
+    scrollbar-width: none;
 }
 
 svg {

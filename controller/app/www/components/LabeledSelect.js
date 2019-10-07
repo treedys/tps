@@ -10,7 +10,7 @@ const styles = {
         label: {
             width: "6em",
             fontSize: "1em",
-            alignSelf: "baseline",
+            alignSelf: "center",
             marginRight: "1em",
             fontWeight: "bold",
             color: "#5A7287"
@@ -19,7 +19,6 @@ const styles = {
             WebkitAppearance: "none",
             MozAppearance: "none",
             appearence: "none",
-            alignSelf: "baseline",
             color: '#BDBDBD',
             backgroundColor: "#FFFFFF",
             border: '2px solid #E1E7E7',
@@ -31,7 +30,6 @@ const styles = {
             WebkitAppearance: "none",
             MozAppearance: "none",
             appearence: "none",
-            alignSelf: "baseline",
             color: '#343B4B',
             backgroundColor: "#FFFFFF",
             fontSize: "1em"

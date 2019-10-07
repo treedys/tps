@@ -10,7 +10,8 @@ const styles = {
         container: {
             textAlign: 'center',
             verticalAlign: 'middle',
-            overflow: 'scroll'
+            overflow: 'scroll',
+            scrollbarWidth: 'none'
         },
         image: {
             maxWidth: '100%'

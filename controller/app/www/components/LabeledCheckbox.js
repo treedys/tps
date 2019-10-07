@@ -11,13 +11,12 @@ const styles = {
         },
         label: {
             fontSize: "1em",
-            alignSelf: "baseline",
+            alignSelf: "center",
             marginLeft: "1em",
             fontWeight: "bold",
             color: "#5A7287"
         },
         input: {
-            alignSelf: "baseline",
             color: '#BDBDBD',
             backgroundColor: "#FFFFFF",
             border: '2px solid #E1E7E7',
