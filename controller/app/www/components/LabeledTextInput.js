@@ -1,5 +1,5 @@
 import React from 'react';
-import Focused from './Focused';
+import MoreProps from './MoreProps';
 import Row from './Row';
 
 const styles = {
@@ -85,4 +85,4 @@ const LabeledTextInput = ({ id, label, labelStyle, style, containerStyle, value,
         {children}
     </Row>
 
-export default props => <Focused><LabeledTextInput {...props}/></Focused>
+export default props => <MoreProps><LabeledTextInput {...props}/></MoreProps>

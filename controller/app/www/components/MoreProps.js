@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default class Focused extends React.Component {
+export default class MoreProps extends React.Component {
 
     state = { focused: false };
 

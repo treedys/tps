@@ -4,7 +4,7 @@ export Icon from './Icon';
 export Circle from './Circle';
 export Centered from './Centered';
 export Button from './Button';
-export Focused from './Focused';
+export MoreProps from './MoreProps';
 export Form from './Form.js';
 export LabeledTextInput from './LabeledTextInput';
 export LabeledCheckbox from './LabeledCheckbox';

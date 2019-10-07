@@ -1,5 +1,5 @@
 import React from 'react';
-import Focused from './Focused';
+import MoreProps from './MoreProps';
 import Row from './Row';
 
 const styles = {
@@ -92,4 +92,4 @@ const LabeledSelect = ({ id, label, labelStyle, style, containerStyle, optionSty
         </select>
     </Row>
 
-export default props => <Focused><LabeledSelect {...props}/></Focused>
+export default props => <MoreProps><LabeledSelect {...props}/></MoreProps>

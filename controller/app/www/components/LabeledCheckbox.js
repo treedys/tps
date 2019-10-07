@@ -1,5 +1,5 @@
 import React from 'react';
-import Focused from './Focused';
+import MoreProps from './MoreProps';
 import Row from './Row';
 
 /* TODO: Could be merged with LabeledTextInput */
@@ -77,4 +77,4 @@ const LabeledCheckbox = ({id, label, labelStyle, style, checked, focused, change
         </label> }
     </Row>
 
-export default props => <Focused><LabeledCheckbox {...props}/></Focused>
+export default props => <MoreProps><LabeledCheckbox {...props}/></MoreProps>
