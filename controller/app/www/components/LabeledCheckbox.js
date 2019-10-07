@@ -51,7 +51,7 @@ const styles = {
     }
 };
 
-const LabeledCheckbox = ({id, label, labelStyle, style, checked, focused, changed, invalid, ...props}) =>
+const LabeledCheckbox = ({id, label, labelStyle, style, checked, focused, pressed, hovered, changed, invalid, ...props}) =>
     <Row style={ styles.normal.container }>
         <input type="checkbox"
             id={id}

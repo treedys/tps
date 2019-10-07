@@ -1,5 +1,7 @@
 import React from 'react';
 
+import MoreProps from './MoreProps';
+
 const styles = {
     button: {
         borderRadius: '6px',
@@ -24,9 +26,17 @@ const styles = {
         boxShadow: 'rgba(0, 0, 0, 0.1) 0px 0px 8px',
         backgroundColor: 'rgba(0, 0, 0, 0.05)',
         color: 'rgba(0, 0, 0, 0.3)'
+    },
+    pressed: {
+        boxShadow: 'rgba(0, 0, 0, 0.1) 0px 0px 8px',
+    },
+    hovered: {
+        backgroundColor: "#00C0F0",
     }
 };
 
-export default ({ disabled, children, style, href, ...props}) => href
-    ? <a href={disabled?null:href} disabled={disabled} style={{ ...styles.button, ...(disabled?styles.disabled:styles.enabled), ...style }} { ...props }>{children}</a>
-    : <button                      disabled={disabled} style={{ ...styles.button, ...(disabled?styles.disabled:styles.enabled), ...style }} { ...props }>{children}</button>
+const Button = ({ pressed, focused, hovered, disabled, children, style, href, ...props}) => href
+    ? <a href={disabled?null:href} disabled={disabled} style={{ ...styles.button, ...(disabled?styles.disabled:styles.enabled), ...(pressed && styles.pressed), ...(hovered && styles.hovered), ...style }} { ...props }>{children}</a>
+    : <button                      disabled={disabled} style={{ ...styles.button, ...(disabled?styles.disabled:styles.enabled), ...(pressed && styles.pressed), ...(hovered && styles.hovered), ...style }} { ...props }>{children}</button>
+
+export default props => <MoreProps><Button {...props}/></MoreProps>

@@ -35,6 +35,15 @@ const styles = {
             fontSize: "1em"
         }
     },
+    hovered: {
+        label: {
+            color: "#00C0F0"
+        },
+        input: {
+            color: '#384050',
+            border: '1px solid #00C0F0'
+        }
+    },
     focused: {
         label: {
             color: "#00B7EC"
@@ -62,7 +71,7 @@ const styles = {
     }
 };
 
-const LabeledSelect = ({ id, label, labelStyle, style, containerStyle, optionStyle, value, options, children, focused, changed, invalid, ...props }) =>
+const LabeledSelect = ({ id, label, labelStyle, style, containerStyle, optionStyle, value, options, children, focused, hovered, pressed, changed, invalid, ...props }) =>
     <Row style={{ ...styles.normal.container, ...containerStyle }}>
         { label && <label
             htmlFor={id}
@@ -70,6 +79,7 @@ const LabeledSelect = ({ id, label, labelStyle, style, containerStyle, optionSty
                 ...styles.normal.label,
                 ...( changed && styles.changed.label ),
                 ...( focused && styles.focused.label ),
+                ...( hovered && styles.hovered.label ),
                 ...( invalid && styles.invalid.label ),
                 ...labelStyle
             }}>
@@ -81,6 +91,7 @@ const LabeledSelect = ({ id, label, labelStyle, style, containerStyle, optionSty
                 ...styles.normal.select,
                 ...( changed && styles.changed.select ),
                 ...( focused && styles.focused.select ),
+                ...( hovered && styles.hovered.select ),
                 ...( invalid && styles.invalid.select ),
                 ...style
             }}

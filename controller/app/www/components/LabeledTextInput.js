@@ -26,6 +26,15 @@ const styles = {
             transition: 'box-shadow 0.1s'
         }
     },
+    hovered: {
+        label: {
+            color: "#00C0F0"
+        },
+        input: {
+            color: '#384050',
+            border: '1px solid #00C0F0'
+        }
+    },
     focused: {
         label: {
             color: "#00B7EC"
@@ -58,7 +67,7 @@ const styles = {
  * https://www.npmjs.com/package/radium
  * https://www.npmjs.com/package/style-it */
 
-const LabeledTextInput = ({ id, label, labelStyle, style, containerStyle, value, children, focused, changed, invalid, ...props }) =>
+const LabeledTextInput = ({ id, label, labelStyle, style, containerStyle, value, children, focused, hovered, pressed, changed, invalid, ...props }) =>
     <Row style={{ ...styles.normal.container, ...containerStyle }}>
         { label && <label
             htmlFor={id}
@@ -66,6 +75,7 @@ const LabeledTextInput = ({ id, label, labelStyle, style, containerStyle, value,
                 ...styles.normal.label,
                 ...( changed && styles.changed.label ),
                 ...( focused && styles.focused.label ),
+                ...( hovered && styles.hovered.label ),
                 ...( invalid && styles.invalid.label ),
                 ...labelStyle
             }}>
@@ -77,6 +87,7 @@ const LabeledTextInput = ({ id, label, labelStyle, style, containerStyle, value,
                 ...styles.normal.input,
                 ...( changed && styles.changed.input ),
                 ...( focused && styles.focused.input ),
+                ...( hovered && styles.hovered.input ),
                 ...( invalid && styles.invalid.input ),
                 ...style
             }}
