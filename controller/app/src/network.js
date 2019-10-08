@@ -84,7 +84,7 @@ class computer {
                 }
 
                 if(!port.switch) {
-                    if(await this.routeOnly(port.index, this.portAddress(port.index), async () => await tplink.probe(this.portAddress(port.index), { timeout: 10*1000 }))) {
+                    if(await this.route(port.index, this.portAddress(port.index), async () => await tplink.probe(this.portAddress(port.index), { timeout: 10*1000 }))) {
                         this.debug(`${port.name}: Discovered configured switch`);
                         port.switch = await new tplink(this, port.index);
                         if(port.switch) {
@@ -373,9 +373,9 @@ class tplink {
         });
 
         if(unknownPortList.length) {
-            this.debug(`Checking for switch on ports [${unknownPortList.join(', ')}]`);
+            this.debug(`Checking for configured switch on ports [${unknownPortList.join(', ')}]`);
 
-            await this.parentSwitch.routeOnly(this.parentPort, config.SWITCH_DEFAULT_ADDRESS, async () => {
+            await this.parentSwitch.routeOnly(this.parentPort, this.switchAddress, async () => {
                 await this.tplink.session(this.switchAddress, async device => {
 
                     await device.disableAll([this.uplinkPort], this.numberOfPorts);
@@ -386,7 +386,34 @@ class tplink {
 
                             if(await tplink.probe(this.portAddress(port, { timeout: 10*1000 }))) {
                                 knownPortList.push(port);
-                            } else if(await tplink.probe(config.SWITCH_DEFAULT_ADDRESS, { timeout: 10*1000 })) {
+                            }
+
+                            await device.portDisable(port);
+                        } catch(error) {
+                            this.debug(`${this.portName(port)}: Error:`, error);
+                        }
+                    }
+
+                    await device.enableAll([], this.numberOfPorts);
+
+                    unknownPortList = unknownPortList.filter( port => !knownPortList.includes(port) );
+                });
+            });
+        }
+
+        if(unknownPortList.length) {
+            this.debug(`Checking for default switch on ports [${unknownPortList.join(', ')}]`);
+
+            await this.parentSwitch.routeOnly(this.parentPort, config.SWITCH_DEFAULT_ADDRESS, async () => {
+                await this.tplink.session(this.switchAddress, async device => {
+
+                    await device.disableAll([this.uplinkPort], this.numberOfPorts);
+
+                    for(let port of unknownPortList) {
+                        try {
+                            await device.portEnable(port);
+
+                            if(await tplink.probe(config.SWITCH_DEFAULT_ADDRESS, { timeout: 10*1000 })) {
                                 defaultPortList.push(port);
                             } else {
                                 emptyPortList.push(port);
