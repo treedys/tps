@@ -37,6 +37,7 @@
     "@feathersjs/client": "^3.7.8",
     "@feathersjs/feathers": "^3.3.1",
     "@feathersjs/socketio": "^3.2.9",
+    "@sindresorhus/df": "^3.1.1",
     "archiver": "^3.1.1",
     "async-rwlock": "^1.1.1",
     "await-mutex": "^1.0.2",

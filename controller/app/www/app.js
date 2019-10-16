@@ -81,8 +81,18 @@ export default class App extends React.Component {
         this.config      .unsubscribe();
     }
 
+    get storageFull () {
+        return this.state?.status?.df.available < 5*1024*1024*1024;
+    }
+
     shootScan = async () => {
         try {
+            if(this.storageFull) {
+                // FIXME: remove dialog CANCEL button
+                await confirmDialog('Storage full', 'Please download and delete some scans to free space for new ones.');
+                return;
+            }
+
             const response = await fetch('/api/shoot/scan', { method: 'POST' });
             const { id:scanId } = await response.json();
 
@@ -94,6 +104,12 @@ export default class App extends React.Component {
 
     shootCalibration = async () => {
         try {
+            if(this.storageFull) {
+                // FIXME: remove dialog CANCEL button
+                await confirmDialog('Storage full', 'Please download and delete some scans to free space for new ones.');
+                return;
+            }
+
             const response = await fetch('/api/shoot/calibration', { method: 'POST' });
             const { id:calibrationId } = await response.json();
 
@@ -241,6 +257,7 @@ export default class App extends React.Component {
         <Router history={this.history}>
             <Col style={ styles.container }>
                 <Header/>
+                <Row style={{ backgroundColor:'black' }}> <div style={{ height:'3px', width:`${100*this.state?.status?.df.used/this.state?.status?.df.size}%`, backgroundColor:'red' }}/> </Row>
                 <Row className="fill">
                     <PageList>
                         <PageLink to="/scan"        title="Scan"        icon={assets.shoot}       />

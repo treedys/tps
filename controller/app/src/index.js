@@ -336,6 +336,8 @@ let run = async () => {
 
     await configRecordDefer.promise;
 
+    await status.updateFreeSpace();
+
     try {
         await multicast.client(config.MCAST_CAMERA_REPLY_PORT, config.MCAST_GROUP_ADDR);
 
