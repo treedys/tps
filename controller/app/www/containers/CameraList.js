@@ -14,7 +14,6 @@ const styles = {
         height: "auto",
         position: "relative",
         boxShadow: 'rgba(0, 0, 0, 0.156863) 0px 0px 10px, rgba(0, 0, 0, 0.227451) 0px 0px 10px',
-        borderRadius: '6px',
         overflow: 'auto'
     },
     switchIndex: {
@@ -58,10 +57,10 @@ const styles = {
     }
 };
 
-export const CameraLink = ({ camera, switchData, index, style, ...params }) =>
-    <div style={{ ...styles.camera, ...style }}>
+export const CameraLink = ({ camera, switchData, index, style, className, ...params }) =>
+    <div className={ className } style={{ ...styles.camera, ...style }}>
         <NavLink to={`/cameras/${camera?.id}`}>
-            <img src={ camera?.online ? `/preview/${camera.id}/0-2.jpg?${Math.floor(Date.now()/2000)}` : assets.noise } style={{width:'100%', height:'auto'}} {...params} />
+            <img src={ camera?.online ? `/preview/${camera.id}/0-2.jpg?${Math.floor(Date.now()/2000)}` : assets.noise } style={{width:'100%', height:'auto', verticalAlign:'top'}} {...params} />
         </NavLink>
         <p style={styles.port}>{index||camera?.index||"--"}</p>
         <div style={{ ...styles.led, ...( camera?.online ? styles.on : styles.off) }}/>

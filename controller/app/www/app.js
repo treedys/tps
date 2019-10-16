@@ -233,8 +233,8 @@ export default class App extends React.Component {
     offlineCameras = () => this.state?.config?.scanner?.map?.filter( mac => mac && !(this.state?.cameras?.find( camera => camera.mac==mac && camera.online )))?.length || 0;
     cameraProblems = () => this.state?.config?.scanner?.new.length+this.offlineCameras();
     scannerBusy = () =>
-            !this.state?.status?.operational ||
-            this.state?.status?.shooting     ||
+           !this.state?.status?.operational ||
+            this.state?.status?.shooting    ||
             this.state?.status?.downloading;
 
     render = () =>
@@ -296,7 +296,7 @@ export default class App extends React.Component {
                         }/>
 
                         <Route path="/cameras/map" render={ props =>
-                                <CameraList cameras={this.state.cameras} switches={ this.state.switches } config={this.state.config?.scanner} onConfigChange={ config => services.config.patch('0', { scanner: config }) }/>
+                            <CameraList cameras={this.state.cameras} switches={ this.state.switches } config={this.state.config?.scanner} onConfigChange={ config => services.config.patch('0', { scanner: config }) }/>
                         }/>
 
                         <Route path="/cameras/switch/:switchId" render={ props =>
@@ -304,7 +304,7 @@ export default class App extends React.Component {
                         }/>
 
                         <Route path="/cameras/:cameraId" render={ props =>
-                            <CameraLink camera={this.state.cameras?.find( camera => camera.id==props.match.params.cameraId ) }/>
+                            <CameraLink className="fill scroll" camera={this.state.cameras?.find( camera => camera.id==props.match.params.cameraId ) }/>
                         }/>
 
                         <Route path="/settings" render={ props =>
