@@ -25,11 +25,11 @@ const styles = {
     }
 };
 
-export default ({ calibration, onDelete}) => calibration ?
+export default ({ calibration, previewCamera, onDelete}) => calibration ?
     <Row className="fill">
         <div className="fill" style={ styles.preview.container }>
             { calibration.done
-                ? <img src={`/calibration/${calibration.id}/preview.jpg?${Math.floor(Date.now()/2000)}`} style={ styles.preview.image }/>
+                ? <img src={`/calibration/${calibration.id}/${previewCamera}.jpg`} style={ styles.preview.image }/>
                 : <Spinner style={{margin:"20%"}}/>
             }
         </div>

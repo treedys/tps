@@ -9,14 +9,19 @@ app.use('/api/status', memory() );
 
 const service = app.service('/api/status');
 
+let scannerPreview = 0;
+
 service.create({
     id:0,
+    scannerPreview,
     shooting: false,
     restarting: false
 });
 
 const dbPath = Path.join(config.PATH,'/db');
 const updateFreeSpace  = async () => service.patch( 0, { df: await df.file(dbPath) });
+
+const nextScannerPreview = async () => service.patch( 0, { scannerPreview: scannerPreview++ });
 
 setInterval( async () => {
     try {
@@ -27,5 +32,6 @@ setInterval( async () => {
 
 module.exports = {
     updateFreeSpace,
+    nextScannerPreview,
     service
 };

@@ -37,11 +37,12 @@ app.param('scan', async (browser_request, browser_response, next, id) => {
     }
 });
 
-app.get('/scan/:scan/preview-:index.jpg', async (browser_request, browser_response) => {
+app.get('/scan/:scan/:preview-:index.jpg', async (browser_request, browser_response) => {
     try {
         const scanId = browser_request.scan[service.id];
+        const preview = browser_request.params.preview;
         const { scanPath } = paths(scansPath, scanId);
-        const { preview, scanner } = await config.service.get('0');
+        const { scanner } = await config.service.get('0');
         const folder = browser_request.params.index == "2" ? "projection" : "normal";
         const fileName = Path.join(scanPath, folder, `${preview}.jpg`);
 

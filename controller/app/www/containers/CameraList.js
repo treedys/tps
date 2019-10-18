@@ -57,10 +57,10 @@ const styles = {
     }
 };
 
-export const CameraLink = ({ camera, switchData, index, style, className, ...params }) =>
+export const CameraLink = ({ camera, switchData, index, style, className, status, ...params }) =>
     <div className={ className } style={{ ...styles.camera, ...style }}>
         <NavLink to={`/cameras/${camera?.id}`}>
-            <img src={ camera?.online ? `/preview/${camera.id}/0-2.jpg?${Math.floor(Date.now()/2000)}` : assets.noise } style={{width:'100%', height:'auto', verticalAlign:'top'}} {...params} />
+            <img src={ camera?.online ? `/preview/${camera.id}/0-2.jpg?${status?.scannerPreview}-${camera.transaction}` : assets.noise } style={{width:'100%', height:'auto', verticalAlign:'top'}} {...params} />
         </NavLink>
         <p style={styles.port}>{index||camera?.index||"--"}</p>
         <div style={{ ...styles.led, ...( camera?.online ? styles.on : styles.off) }}/>
@@ -68,7 +68,7 @@ export const CameraLink = ({ camera, switchData, index, style, className, ...par
         <div style={ styles.portIndex }>{camera?.port||"--"}</div>
     </div>
 
-export const SwitchCameraList = ({ switchData, cameras, ...params }) => {
+export const SwitchCameraList = ({ switchData, cameras, status, ...params }) => {
 
     if(!switchData || !cameras)
         return <h1>Switch is not connected</h1>;
@@ -89,7 +89,7 @@ export const SwitchCameraList = ({ switchData, cameras, ...params }) => {
                     camera.port==port && camera.switchAddress==switchData.address)
                         || { online: false, port: port, switchAddress: switchData.address } ;
 
-                cols.push(<td style={styles.cell} key={port}><CameraLink camera={camera} switchData={switchData} {...params}/></td>);
+                cols.push(<td style={styles.cell} key={port}><CameraLink camera={camera} switchData={switchData} status={status} {...params}/></td>);
             }
         }
         rows.push(<tr key={row}>{cols}</tr>);
@@ -102,7 +102,7 @@ export const SwitchCameraList = ({ switchData, cameras, ...params }) => {
 
 const cameraDrag = 'CAMERA';
 
-export const Camera = ({ ...params }) => {
+export const Camera = ({ status, ...params }) => {
     const [{isDragging}, connectDragSource] = useDrag({
         item: {
             type: cameraDrag,
@@ -126,12 +126,13 @@ export const Camera = ({ ...params }) => {
         <div>
             <CameraLink
                 style={{ ...(isOver && { border:"2px solid black" }) }}
+                status={status}
                 {...params}
             />
         </div>));
 };
 
-export const CameraList = ({ config, cameras, switches, onConfigChange, ...props}) => {
+export const CameraList = ({ status, config, cameras, switches, onConfigChange, ...props}) => {
     if( !(config && cameras) )
         return <h1>No data</h1>;
 
@@ -157,7 +158,7 @@ export const CameraList = ({ config, cameras, switches, onConfigChange, ...props
                 const switchData = switches?.find( switchData => switchData.address == camera?.switchAddress );
 
                 if(index<count) {
-                    columns.push(<td key={column} style={cellStyle}><Camera camera={camera} switchData={switchData} index={start+index} onDrop={onDrop}/></td>);
+                    columns.push(<td key={column} style={cellStyle}><Camera status={status} camera={camera} switchData={switchData} index={start+index} onDrop={onDrop}/></td>);
                 } else {
                     columns.push(<td key={column} style={{ ...cellStyle, border:"2px solid #55555522", borderRadius:"5px",  minHeight:"40px"}}/>);
                 }

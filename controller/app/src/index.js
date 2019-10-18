@@ -68,6 +68,7 @@ app.post("/api/shoot/preview", async (browser_request, browser_response) => {
         await send.shootAll(0);
         await delay(5*1000);
         await status.service.patch(0, { shooting: false });
+        await status.nextScannerPreview();
         browser_response.status(204).end();
     } catch(error) {
         debug('Error:', error);

@@ -50,7 +50,7 @@ export default class Scan extends React.Component {
     getFormRef = form => { this.form = form; }
 
     render() {
-        const { scan, status, fields, ...props } = this.props;
+        const { scan, status, previewCamera, fields, ...props } = this.props;
 
         if( !scan || !status)
             return <Row className="fill">
@@ -64,7 +64,7 @@ export default class Scan extends React.Component {
         return <Row className="fill">
             <div className="fill" style={ styles.preview.container }>
                 { scan.done || !status.shooting
-                    ? <img src={`/scan/${scan.id}/preview-${ this.state.normalProjection ? "1":"2"}.jpg?${Math.floor(Date.now()/2000)}`}
+                    ? <img src={`/scan/${scan.id}/${previewCamera}-${this.state.normalProjection ? "1":"2"}.jpg`}
                         style={ styles.preview.image }
                         onClick={ this.onImageClick }/>
                     : <Spinner style={{margin:"20%"}}/>

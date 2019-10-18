@@ -29,10 +29,10 @@ const styles = {
     }
 };
 
-export const ScanLink = ({scan, selected, onSelectedChange, ...props}) =>
+export const ScanLink = ({scan, selected, previewCamera, onSelectedChange, ...props}) =>
     <PageSubLink to={`/scan/${scan.id}`}
         checkbox selected={selected} onChange={ e => onSelectedChange(scan.id, e.target.checked) }
-        spinner={!scan.done} icon={`/scan/${scan.id}/preview-1.jpg`}
+        spinner={!scan.done} icon={`/scan/${scan.id}/${previewCamera}-1.jpg`}
         style={{ backgroundColor: scan.zipDownloaded ? "#EEEEEE":"#FFFFFF" }}
         {...props}>
         <Badge count={scan.failed?.length} effect={BadgeEffect.SCALE} containerStyle={{width: undefined, height: undefined, position:"relative", top:"1em", right:"1em"}}/>
@@ -50,14 +50,14 @@ export const ScanLink = ({scan, selected, onSelectedChange, ...props}) =>
         </Col>
     </PageSubLink>
 
-export const ScanList = ({scans, selected, operational, onShoot, onSelectAll, children, ...props}) =>
+export const ScanList = ({scans, selected, operational, previewCamera, onShoot, onSelectAll, children, ...props}) =>
     <Col style={ styles.list.container }>
         <Row>
             <Button onClick={ onShoot } disabled={!operational} style={{width:"100%"}} >Scan</Button>
         </Row>
         <Col className="fill scroll">
             {scans?.sort((a,b)=>b.id-a.id).map( (scan) =>
-                <ScanLink key={scan.id} scan={scan} selected={!!selected[scan.id]} {...props} />
+                <ScanLink key={scan.id} scan={scan} selected={!!selected[scan.id]} previewCamera={previewCamera} {...props} />
             )}
             { children }
         </Col>

@@ -256,13 +256,20 @@ const update = async ({ mac, ...patch}) => {
         if(!live[mac]) {
             await config.addNewCamera(mac);
 
-            live[mac] = { id:mac, mac, debug: debug.extend(mac) };
+            live[mac] = { id:mac, mac, transaction:0, debug: debug.extend(mac) };
             await service.create(stripLiveFields(live[mac]));
             live[mac].debug('Discovered', stripLiveFields(patch));
         }
 
         const oldCamera = live[mac];
         const newCamera = { ...oldCamera, index: await config.cameraIndex(mac), ...patch };
+
+        if( oldCamera.online  != newCamera.online  ||
+            oldCamera.address != newCamera.address ||
+            oldCamera.switch  != newCamera.switch  ||
+            oldCamera.port    != newCamera.port)
+            newCamera.transaction++;
+
         const diff = diffPatch(oldCamera, newCamera);
         const stripDiff = stripLiveFields(diff);
 

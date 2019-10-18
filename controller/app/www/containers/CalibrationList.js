@@ -29,10 +29,10 @@ const styles = {
     }
 };
 
-export const CalibrationLink = ({calibration, selected, onSelectedChange, ...props}) =>
+export const CalibrationLink = ({calibration, selected, onSelectedChange, previewCamera, ...props}) =>
     <PageSubLink to={`/calibration/${calibration.id}`}
         checkbox selected={selected} onChange={ e => onSelectedChange(calibration.id, e.target.checked) }
-        spinner={!calibration.done} icon={`/calibration/${calibration.id}/preview.jpg`}
+        spinner={!calibration.done} icon={`/calibration/${calibration.id}/${previewCamera}.jpg`}
         style={{ backgroundColor: calibration.zipDownloaded ? "#EEEEEE":"#FFFFFF" }}
         {...props}>
         <Badge count={calibration.failed?.length} effect={BadgeEffect.SCALE} containerStyle={{width: undefined, height: undefined, position:"relative", top:"1em", right:"1em"}}/>
@@ -49,14 +49,14 @@ export const CalibrationLink = ({calibration, selected, onSelectedChange, ...pro
         </Col>
     </PageSubLink>
 
-export const CalibrationList = ({calibrations, selected, operational, onShoot, onSelectAll, children, ...props}) =>
+export const CalibrationList = ({calibrations, selected, operational, previewCamera, onShoot, onSelectAll, children, ...props}) =>
     <Col style={ styles.list.container }>
         <Row>
             <Button onClick={ onShoot } disabled={!operational} style={{width:"100%"}}>Calibration</Button>
         </Row>
         <Col className="fill scroll">
             {calibrations?.sort((a,b)=>b.id-a.id).map( (calibration) =>
-                <CalibrationLink key={calibration.id} calibration={calibration} selected={!!selected[calibration.id]} {...props} />
+                <CalibrationLink key={calibration.id} calibration={calibration} selected={!!selected[calibration.id]} previewCamera={previewCamera} {...props} />
             )}
             { children }
         </Col>

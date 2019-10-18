@@ -275,6 +275,7 @@ export default class App extends React.Component {
                                 onShoot={ this.shootScan }
                                 onSelectedChange={ this.onScanSelectedChange }
                                 onSelectAll={ this.onScanSelectAll }
+                                previewCamera={ this.state.config?.preview }
                                 operational={!this.scannerBusy()} />
                         }/>
 
@@ -284,6 +285,7 @@ export default class App extends React.Component {
                                 onShoot={ this.shootCalibration }
                                 onSelectedChange={ this.onCalibrationSelectedChange }
                                 onSelectAll={ this.onCalibrationSelectAll }
+                                previewCamera= {this.state.config?.preview }
                                 operational={!this.scannerBusy()} />
                         }/>
 
@@ -298,6 +300,7 @@ export default class App extends React.Component {
                             <Scan scan={ this.state.scans?.find(scan => scan.id == props.match.params.scanId)}
                                 status={ this.state.status }
                                 fields={ this.state.config?.scanFields }
+                                previewCamera={ this.state.config?.preview }
                                 onAccept={   scan   => this.acceptScan( scan.id )}
                                 onReject={   scan   => this.rejectScan( scan.id )}
                                 onChange={ ({scan}) => services.scans.update( scan.id, scan)}
@@ -307,21 +310,22 @@ export default class App extends React.Component {
 
                         <Route path="/calibration/:calibrationId" render={ props =>
                             <Calibration calibration={ this.state.calibrations?.find(calibration => calibration.id == props.match.params.calibrationId)}
+                                previewCamera={ this.state.config?.preview }
                                 onChange={ ({calibration}) => services.calibrations.update( props.match.params.calibrationId, calibration)}
                                 onDelete={ () => this.deleteCalibration( props.match.params.calibrationId )}
                             />
                         }/>
 
                         <Route path="/cameras/map" render={ props =>
-                            <CameraList cameras={this.state.cameras} switches={ this.state.switches } config={this.state.config?.scanner} onConfigChange={ config => services.config.patch('0', { scanner: config }) }/>
+                            <CameraList cameras={this.state.cameras} switches={ this.state.switches } config={this.state.config?.scanner} status={this.state.status} onConfigChange={ config => services.config.patch('0', { scanner: config }) }/>
                         }/>
 
                         <Route path="/cameras/switch/:switchId" render={ props =>
-                            <SwitchCameraList cameras={this.state.cameras} switchData={ this.state.switches?.[props.match.params.switchId] }/>
+                            <SwitchCameraList cameras={this.state.cameras} switchData={ this.state.switches?.[props.match.params.switchId] } status={this.state.status}/>
                         }/>
 
                         <Route path="/cameras/:cameraId" render={ props =>
-                            <CameraLink className="fill scroll" camera={this.state.cameras?.find( camera => camera.id==props.match.params.cameraId ) }/>
+                            <CameraLink className="fill scroll" camera={this.state.cameras?.find( camera => camera.id==props.match.params.cameraId ) } status={this.state.status}/>
                         }/>
 
                         <Route path="/settings" render={ props =>

@@ -34,11 +34,12 @@ app.param('calibration', async (browser_request, browser_response, next, id) => 
     }
 });
 
-app.get('/calibration/:calibration/preview.jpg', async (browser_request, browser_response) => {
+app.get('/calibration/:calibration/:preview.jpg', async (browser_request, browser_response) => {
     try {
         const calibrationId = browser_request.calibration[service.id];
+        const preview = browser_request.params.preview;
         const { calibrationPath } = paths(calibrationsPath, calibrationId);
-        const { preview, scanner } = await config.service.get('0');
+        const { scanner } = await config.service.get('0');
         const folder = 'calibration';
         const fileName = Path.join(calibrationPath, folder, `${preview}.jpg`);
 

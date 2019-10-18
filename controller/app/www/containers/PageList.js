@@ -88,7 +88,7 @@ export const PageSubLink = ({to, spinner, icon, checkbox, selected, onChange, ch
                 <Route path={to} render={ () => <div style={ styles.sublink.activeBar }/> }/>
             </div>
             { checkbox!==undefined && <Centered><LabeledCheckbox checked={selected} onChange={ e => onChange(e) }/></Centered> }
-            { (spinner||icon) && <Circle radius={40} className="align-center" style={ styles.sublink.circle }>{ spinner ? <Spinner/> : <Icon src={icon+`?${Math.floor(Date.now()/2000)}`} style={ styles.sublink.icon }/> }</Circle> }
+            { (spinner||icon) && <Circle radius={40} className="align-center" style={ styles.sublink.circle }>{ spinner ? <Spinner/> : <Icon src={icon} style={ styles.sublink.icon }/> }</Circle> }
             {children}
         </Row>
     </NavLink>
