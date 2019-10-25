@@ -42,7 +42,6 @@
     "async-rwlock": "^1.1.1",
     "await-mutex": "^1.0.2",
     "babel-loader": "^8.0.6",
-    "babel-minify-webpack-plugin": "^0.3.1",
     "camelcase": "^5.3.1",
     "clean-webpack-plugin": "^3.0.0",
     "cross-env": "^5.2.0",

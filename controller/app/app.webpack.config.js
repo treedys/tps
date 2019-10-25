@@ -2,7 +2,6 @@ const path = require("path");
 const webpack = require("webpack");
 const merge = require("webpack-merge");
 const GitRevisionPlugin = require("git-revision-webpack-plugin");
-const MinifyPlugin = require("babel-minify-webpack-plugin");
 const nodeExternals = require('webpack-node-externals');
 
 const            gitRevisionPlugin = new GitRevisionPlugin();
@@ -30,7 +29,8 @@ const common = {
         rules: [
             { test: /\.(js)$/, loader: "babel-loader", exclude: /(node_modules)/, options: {
                 presets: [
-                    [ "@babel/preset-env", { "targets":{ "node": "8.11.3" }, "modules": false }]
+                    // TODO: Update controller buildroot node version from 8.11.3 to 10.17.0
+                    [ "@babel/preset-env", { "targets":{ "node": "10.17.0" }, "modules": false }]
                 ],
                 plugins: [
                     ["@babel/proposal-decorators", { legacy: true }],
@@ -69,7 +69,6 @@ const release = {
     ],
     optimization: {
         minimize: true,
-        minimizer: [ new MinifyPlugin({}, { sourceMap: true }) ]
     }
 };
 
