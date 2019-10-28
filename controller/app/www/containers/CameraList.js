@@ -54,7 +54,44 @@ const styles = {
     },
     off: {
         background: "red"
+    },
+    noIp: {
+        background: "darkOrange"
+    },
+    noNetBoot: {
+        background: "blue"
+    },
+    upgrading: {
+        background: "magenta"
+    },
+    needUpgrade: {
+        background: "yellow"
+    },
+    noSDcard: {
+        background: "purple"
     }
+};
+
+const ledStyle = camera => {
+    if(!camera?.online)
+        return styles.off;
+
+    if(camera.firmwareUpgrade)
+        return styles.upgrading;
+
+    if(!camera.sameIpRange)
+        return styles.noIp;
+
+    if(!camera.netboot)
+        return styles.noNetBoot;
+
+    if(camera.needsUpgrade || (camera.hasSDcard && !camera.bootFromSDcard))
+        return styles.needUpgrade;
+
+    if(!camera.hasSDcard)
+        return styles.noSDcard;
+
+    return styles.on;
 };
 
 export const CameraLink = ({ camera, switchData, index, style, className, status, ...params }) =>
@@ -63,7 +100,7 @@ export const CameraLink = ({ camera, switchData, index, style, className, status
             <img src={ camera?.online ? `/preview/${camera.id}/0-2.jpg?${status?.scannerPreview}-${camera.transaction}` : assets.noise } style={{width:'100%', height:'auto', verticalAlign:'top'}} {...params} />
         </NavLink>
         <p style={styles.port}>{index||camera?.index||"--"}</p>
-        <div style={{ ...styles.led, ...( camera?.online ? styles.on : styles.off) }}/>
+        <div style={{ ...styles.led, ...ledStyle(camera) }}/>
         <div style={ styles.switchIndex }>{camera?.switchName||"--"}</div>
         <div style={ styles.portIndex }>{camera?.port||"--"}</div>
     </div>

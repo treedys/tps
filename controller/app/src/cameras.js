@@ -153,9 +153,13 @@ const checkNetboot = async (camera) => {
         const otp_dump = await downloadContent(camera, "otp_dump");
         const otp = eol.split(otp_dump).map(line => line.split(':')).reduce( (otp, [addr, value]) => Object.assign(otp, typeof(value)!="undefined" && { [parseInt(addr)]:parseInt(value,16) }), []);
 
+        await update({ mac: camera.mac, netboot: otp[17]==0x3020000a });
+
         if(otp[17]!=0x3020000a) {
             camera.debug(`Configuring netboot - ${otp[17]?.toString(16)}`);
             await send.exec(camera.mac, `mkdir /var/fat;mount /dev/mmcblk0p1 /var/fat;echo "program_usb_boot_mode=1" >> /var/fat/config.txt;sync;sync;sync;reboot;`);
+
+            await update({ mac: camera.mac, transaction: camera.transaction+1 });
         }
     } catch(error) {
     	camera.debug(`checkNetboot ${otp_dump} error:`, error);
@@ -181,6 +185,8 @@ const cameraState= async (camera) => {
     const cmdline = await downloadContent(camera, "cmdline");
     const bootFromSDcard = cmdline.includes("root=/dev/mmcblk0");
 
+    await update({ mac: camera.mac, needsUpgrade, hasSDcard, bootFromSDcard });
+
     return { cameraVersion, buildrootVersion, dev, cmdline, needsUpgrade, hasSDcard, bootFromSDcard };
 }
 
@@ -204,10 +210,6 @@ const upgradeCameraFirmmware = async (camera) => {
     camera.debug('Needs upgrade');
 
     try {
-        // TODO: add the camera to the upgrade list
-
-        const upgradeStarts = Date.now();
-
         if(!state.hasSDcard && state.needsUpgrade) {
             await send.exec(camera.mac, "reboot");
         } else if(state.hasSDcard && (!state.bootFromSDcard || state.needsUpgrade)) {
@@ -217,11 +219,14 @@ const upgradeCameraFirmmware = async (camera) => {
             await send.exec(camera.mac, "chmod +x /var/www/upgrade.sh");
             await send.exec(camera.mac, "/var/www/upgrade.sh");
         } else {
-            camera.debug(`needsUpgrade=${state.needsUpgrade} hasSDcard=${state.hasSDcard} bootFromSDcard=${state.bootFromSDcard}`);
             unlock();
             dnsmasq.lock.unlock();
             return;
         }
+
+        const upgradeStarts = Date.now();
+
+        await update({ mac: camera.mac, firmwareUpgrade: true, transaction: camera.transaction+1 });
 
         let afterReboot;
         do {
@@ -229,11 +234,12 @@ const upgradeCameraFirmmware = async (camera) => {
             // TODO: Timout the loop
             try {
                 afterReboot = await cameraState(camera);
-                camera.debug(`needsUpgrade=${afterReboot.needsUpgrade} hasSDcard=${afterReboot.hasSDcard} bootFromSDcard=${afterReboot.bootFromSDcard}`);
             } catch(error) {
                 camera.debug('Upgrade polling error:', error);
             }
-        } while((afterReboot.needsUpgrade || (afterReboot.hasSDcard && !afterReboot.bootFromSDcard)) && time.since(upgradeStarts).secs()<2*60);
+        } while((afterReboot.needsUpgrade || (afterReboot.hasSDcard && !afterReboot.bootFromSDcard)) && live[camera.mac].sameIpRange && time.since(upgradeStarts).secs()<2*60);
+
+        await update({ mac: camera.mac, firmwareUpgrade: false, transaction: camera.transaction+1  });
 
         // TODO: remove the camera from the upgrade list
         unlock();
@@ -241,13 +247,14 @@ const upgradeCameraFirmmware = async (camera) => {
 
     } catch(error) {
         camera.debug('Camera upgrade error:', error);
+        await update({ mac: camera.mac, firmwareUpgrade: false });
         unlock();
         dnsmasq.lock.unlock();
     }
 }
 
 const diffPatch = (a,b) => Object.keys(b).reduce( (o, k) => a[k] != b[k] && { ...o, [k]:b[k] } || o, {} );
-const stripLiveFields = ({ debug, switch:_switch, lastSeen, lastReboot, sameIpRange, ...o}) => o;
+const stripLiveFields = ({ debug, switch:_switch, lastSeen, lastReboot, ...o}) => o;
 const isEmptyObject = o => Object.entries(o).length ===0;
 
 const update = async ({ mac, ...patch}) => {
@@ -270,6 +277,8 @@ const update = async ({ mac, ...patch}) => {
             oldCamera.port    != newCamera.port)
             newCamera.transaction++;
 
+        newCamera.sameIpRange = !!ipRangeCheck(newCamera.address, newCamera.switch?.ipRange(newCamera.port))
+
         const diff = diffPatch(oldCamera, newCamera);
         const stripDiff = stripLiveFields(diff);
 
@@ -283,11 +292,7 @@ const update = async ({ mac, ...patch}) => {
             await service.patch(mac, stripDiff);
         }
 
-        if(live[mac].address && live[mac].switch && live[mac].port && (diff.address || diff.switch || diff.port)) {
-            live[mac].sameIpRange = ipRangeCheck(live[mac].address, live[mac].switch.ipRange(live[mac].port));
-        }
-
-        if(live[mac].online && live[mac].switch && (diff.online || diff.switch) && live[mac].sameIpRange) {
+        if(live[mac].online && live[mac].sameIpRange && (diff.online || diff.sameIpRange)) {
             await checkNetboot(live[mac]);
             await upgradeCameraFirmmware(live[mac]);
         }
