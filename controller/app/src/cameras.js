@@ -245,6 +245,9 @@ const upgradeCameraFirmmware = async (camera) => {
         unlock();
         dnsmasq.lock.unlock();
 
+        if(!live[camera.mac].sameIpRange)
+            await dnsmasq.forceRestart();
+
     } catch(error) {
         camera.debug('Camera upgrade error:', error);
         await update({ mac: camera.mac, firmwareUpgrade: false });

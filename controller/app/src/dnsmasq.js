@@ -8,7 +8,7 @@ const rwlock = require("async-rwlock").RWLock;
 const noop = () => {};
 
 let dnsmasq;
-let start = noop, restart = noop;
+let start = noop, restart = noop, forceRestart = noop;
 
 const lock = new rwlock();
 
@@ -69,9 +69,7 @@ module.exports = async (ports) => {
         dnsmasqDebug('Started');
     }
 
-    restart = async () => {
-        await lock.writeLock();
-
+    forceRestart = async () => {
         try {
             dnsmasqDebug("Restarting");
             await dnsmasqKill();
@@ -79,6 +77,12 @@ module.exports = async (ports) => {
         } catch(error) {
             dnsmasqDebug("Restarting error:", error);
         }
+    }
+
+    restart = async () => {
+        await lock.writeLock();
+
+        await forceRestart();
 
         await lock.unlock();
     }
@@ -95,3 +99,5 @@ module.exports = async (ports) => {
 }
 
 module.exports.lock = lock;
+
+module.exports.forceRestart = () => forceRestart();
