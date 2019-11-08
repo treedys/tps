@@ -6,6 +6,7 @@
   "bin": "treedys-controller.js",
   "scripts": {
     "prepack": "npm install && npm run build",
+    "postpack": "postpack",
     "build": "cross-env NODE_OPTIONS=--max_old_space_size=8192 webpack --config webpack.config.js && cross-env NODE_OPTIONS=--max_old_space_size=8192 webpack --config app.webpack.config.js",
     "start": "cross-env NODE_OPTIONS=--max_old_space_size=8192 webpack --config webpack.config.js && cross-env NODE_OPTIONS=--max_old_space_size=8192 webpack --config app.webpack.config.js && node treedys-controller.js",
     "debug": "cross-env NODE_OPTIONS=--max_old_space_size=8192 webpack --config webpack.config.js && cross-env NODE_OPTIONS=--max_old_space_size=8192 webpack --config app.webpack.config.js && node treedys-controller.js"
@@ -13,6 +14,9 @@
   "author": "",
   "license": "SEE LICENSE IN LICENSE",
   "private": true,
+  "files": [
+    "build"
+  ],
   "dependencies": {
     "@feathersjs/express": "^1.3.1",
     "avahi-dbus": "^0.1.0",
@@ -75,6 +79,7 @@
     "p-retry": "^4.1.0",
     "p-timeout": "^3.1.0",
     "pify": "^4.0.1",
+    "postpack": "github:treedys/postpack",
     "react": "^16.9.0",
     "react-dnd": "^9.3.4",
     "react-dnd-html5-backend": "^9.3.4",
