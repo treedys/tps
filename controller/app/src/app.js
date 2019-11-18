@@ -24,7 +24,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.errorHandler());
 
 // Serve static files
-app.use(express.static(path.join(__dirname, "build")));
+app.use(express.static(path.join(__dirname, "site")));
 
 app.on('connection', connection => app.channel('unprotected').join(connection) );
 app.publish( (data, context) => app.channel('unprotected') );

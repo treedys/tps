@@ -4,18 +4,45 @@
   "description": "Treedys scanner controller application",
   "main": "treedys-controller.js",
   "bin": "treedys-controller.js",
+  "postpack": {
+    "removeDefaultAnd": [
+      "packware"
+    ]
+  },
+  "packware": {
+    "bin": {
+      "target": "node",
+      "plugin": "./gitsha.js",
+      "targets": {
+        "node": "10.17.0"
+      },
+      "entry": {
+        "treedys-controller": "src/index.js"
+      },
+      "outputPath": "./"
+    },
+    "site": {
+      "target": "react",
+      "sourcePath": "www",
+      "title": "TREEDY'S Scanner",
+      "entry": [
+        "index.js",
+        "styles.css"
+      ]
+    }
+  },
   "scripts": {
     "prepack": "npm install && npm run build",
     "postpack": "postpack",
-    "build": "cross-env NODE_OPTIONS=--max_old_space_size=8192 webpack --config webpack.config.js && cross-env NODE_OPTIONS=--max_old_space_size=8192 webpack --config app.webpack.config.js",
-    "start": "cross-env NODE_OPTIONS=--max_old_space_size=8192 webpack --config webpack.config.js && cross-env NODE_OPTIONS=--max_old_space_size=8192 webpack --config app.webpack.config.js && node treedys-controller.js",
-    "debug": "cross-env NODE_OPTIONS=--max_old_space_size=8192 webpack --config webpack.config.js && cross-env NODE_OPTIONS=--max_old_space_size=8192 webpack --config app.webpack.config.js && node treedys-controller.js"
+    "build": "cross-env NODE_OPTIONS=--max_old_space_size=8192 packware",
+    "start": "cross-env NODE_OPTIONS=--max_old_space_size=8192 packware && node treedys-controller.js",
+    "debug": "cross-env NODE_OPTIONS=--max_old_space_size=8192 packware && node treedys-controller.js"
   },
   "author": "",
   "license": "SEE LICENSE IN LICENSE",
   "private": true,
   "files": [
-    "build"
+    "site"
   ],
   "dependencies": {
     "@feathersjs/express": "^1.3.1",
@@ -26,30 +53,17 @@
     "socket.io": "^2.2.0"
   },
   "devDependencies": {
-    "@babel/cli": "^7.5.5",
-    "@babel/core": "^7.5.5",
-    "@babel/plugin-proposal-class-properties": "^7.5.5",
-    "@babel/plugin-proposal-decorators": "^7.4.4",
-    "@babel/plugin-proposal-export-default-from": "^7.5.2",
-    "@babel/plugin-proposal-object-rest-spread": "^7.5.5",
-    "@babel/plugin-proposal-optional-chaining": "^7.2.0",
-    "@babel/plugin-syntax-export-default-from": "^7.2.0",
-    "@babel/plugin-syntax-export-namespace-from": "^7.2.0",
-    "@babel/polyfill": "^7.4.4",
-    "@babel/preset-env": "^7.5.5",
-    "@babel/preset-react": "^7.0.0",
     "@feathersjs/client": "^3.7.8",
     "@feathersjs/feathers": "^3.3.1",
     "@feathersjs/socketio": "^3.2.9",
     "@sindresorhus/df": "^3.1.1",
+    "@treedys/packware": "^1.1.0",
+    "@treedys/postpack": "^1.0.1",
     "archiver": "^3.1.1",
     "async-rwlock": "^1.1.1",
     "await-mutex": "^1.0.2",
-    "babel-loader": "^8.0.6",
     "camelcase": "^5.3.1",
-    "clean-webpack-plugin": "^3.0.0",
     "cross-env": "^5.2.0",
-    "css-loader": "^3.2.0",
     "dataminr-react-components": "^1.4.0",
     "debug": "^4.1.1",
     "delay": "^4.3.0",
@@ -58,20 +72,16 @@
     "feathers-memory": "^4.0.0",
     "feathers-nedb": "^5.0.1",
     "feathers-reactive": "^0.8.1",
-    "file-loader": "^4.2.0",
     "fs-extra": "^8.1.0",
-    "git-revision-webpack-plugin": "^3.0.3",
+    "git-revision-webpack-plugin": "^3.0.4",
     "globby": "^10.0.1",
     "history": "^4.9.0",
-    "html-minify-loader": "^1.4.0",
-    "html-webpack-plugin": "^3.2.0",
     "immer": "^3.2.0",
     "immutable": "^4.0.0-rc.12",
     "ip": "^1.1.5",
     "ip-range-check": "^0.2.0",
     "iproute": "^1.0.2",
     "lodash-decorators": "^6.0.1",
-    "mini-css-extract-plugin": "^0.8.0",
     "minimist": "^1.2.0",
     "moment": "^2.24.0",
     "nedb": "^1.8.0",
@@ -79,7 +89,6 @@
     "p-retry": "^4.1.0",
     "p-timeout": "^3.1.0",
     "pify": "^4.0.1",
-    "postpack": "github:treedys/postpack",
     "react": "^16.9.0",
     "react-dnd": "^9.3.4",
     "react-dnd-html5-backend": "^9.3.4",
@@ -89,14 +98,8 @@
     "react-style-object-to-css": "^1.1.2",
     "react-svg": "^10.0.18",
     "request": "^2.88.0",
-    "style-loader": "^1.0.0",
     "telnet-client": "^1.0.4",
-    "time-since": "^1.0.7",
-    "url-loader": "^2.1.0",
-    "webpack": "^4.39.2",
-    "webpack-cli": "^3.3.7",
-    "webpack-merge": "^4.2.1",
-    "webpack-node-externals": "^1.7.2"
+    "time-since": "^1.0.7"
   },
   "optionalDependencies": {
     "netlink-notify": "github:treedys/netlink-notify"
