@@ -12,7 +12,10 @@
   "packware": {
     "bin": {
       "target": "node",
-      "plugin": "./gitsha.js",
+      "plugin": [
+        "./gitsha.js",
+        "./shebang.js"
+      ],
       "targets": {
         "node": "10.17.0"
       },
