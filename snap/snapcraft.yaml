@@ -19,6 +19,7 @@ apps:
             - network-control               # sudo snap connect treedys-controller:network-control; sudo snap restart treedys-controller;
             - hostname-control              # sudo snap connect treedys-controller:hostname-control; sudo snap restart treedys-controller;
             - avahi-control                 # sudo snap connect treedys-controller:avahi-control; sudo snap restart treedys-controller;
+            - mount-observe
 
 parts:
     treedys-controller:
@@ -33,6 +34,7 @@ parts:
         stage-packages:
             - 'libmnl0'
             - 'dnsmasq'
+            - 'libc6-i386'
         build-packages:
             - 'build-essential'
             - 'libmnl-dev'
