@@ -30,6 +30,7 @@ class computer {
                 name=="lo"
                 || name=="eno1"
                 || name=="eth0"
+                || name.startsWith("enp0")
                 || name.startsWith("usb")
                 || name.startsWith("dummy")
                 || name.startsWith("rndis")
