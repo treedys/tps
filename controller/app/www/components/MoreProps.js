@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default props => {
+export default ({UGLY_FF_SELECT_FIX, ...props}) => {
 
     const [ focused, setFocused ] = React.useState(false);
     const [ hovered, setHovered ] = React.useState(false);
@@ -16,7 +16,7 @@ export default props => {
         onBlur       = { event => { setFocused(false); child.onBlur      ?.(event); } }
         onMouseEnter = { event => { setHovered(true ); child.onMouseEnter?.(event); } }
         onMouseLeave = { event => { setHovered(false); child.onMouseLeave?.(event); } }
-        onMouseDown  = { event => { setPressed(true ); child.onMouseDown ?.(event); } }
+        onMouseDown  = { event => { setPressed(true ); child.onMouseDown ?.(event); UGLY_FF_SELECT_FIX && child.props.value!=event.target.value && child.props.onChange?.(event); } }
         onMouseUp    = { event => { setPressed(false); child.onMouseUp   ?.(event); } }>
         {child.props.children}
     </child.type>

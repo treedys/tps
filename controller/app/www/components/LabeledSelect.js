@@ -103,4 +103,4 @@ const LabeledSelect = ({ id, label, labelStyle, style, containerStyle, optionSty
         </select>
     </Row>
 
-export default props => <MoreProps><LabeledSelect {...props}/></MoreProps>
+export default props => <MoreProps UGLY_FF_SELECT_FIX={true}><LabeledSelect {...props}/></MoreProps>
