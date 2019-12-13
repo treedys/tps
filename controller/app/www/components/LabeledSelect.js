@@ -98,7 +98,7 @@ const LabeledSelect = ({ id, label, labelStyle, style, containerStyle, optionSty
             value={value!==undefined?value:''}
             {...props}>
             <option key={undefined} value='' hidden disabled/>
-            { options?.map( option => <option key={option.value || option} style={{ ...styles.normal.option , ...optionStyle }} value={option.value || option}>{option.name || option}</option>)}
+            { options?.map( option => typeof option != "object" ? { name:option, value:option } : option ).map( option => <option key={option.value} style={{ ...styles.normal.option , ...optionStyle }} value={option.value}>{option.name}</option>)}
             {children}
         </select>
     </Row>
