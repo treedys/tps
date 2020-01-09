@@ -49,6 +49,13 @@ const styles = {
         height: "12px",
         boxShadow: 'rgba(0, 0, 0, 0.156863) 0px 0px 10px, rgba(0, 0, 0, 0.227451) 0px 0px 10px'
     },
+    legendLed: {
+        borderRadius: "6px",
+        width: "12px",
+        height: "12px",
+        margin: "6px",
+        boxShadow: 'rgba(0, 0, 0, 0.156863) 0px 0px 10px, rgba(0, 0, 0, 0.227451) 0px 0px 10px'
+    },
     on: {
         background: "green"
     },
@@ -264,10 +271,20 @@ export const CameraList = ({ status, config, cameras, switches, onConfigChange, 
     if(config.extra)      add("Extra cameras", config.map, config.rows*config.columns, config.extra              , onDropMap);
     if(config.new.length) add("New",           config.new,                          0, config.new.length         , onDropNew);
 
-    return <Col className='fill scroll'>
+    return <Col className='fill scroll' style={{padding:"10px"}}>
         <DndProvider backend={HTML5Backend}>
-            <table style={{padding:"10px"}}><tbody>{rows}</tbody></table>
+            <table><tbody>{rows}</tbody></table>
         </DndProvider>
+        <h1>Legend</h1>
+        <div style={{ display:"flex", flexWrap:"wrap" }}>
+            <Row style={{ margin:"10px", alignItems:"baseline" }}><div style={{ ...styles.legendLed,  ...styles.on          }}/>ON</Row>
+            <Row style={{ margin:"10px", alignItems:"baseline" }}><div style={{ ...styles.legendLed,  ...styles.off         }}/>OFF</Row>
+            <Row style={{ margin:"10px", alignItems:"baseline" }}><div style={{ ...styles.legendLed,  ...styles.noIp        }}/>IP address</Row>
+            <Row style={{ margin:"10px", alignItems:"baseline" }}><div style={{ ...styles.legendLed,  ...styles.noNetBoot   }}/>NetBoot</Row>
+            <Row style={{ margin:"10px", alignItems:"baseline" }}><div style={{ ...styles.legendLed,  ...styles.noSDcard    }}/>SD card</Row>
+            <Row style={{ margin:"10px", alignItems:"baseline" }}><div style={{ ...styles.legendLed,  ...styles.needUpgrade }}/>Needs upgrade</Row>
+            <Row style={{ margin:"10px", alignItems:"baseline" }}><div style={{ ...styles.legendLed,  ...styles.upgrading   }}/>Upgrading</Row>
+        </div>
     </Col>;
 }
 
