@@ -207,7 +207,8 @@ const onConfigChange = async context => {
         }
     }
 
-    await updateHostName(newConfig.hostname);
+    if(newConfig.hostname)
+        await updateHostName(newConfig.hostname);
 
     return context;
 };
