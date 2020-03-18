@@ -53,6 +53,16 @@ In order to replicate the **exact** setup that we use at Treedy's you will need 
 
 ***Of course*** you don't need to stick to this exact configuration! With minor modifications to the code you can replace the control system with an X86-based computer for example instead of the Nvidia Xavier, or you can update the software running on the Raspberry Pis to be compatible with the Pi v4 boards... or rewrite the network discovery system to support any brand of PoE switch instead of the TP-link gear that we use. If you make such changes please merge them back into the main repo!
 
+
+## Who made this? 
+
+This is a product of Treedy's SA, the people you see below. Click on the picture to see our website.
+
+<a href="www.treedys.com" target="_blank" style="font-weight: bold; color: #1CAAD9;"><img src="https://images.squarespace-cdn.com/content/v1/5d6cf31ccbc1df0001d1cceb/1567422231117-DM92R9GZ577OQHSIC7V4/ke17ZwdGBToddI8pDm48kLkXF2pIyv_F2eUT9F60jBl7gQa3H78H3Y0txjaiv_0fDoOvxcdMmMKkDsyUqMSsMWxHk725yiiHCCLfrh8O1z4YTzHvnKhyp6Da-NYroOW3ZGjoBKy3azqku80C789l0iyqMbMesKd95J-X4EagrgU9L3Sa3U8cogeb0tjXbfawd0urKshkc5MgdBeJmALQKw/180116_Treedys_BenjaminBrolet0115.jpg" 
+alt="EXAMPLE 1" width="500" height="333" border="10" /></a>
+
+
+
 ## License:
 
 ### Software Copyright License for non-commercial scientific research purposes
