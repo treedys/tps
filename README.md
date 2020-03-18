@@ -51,7 +51,7 @@ In order to replicate the **exact** setup that we use at Treedy's you will need 
 3. Play your favorite song :-p 
 
 
-
+***Of course*** you don't need to stick to this exact configuration! With minor modifications to the code you can replace the control system with an X86-based computer for example instead of the Nvidia Xavier, or you can update the software running on the Raspberry Pis to be compatible with the Pi v4 boards... or rewrite the network discovery system to support any brand of PoE switch instead of the TP-link gear that we use. If you make such changes please merge them back into the main repo!
 
 ## License:
 
