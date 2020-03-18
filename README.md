@@ -58,7 +58,7 @@ In order to replicate the **exact** setup that we use at Treedy's you will need 
 
 This is a product of Treedy's SA, the people you see below. Click on the picture to see our website.
 
-<a href="www.treedys.com" target="_blank" style="font-weight: bold; color: #1CAAD9;"><img src="https://images.squarespace-cdn.com/content/v1/5d6cf31ccbc1df0001d1cceb/1567422231117-DM92R9GZ577OQHSIC7V4/ke17ZwdGBToddI8pDm48kLkXF2pIyv_F2eUT9F60jBl7gQa3H78H3Y0txjaiv_0fDoOvxcdMmMKkDsyUqMSsMWxHk725yiiHCCLfrh8O1z4YTzHvnKhyp6Da-NYroOW3ZGjoBKy3azqku80C789l0iyqMbMesKd95J-X4EagrgU9L3Sa3U8cogeb0tjXbfawd0urKshkc5MgdBeJmALQKw/180116_Treedys_BenjaminBrolet0115.jpg" 
+<a href="https://www.treedys.com" target="_blank" style="font-weight: bold; color: #1CAAD9;"><img src="https://images.squarespace-cdn.com/content/v1/5d6cf31ccbc1df0001d1cceb/1567422231117-DM92R9GZ577OQHSIC7V4/ke17ZwdGBToddI8pDm48kLkXF2pIyv_F2eUT9F60jBl7gQa3H78H3Y0txjaiv_0fDoOvxcdMmMKkDsyUqMSsMWxHk725yiiHCCLfrh8O1z4YTzHvnKhyp6Da-NYroOW3ZGjoBKy3azqku80C789l0iyqMbMesKd95J-X4EagrgU9L3Sa3U8cogeb0tjXbfawd0urKshkc5MgdBeJmALQKw/180116_Treedys_BenjaminBrolet0115.jpg" 
 alt="EXAMPLE 1" width="500" height="333" border="10" /></a>
 
 
