@@ -18,7 +18,9 @@ alt="EXAMPLE 2" width="200" height="200" border="10" /></a>
 
 Look [here](https://github.com/treedys/tps-design-files) to find the design files to create your own **transportable** 3D scanning system made of sturdy aluminium components, that will fit in a set of flight cases.
 
-**Please take a look at the licensing agreement below. We are making this system free to use for scientific research, non-commercial education, and artistic projects.** For other uses please contact us for licensing. We don't bite :-p  
+## Licensing:
+
+***Please take a look at the licensing agreement below. We are making this system free to use for scientific research, non-commercial education, and artistic projects.** For other uses please contact us for licensing. We don't bite :-p  
 
 ## How does the scanner work ? 
 
