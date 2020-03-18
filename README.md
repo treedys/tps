@@ -6,8 +6,16 @@ This repository contains the codebase for Treedy's orginal photogrammetry-based 
 
 With a little automation on the 3D processing side with photogrammetry software like "Capturing Reality" or "Agisoft Metashape" you can use this scanning system to create 3D models like these fully automatically: 
 
-[example 1](https://sketchfab.com/3d-models/david-at-gsp-connect-2018-26be3a3c55a143648b6e6a7e1d26fa7da)
-[example 2](https://sketchfab.com/3d-models/louis-from-sketchfab-2-0d966fce8ec04cc992422c127b6aaed3)
+
+<a href="https://sketchfab.com/3d-models/david-at-gsp-connect-2018-26be3a3c55a143648b6e6a7e1d26fa7d?utm_medium=embed&utm_source=website&utm_campaign=share-popup" target="_blank" style="font-weight: bold; color: #1CAAD9;"><img src="https://raw.githubusercontent.com/treedys/tps/master/preview1.jpg" 
+alt="EXAMPLE 1" width="200" height="200" border="10" /></a>
+
+<a href="https://sketchfab.com/3d-models/louis-from-sketchfab-2-0d966fce8ec04cc992422c127b6aaed3?utm_medium=embed&utm_source=website&utm_campaign=share-popup" target="_blank" style="font-weight: bold; color: #1CAAD9;"><img src="https://raw.githubusercontent.com/treedys/tps/master/preview2.jpg" 
+alt="EXAMPLE 2" width="200" height="200" border="10" /></a>
+
+
+
+
 
 This repository contains both the code needed to build such a scanner and operate it, and the design files to create your own **transportable** 3D scanning system made of sturdy aluminium components, that will fit in a set of flight cases.
 
