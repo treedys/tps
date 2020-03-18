@@ -4,13 +4,11 @@
 
 This repository contains the codebase for Treedy's orginal photogrammetry-based 3D body scanning system. This system has been deployed by Treedy's and our customers all over the globe and consistenly delivers excellent results in 3D scanning. 
 
-With a little automation on the 3D processing side with photogrammetry software like "Capturing Reality" or "Agisoft Metashape" you can use this scanning system to create 3D models like these fully automatically: 
+With a little automation on the 3D processing side with photogrammetry software like "Capturing Reality" or "Agisoft Metashape" you can use this scanning system to create 3D models like these fully automatically (links go to sketchfab):
 
 
 <a href="https://sketchfab.com/3d-models/david-at-gsp-connect-2018-26be3a3c55a143648b6e6a7e1d26fa7d?utm_medium=embed&utm_source=website&utm_campaign=share-popup" target="_blank" style="font-weight: bold; color: #1CAAD9;"><img src="https://raw.githubusercontent.com/treedys/tps/master/preview1.jpg" 
-alt="EXAMPLE 1" width="200" height="200" border="10" /></a>
-
-<a href="https://sketchfab.com/3d-models/louis-from-sketchfab-2-0d966fce8ec04cc992422c127b6aaed3?utm_medium=embed&utm_source=website&utm_campaign=share-popup" target="_blank" style="font-weight: bold; color: #1CAAD9;"><img src="https://raw.githubusercontent.com/treedys/tps/master/preview2.jpg" 
+alt="EXAMPLE 1" width="200" height="200" border="10" /></a><a href="https://sketchfab.com/3d-models/louis-from-sketchfab-2-0d966fce8ec04cc992422c127b6aaed3?utm_medium=embed&utm_source=website&utm_campaign=share-popup" target="_blank" style="font-weight: bold; color: #1CAAD9;"><img src="https://raw.githubusercontent.com/treedys/tps/master/preview2.jpg" 
 alt="EXAMPLE 2" width="200" height="200" border="10" /></a>
 
 
