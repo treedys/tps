@@ -79,7 +79,7 @@
     "git-revision-webpack-plugin": "^3.0.4",
     "globby": "^11.0.0",
     "history": "^4.9.0",
-    "immer": "^6.0.2",
+    "immer": "^8.0.1",
     "immutable": "^4.0.0-rc.12",
     "ip": "^1.1.5",
     "ip-range-check": "^0.2.0",
